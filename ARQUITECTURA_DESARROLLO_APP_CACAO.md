@@ -1,6 +1,6 @@
 # Arquitectura y plan general de desarrollo
 
-## Cacao Passport
+## ORIVIA
 
 Plataforma de trazabilidad agroindustrial, pedidos verificables y analítica asistida por IA para una asociación cacaotera del Huila.
 

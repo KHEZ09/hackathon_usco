@@ -1,2 +1,3 @@
 # hackathon_usco
-aca se sube lo de la hackaton
+
+Repositorio del proyecto ORIVIA para la hackatón de agroindustria de la USCO.
