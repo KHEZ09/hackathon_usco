@@ -8,9 +8,11 @@ La fuente de verdad de payloads completos sigue siendo
 
 - Salud: `GET /health` y `GET /ready`.
 - Desarrollo local: `http://127.0.0.1:8000`.
-- Servidor `orivia`: la API escucha en `127.0.0.1:8000` detrás del servidor;
-  todavía no debe asumirse una URL pública HTTPS hasta instalar y validar el
-  proxy del dominio `oriviaurlapi.tobaru.xyz`.
+- Servidor `orivia`: la API escucha en `127.0.0.1:8000` detrás de Caddy.
+  La URL pública oficial, una vez validado el certificado del proxy, es
+  `https://oriviaurlapi.tobaru.xyz/api/v1`.
+- El proxy público solo enruta `/health`, `/ready` y `/api/v1/*`; no expone
+  PostgreSQL ni el puerto interno `8000` directamente.
 - No usar PostgreSQL directamente desde el navegador.
 - No enviar secretos de blockchain, Ollama, PostgreSQL o JWT al cliente.
 
@@ -78,5 +80,7 @@ recurso no visible o inexistente, `409` conflicto de transición/integridad,
 
 Ángel y Daniel deben comunicar el origen final del frontend para que se agregue
 exactamente a `ORIVIA_CORS_ORIGINS` en el `.env` privado de `orivia`. Nunca se
-debe usar `*`. La integración se prueba primero localmente y después contra el
-servidor mediante HTTPS cuando el proxy quede habilitado.
+debe usar `*`. La integración se prueba primero localmente y después contra
+`https://oriviaurlapi.tobaru.xyz/api/v1` mediante HTTPS. Kevin debe configurar
+esa URL como `NEXT_PUBLIC_ORIVIA_API_URL` en el entorno de producción del
+frontend, sin subir secretos al repositorio.

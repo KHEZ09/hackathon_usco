@@ -18,3 +18,26 @@ oriviahealth.tobaru.xyz {
         file_server
     }
 }
+
+# API oficial de ORIVIA. Solo se enrutan salud y rutas versionadas; el resto
+# devuelve 404 y PostgreSQL nunca se publica.
+oriviaurlapi.tobaru.xyz {
+    encode gzip
+
+    header {
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        Cache-Control "no-store"
+        Strict-Transport-Security "max-age=31536000"
+    }
+
+    route {
+        @health path /health /ready
+        reverse_proxy @health api:8000
+
+        @api path /api/v1/*
+        reverse_proxy @api api:8000
+
+        respond 404
+    }
+}

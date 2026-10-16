@@ -2,7 +2,12 @@
 
 El frontend consume el contrato de `backend/API_CONTRACT_ORIVIA.md` mediante
 `lib/orivia-api.ts`. La URL se configura con `NEXT_PUBLIC_ORIVIA_API_URL` y por
-defecto apunta a `http://localhost:8000/api/v1`.
+defecto apunta a `http://localhost:8000/api/v1`. Para producción debe apuntar a
+`https://oriviaurlapi.tobaru.xyz/api/v1`.
+
+El dominio de producción solo funciona después de que Caddy valide su
+certificado HTTPS. No se debe usar el puerto `8000` desde el navegador ni
+conectar el frontend directamente a PostgreSQL.
 
 ## Componentes conectados
 
