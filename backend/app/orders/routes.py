@@ -6,6 +6,7 @@ from flask import Blueprint, current_app, g, jsonify, request
 
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
+from .access import can_read_order, can_update_order
 from .repository import OrderRepository, event_to_dict, order_to_dict
 from .states import InvalidOrderTransition
 
@@ -76,7 +77,8 @@ def create_order():
 @require_access_token
 @require_permissions("orders:read")
 def list_orders():
-    return jsonify({"orders": [order_to_dict(order) for order in _repository().list()]})
+    orders = [order for order in _repository().list() if can_read_order(order)]
+    return jsonify({"orders": [order_to_dict(order) for order in orders]})
 
 
 @orders_bp.get("/<order_id>")
@@ -84,7 +86,7 @@ def list_orders():
 @require_permissions("orders:read")
 def get_order(order_id: str):
     order = _repository().get(order_id)
-    if order is None:
+    if order is None or not can_read_order(order):
         return jsonify({"error": "ORDER_NOT_FOUND"}), 404
     return jsonify({"order": order_to_dict(order)}), 200
 
@@ -107,6 +109,9 @@ def update_order_status(order_id: str):
         )
 
     try:
+        current_order = _repository().get(order_id)
+        if current_order is None or not can_update_order(current_order):
+            return jsonify({"error": "ORDER_NOT_FOUND"}), 404
         order = _repository().transition(
             order_id=order_id,
             actor_id=_principal_id(),
@@ -128,6 +133,9 @@ def update_order_status(order_id: str):
 @require_permissions("tracking:read")
 def order_timeline(order_id: str):
     try:
+        order = _repository().get(order_id)
+        if order is None or not can_read_order(order):
+            return jsonify({"error": "ORDER_NOT_FOUND"}), 404
         events = _repository().timeline(order_id)
     except KeyError:
         return jsonify({"error": "ORDER_NOT_FOUND"}), 404

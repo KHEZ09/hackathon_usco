@@ -5,6 +5,7 @@ from flask import Blueprint, current_app, jsonify
 from ..orders.repository import OrderRepository, audit_to_dict
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
+from ..orders.access import can_read_order
 
 audit_bp = Blueprint("audit", __name__)
 
@@ -15,7 +16,7 @@ def _repository() -> OrderRepository:
 
 def _order_or_404(order_id: str):
     order = _repository().get(order_id)
-    if order is None:
+    if order is None or not can_read_order(order, audit=True):
         return None, (jsonify({"error": "ORDER_NOT_FOUND"}), 404)
     return order, None
 

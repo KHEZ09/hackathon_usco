@@ -5,6 +5,7 @@ from typing import Any
 from flask import Blueprint, current_app, jsonify
 
 from ..orders.repository import OrderRepository
+from ..orders.access import can_read_order
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
 from .service import AiInsight, OllamaClient, build_local_insight
@@ -18,7 +19,7 @@ def _repository() -> OrderRepository:
 
 def _order_facts(order_id: str) -> tuple[dict[str, Any] | None, tuple[Any, int] | None]:
     order = _repository().get(order_id)
-    if order is None:
+    if order is None or not can_read_order(order, audit=True):
         return None, (jsonify({"error": "ORDER_NOT_FOUND"}), 404)
     return (
         {
@@ -89,7 +90,7 @@ def order_audit_insight(order_id: str):
 @require_access_token
 @require_permissions("orders:read")
 def analytics():
-    orders = _repository().list()
+    orders = [order for order in _repository().list() if can_read_order(order)]
     facts = {
         "order_count": len(orders),
         "statuses": sorted({order.status for order in orders}),

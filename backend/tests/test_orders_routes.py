@@ -114,3 +114,36 @@ def test_orders_reject_missing_authentication_and_invalid_payload():
 
     assert invalid.status_code == 400
     assert invalid.get_json()["error"] == "INVALID_ORDER"
+
+
+def test_orders_enforce_owner_access_for_non_admin_principals():
+    app = create_app()
+    client = app.test_client()
+    owner_headers = {
+        "Authorization": f"Bearer {_token(app, subject='owner-1')}"
+    }
+    other_headers = {
+        "Authorization": f"Bearer {_token(app, subject='other-1')}"
+    }
+
+    created = client.post(
+        "/api/v1/orders",
+        headers=owner_headers,
+        json={"product": "Cacao", "quantity": 1},
+    )
+    order_id = created.get_json()["order"]["id"]
+
+    assert client.get(f"/api/v1/orders/{order_id}", headers=other_headers).status_code == 404
+    assert client.get("/api/v1/orders", headers=other_headers).get_json()["orders"] == []
+    assert (
+        client.get(f"/api/v1/orders/{order_id}/timeline", headers=other_headers).status_code
+        == 404
+    )
+    assert (
+        client.patch(
+            f"/api/v1/orders/{order_id}/status",
+            headers=other_headers,
+            json={"status": "CONFIRMED"},
+        ).status_code
+        == 404
+    )

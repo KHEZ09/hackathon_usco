@@ -10,6 +10,9 @@
 - La API limita el tamaño de cuerpos, usa respuestas JSON genéricas para errores
   inesperados, headers de seguridad y no almacena tokens en logs.
 - Las rutas sensibles exigen permisos de negocio además de autenticación.
+- Los pedidos aplican autorización a nivel de objeto: operadores y compradores
+  solo ven y modifican sus propios pedidos; contabilidad y administración usan
+  permisos explícitos para acceder al conjunto completo.
 - El backend se ejecuta sin root en la imagen de producción y PostgreSQL no se
   publica fuera de la red privada de Docker.
 - Los clientes HTTP externos validan el origen, tienen timeout, bloquean

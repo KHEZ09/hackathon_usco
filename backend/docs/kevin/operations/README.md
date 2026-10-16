@@ -16,7 +16,9 @@ El archivo `.env` existe únicamente en el servidor. Debe contener como mínimo 
 La imagen de producción se ejecuta con un usuario sin privilegios de root, la
 API queda enlazada a `127.0.0.1:8000`, PostgreSQL solo se expone dentro de la
 red privada de Docker y el Compose local exige configurar el archivo `.env` en
-lugar de incluir contraseñas fijas.
+lugar de incluir contraseñas fijas. Las rutas de pedidos también aplican
+autorización a nivel de objeto para impedir que un usuario consulte o cambie
+pedidos ajenos aunque conozca su UUID.
 
 ## Despliegue actual de staging
 
