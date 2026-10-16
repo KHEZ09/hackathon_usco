@@ -57,10 +57,16 @@ devuelven contraseñas, hashes de contraseña, tokens ni secretos.
 | GET | /api/v1/health | Público | Alias versionado de liveness |
 | GET | /ready | Público | API y PostgreSQL disponibles |
 | GET | /api/v1/ready | Público | Alias versionado de readiness |
-| GET | /api/v1/public/live | Público | Snapshot agregado del tablero |
+| GET | /api/v1/public/live | Público | Health operativo y snapshot del tablero |
 
-/api/v1/public/live solo expone conteos, estados agregados, fechas de revisión
-y eventos sin payload. No expone PII, emails, costos, ids internos ni contactos.
+`/api/v1/public/live` siempre expone conteos, estados agregados, fechas de
+revisión y eventos sin payload. En el modo de demo de la hackatón
+(`ORIVIA_PUBLIC_LIVE_INCLUDE_DEMO_DATA=true`) también expone únicamente los
+registros sintéticos necesarios para la demostración: usuarios demo, cadenas
+de pedidos y certificados blockchain. Nunca expone contraseñas, hashes de
+contraseña, tokens, llaves privadas, API keys, DSN, costos, contactos privados
+ni payloads internos. En producción real se recomienda dejar esta variable en
+`false` y conservar la vista agregada.
 
 ## Autenticación y sesión
 

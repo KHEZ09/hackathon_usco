@@ -1,9 +1,10 @@
 # Integración frontend-backend ORIVIA
 
 El frontend consume el contrato de `backend/API_CONTRACT_ORIVIA.md` mediante
-`lib/orivia-api.ts`. La URL se configura con `NEXT_PUBLIC_ORIVIA_API_URL` y por
-defecto apunta a `http://localhost:8000/api/v1`. Para producción debe apuntar a
-`https://oriviaurlapi.tobaru.xyz/api/v1`.
+`lib/orivia-api.ts`. La URL acepta el override `NEXT_PUBLIC_ORIVIA_API_URL`.
+En desarrollo, el valor por defecto es `http://localhost:8000/api/v1`; en una
+build de producción, el cliente usa automáticamente
+`https://oriviaurlapi.tobaru.xyz/api/v1` si no se define el override.
 
 El dominio de producción solo funciona después de que Caddy valide su
 certificado HTTPS. No se debe usar el puerto `8000` desde el navegador ni
@@ -26,7 +27,8 @@ el resumen del usuario y no sustituye la autorización del backend.
 
 ## Ejecución local
 
-1. Copia `.env.example` a `.env.local` y ajusta la URL del backend.
+1. Copia `.env.example` a `.env.local` y deja la URL local del backend (o
+   reemplázala por otra instancia de pruebas).
 2. Arranca PostgreSQL y Flask según `backend/README.md`.
 3. Ejecuta `npm run dev` dentro de `hackathon_usco`.
 4. Usa una cuenta sintética provisionada por el backend (`operador@orivia.test`,
