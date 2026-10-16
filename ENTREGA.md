@@ -30,6 +30,14 @@ nueva escritura EVM requiere POL de testnet; no se declara confirmada mientras
 la wallet no tenga saldo suficiente. El paquete debe congelarse solo después de
 completar o documentar esa evidencia, 100 registros, backup/restore y usabilidad.
 
+## Evidencia y despliegue
+
+La evidencia reproducible de la validación local está en
+`documents/EVIDENCIA_VALIDACION_FINAL_2026-10-16.md`. El frontend está preparado
+para Hostinger como exportación estática con la API pública configurada; la
+página por defecto no se reemplaza automáticamente hasta autorizar el cambio
+en el sitio exacto `orivia.tobaru.xyz`.
+
 ## Equipo y responsabilidades
 
 Sebas: seguridad, API, trazabilidad, blockchain e IA. Kevin: usuarios, base de
