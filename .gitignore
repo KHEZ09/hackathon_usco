@@ -17,6 +17,8 @@ dist/
 # Environment Variables & Secrets
 .env
 .env*.local
+.env.server
+infra/orivia-server/.env
 .env.development.local
 .env.test.local
 .env.production.local

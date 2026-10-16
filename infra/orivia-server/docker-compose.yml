@@ -1,0 +1,51 @@
+name: orivia-server
+
+services:
+  api:
+    build:
+      context: ../../backend
+    env_file:
+      - .env
+    environment:
+      ORIVIA_ENV: production
+      ORIVIA_HOST: 0.0.0.0
+      ORIVIA_PORT: 8000
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - orivia_private
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in infra/orivia-server/.env}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in infra/orivia-server/.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/orivia-server/.env}
+    volumes:
+      - orivia_postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - orivia_private
+
+networks:
+  orivia_private:
+    driver: bridge
+
+volumes:
+  orivia_postgres_data:
