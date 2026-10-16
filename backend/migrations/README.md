@@ -11,6 +11,8 @@ debe editar una migración que ya haya sido aplicada; se debe crear otra.
 002_seed_synthetic.sql
 003_seed_inventory.sql
 004_orders_traceability_persistence.sql
+005_cluster_network.sql
+006_seed_cluster_synthetic.sql
 ```
 
 `001_initial.sql` crea usuarios, roles, proveedores, clientes, productos,
@@ -26,6 +28,12 @@ demostración para validar inventario y trazabilidad.
 `004_orders_traceability_persistence.sql` agrega el payload público del pedido
 y el hash persistente del evento que necesita el adaptador PostgreSQL de
 pedidos. No reemplaza las tablas de los módulos de Kevin.
+
+`005_cluster_network.sql` crea los tipos, estados, visibilidades, tablas e
+índices de la red digital del clúster.
+
+`006_seed_cluster_synthetic.sql` agrega actores, necesidades, ofertas,
+conexiones y señales de confianza sintéticas.
 
 ## Aplicar migraciones
 
