@@ -1,0 +1,306 @@
+# ORIVIA — Historial del backend
+
+Historial técnico y operativo del desarrollo del backend de ORIVIA dentro del repositorio `hackathon_usco`.
+
+> Este documento registra cambios realizados en el repositorio, decisiones de arquitectura, validaciones, arreglos y responsabilidades del equipo. No contiene secretos, credenciales ni información ajena al proyecto.
+
+## Metadatos del proyecto
+
+- **Proyecto:** ORIVIA.
+- **Repositorio:** `https://github.com/KHEZ09/hackathon_usco`.
+- **Rama de trabajo:** `main`.
+- **Ruta del backend:** `backend/`.
+- **Modelo utilizado durante el acompañamiento técnico:** **GPT 5.6 Luna**.
+- **Servidor de staging/pruebas:** instancia AWS Lightsail `orivia` con Debian 13.
+- **Estado de referencia del repositorio al crear este historial:** `bd1cceb`.
+
+## 1. Objetivo del backend
+
+El backend de ORIVIA proporciona una API segura y auditable para registrar pedidos, controlar sus estados, conservar la trazabilidad de cada cambio, verificar integridad mediante una cadena hash y exponer auditoría, anclaje blockchain e insights de IA.
+
+El objetivo técnico es que la aplicación pueda demostrar no solo que un pedido existe, sino también:
+
+1. quién lo creó o modificó;
+2. qué transición ocurrió y cuándo;
+3. que la secuencia de eventos no fue alterada;
+4. que el estado actual puede verificarse;
+5. que los datos pueden resumirse y explicarse de forma comprensible;
+6. que el servicio puede validarse primero en Docker y después ejecutarse en el servidor.
+
+## 2. Responsabilidades durante el desarrollo
+
+### Sebas — dirección del proyecto y núcleo de plataforma
+
+Sebas definió el alcance de ORIVIA, el flujo de trabajo del equipo y la estrategia de infraestructura. Sus decisiones y responsabilidades fueron:
+
+- establecer el nombre, objetivo y alcance del backend;
+- decidir que el desarrollo y la validación se realizaran sobre el repositorio `hackathon_usco`;
+- definir el flujo obligatorio `pull → trabajar → validar → commit/push`;
+- decidir que cada cambio se probara primero en Docker y luego se desplegara en el servidor `orivia`;
+- escoger AWS Lightsail, Debian 13, Docker Compose y acceso administrativo por SSH protegido con Tailscale/UFW;
+- dirigir la implementación de autenticación por tokens, roles y permisos;
+- dirigir el flujo de pedidos y sus transiciones válidas;
+- implementar la trazabilidad, la cadena hash de eventos, auditoría y verificación de integridad;
+- implementar el adaptador inicial de blockchain y sus rutas;
+- implementar la frontera de IA, el análisis local determinista y la integración opcional con Ollama;
+- revisar errores, ordenar las pruebas y validar el despliegue real;
+- mantener la separación entre datos sintéticos de staging y cualquier entorno real.
+
+### Kevin — datos, usuarios e integraciones empresariales
+
+Kevin se encargó de la capa de datos y de los módulos empresariales generales. Sus responsabilidades y aportes registrados en el repositorio fueron:
+
+- usuarios y operaciones relacionadas con datos;
+- conexión y configuración de PostgreSQL;
+- repositorios, modelos, migraciones y semillas sintéticas;
+- catálogo e inventario;
+- contabilidad y reportes;
+- integraciones empresariales;
+- scripts de bootstrap, migración, backup y restore;
+- pruebas y documentación de sus módulos en `backend/docs/kevin/`;
+- registro de sus módulos dentro de la factoría Flask;
+- incorporación de comprobación de PostgreSQL en `/ready`;
+- documentación del despliegue y de los módulos de datos.
+
+La integración de Kevin quedó preparada para reemplazar progresivamente los repositorios en memoria del núcleo de pedidos. En el estado actual todavía debe completarse ese reemplazo para que los pedidos y sus eventos se persistan en PostgreSQL de forma definitiva.
+
+### GPT 5.6 Luna — acompañamiento técnico y ejecución bajo dirección de Sebas
+
+El modelo utilizado fue **GPT 5.6 Luna**. Su papel fue el de asistente de desarrollo operando bajo las decisiones de Sebas:
+
+- revisar el estado del repositorio, la estructura y el historial Git;
+- proponer y ejecutar cambios de backend y documentación;
+- implementar o completar la base Flask/Gunicorn, seguridad, pedidos, auditoría, blockchain e IA;
+- ejecutar pruebas Docker, revisar errores y corregir regresiones;
+- revisar los cambios de Kevin para evitar sobrescribir el núcleo de Sebas;
+- sincronizar el repositorio con `git pull --ff-only` antes de trabajar;
+- crear commits y hacer push de los cambios terminados;
+- preparar y validar el despliegue en el servidor `orivia`;
+- comprobar salud, readiness, autenticación y aislamiento de PostgreSQL;
+- dejar documentadas las limitaciones pendientes sin presentarlas como funcionalidades terminadas.
+
+## 3. Arquitectura actual del backend
+
+```text
+Cliente web / consumidor de API
+              |
+              v
+      Flask + Gunicorn
+              |
+   +----------+-----------+----------------+
+   |                      |                |
+   v                      v                v
+Pedidos y estados   Auditoría/hash   Insights de IA
+   |                      |                |
+   v                      v                v
+Repositorio de       Blockchain       Ollama opcional
+pedidos              adapter           + fallback local
+   |
+   v
+PostgreSQL 16 en red privada de Docker
+```
+
+### Capas principales
+
+- `backend/app/`: aplicación Flask, configuración, factory, blueprints y servicios.
+- `backend/app/core/`: seguridad, JWT, roles, permisos y manejo común de la API.
+- `backend/app/orders/`: dominio de pedidos, transiciones, repositorio, eventos y timeline.
+- `backend/app/audit/`: verificación de integridad y auditoría de pedidos.
+- `backend/app/blockchain/`: contrato/adaptador inicial de anclaje y recibos.
+- `backend/app/ai/`: análisis, resumen, analítica y proveedor local/fallback.
+- `backend/app/data/` y módulos de Kevin: PostgreSQL, modelos, repositorios, catálogo, contabilidad e integraciones.
+- `backend/tests/`: pruebas unitarias, de integración, de contrato y smoke tests.
+- `backend/infra/orivia-server/`: Docker Compose, variables de entorno de ejemplo, scripts y documentación de operación.
+
+### Rutas base implementadas
+
+- `GET /health`: salud básica del proceso.
+- `GET /ready`: readiness y comprobación de PostgreSQL.
+- `POST /api/v1/auth/login`: contrato inicial de login; la persistencia real de usuarios continúa pendiente.
+- `GET /api/v1/auth/me`: identidad del usuario autenticado.
+- `POST /api/v1/auth/refresh`: contrato de refresh; requiere persistencia de refresh tokens.
+- `POST /api/v1/orders`: registrar pedido.
+- `GET /api/v1/orders`: listar pedidos.
+- `GET /api/v1/orders/<id>`: consultar pedido.
+- `PATCH /api/v1/orders/<id>/status`: cambiar estado con transición validada.
+- `GET /api/v1/orders/<id>/timeline`: consultar trazabilidad.
+- `GET /api/v1/audit/orders/<id>` y `/verify`: auditar/verificar integridad.
+- `POST /api/v1/blockchain/anchors`: crear o consultar anclaje idempotente.
+- Rutas de IA para resumen, auditoría analítica e insights de solo lectura.
+
+## 4. Infraestructura y operación
+
+### Servidor de staging
+
+- **Proveedor:** AWS Lightsail.
+- **Instancia:** `orivia`.
+- **Sistema operativo:** Debian 13.
+- **Ejecución:** Docker Compose.
+- **Acceso administrativo:** SSH mediante la red privada de Tailscale y el alias `ssh admin@orivia` cuando el cliente tiene DNS de Tailscale disponible.
+- **Firewall del sistema:** UFW configurado para permitir administración por la interfaz de Tailscale; no se expone PostgreSQL públicamente.
+- **Base de datos:** PostgreSQL 16 dentro de la red privada de Docker.
+- **API:** escucha internamente en el contenedor y se publica localmente como `127.0.0.1:8000`.
+
+### Contenedores y seguridad operativa
+
+- API ejecutada con Gunicorn.
+- PostgreSQL con healthcheck.
+- Red privada de Docker entre API y base de datos.
+- API con filesystem de solo lectura, `/tmp` en `tmpfs`, `no-new-privileges` y política `restart: unless-stopped`.
+- Secretos ubicados en `infra/orivia-server/.env`; no deben subirse al repositorio.
+- Datos de staging sintéticos; no se debe conectar este entorno a bases de datos reales.
+
+### Flujo de despliegue
+
+Desde el servidor `orivia`, el flujo documentado es:
+
+```bash
+git pull --ff-only origin main
+bash infra/orivia-server/scripts/test.sh
+bash infra/orivia-server/scripts/deploy.sh
+bash infra/orivia-server/scripts/healthcheck.sh
+bash infra/orivia-server/scripts/smoke_test.sh
+```
+
+La operación normal del equipo es:
+
+1. hacer `pull` antes de comenzar;
+2. revisar `status`, diff y archivos no rastreados;
+3. trabajar solamente en el alcance asignado;
+4. probar en Docker;
+5. corregir y repetir las pruebas;
+6. hacer commit con mensaje explícito;
+7. hacer push a `main` cuando el cambio esté validado;
+8. actualizar el servidor con fast-forward;
+9. desplegar solo si las pruebas pasan;
+10. comprobar health, readiness y smoke test.
+
+## 5. Historial cronológico de cambios
+
+| Commit | Responsable | Cambio registrado | Resultado |
+|---|---|---|---|
+| `85a3645` | Sebas / GPT 5.6 Luna | Añadidas las bases del dominio ORIVIA para seguridad, pedidos, auditoría, blockchain e IA local. | Se creó la primera base técnica del backend. |
+| `416baf6` | Sebas / GPT 5.6 Luna | Endurecimiento de las fundaciones del dominio. | Se redujeron inconsistencias iniciales y se estabilizaron contratos internos. |
+| `4104e99` | Sebas / GPT 5.6 Luna | Flujo protegido de pedidos en memoria. | Se añadieron bearer tokens, permisos, estados y transiciones válidas. |
+| `478e306` | Sebas / GPT 5.6 Luna | Rutas de auditoría, verificación y blockchain. | Se expuso la comprobación de integridad y el anclaje inicial. |
+| `a8a222c` | Sebas / GPT 5.6 Luna | Insights de IA de solo lectura. | Se añadió el proveedor local/fallback sin hacer dependiente el backend de un servicio externo. |
+| `2b1380a` | Sebas / GPT 5.6 Luna | Correcciones de IA y trazabilidad. | Se corrigieron validaciones, tipos de análisis y controles de integridad. |
+| `521daca` | Kevin | Primera integración de modificaciones de datos y backend. | Se inició la separación de responsabilidades entre dominio y datos. |
+| `40093c2` | Equipo | Integración de rama. | Se sincronizaron los avances del equipo. |
+| `fe4d416` | Kevin | Operaciones de datos y tooling del servidor. | Se ampliaron módulos empresariales, repositorios y herramientas de operación. |
+| `e41baa5` | Kevin | Migraciones, backups y herramientas contables. | Se añadió soporte operativo para PostgreSQL y contabilidad. |
+| `8179ff4` | Kevin | Formateo y limpieza de módulos de datos e integraciones. | Se mejoró consistencia y mantenibilidad. |
+| `1462b88` | Kevin | Corrección de filtros nullable del catálogo. | Se evitó un error de tipado en filtros opcionales. |
+| `fbc7219` | Kevin | Seed sintético de inventario. | Se habilitaron datos reproducibles para staging y pruebas. |
+| `3381835` | Kevin | Scripts de despliegue ejecutables. | Se corrigieron permisos de ejecución en los scripts. |
+| `1b4ef7b` | Kevin | Normalización de finales de línea en la imagen. | Se evitó incompatibilidad de scripts dentro del contenedor. |
+| `090e575` | Kevin | Formateo de pruebas de backend. | Se dejó el conjunto de pruebas consistente. |
+| `a59ee09` | Sebas / GPT 5.6 Luna | Verificación final del núcleo Sebas y smoke checks. | Se completaron pruebas, correcciones de Docker y validación del despliegue. |
+| `bd1cceb` | Kevin | Documentación de módulos de datos y despliegue. | Se actualizó la referencia documental de la capa de Kevin. |
+
+## 6. Correcciones importantes realizadas
+
+### Seguridad y API
+
+- Se protegieron las rutas de pedidos con tokens Bearer.
+- Se definieron roles y permisos para separar lectura, escritura, administración y auditoría.
+- Se añadieron `X-Content-Type-Options`, `X-Frame-Options` y `Referrer-Policy`.
+- Se limitó el tamaño de payload a 1 MB.
+- Se añadió respuesta controlada para payload JSON demasiado grande (`413`).
+- Se documentó el contrato de la API.
+- Se mantuvo PostgreSQL sin exposición pública directa.
+
+### Pedidos y trazabilidad
+
+- Se validan explícitamente las transiciones permitidas.
+- Cada evento de pedido conserva hash previo y hash actual.
+- La timeline permite revisar la secuencia de cambios.
+- La verificación detecta alteraciones en la cadena.
+- El anclaje blockchain inicial es idempotente: repetir el mismo anclaje no crea una segunda evidencia incorrecta.
+
+### IA
+
+- Se mantuvo una ruta de análisis de solo lectura.
+- Se incorporó fallback local determinista cuando Ollama no está disponible.
+- La integración con Ollama quedó opcional y separada del flujo crítico de pedidos.
+- Se corrigió el tipo de análisis usado por el proveedor Ollama.
+
+### Docker y pruebas
+
+- Se corrigió `backend/Dockerfile.test` para copiar también `migrations/` y `scripts/`.
+- La corrección resolvió el fallo causado por la prueba de migraciones tras integrar los módulos de Kevin.
+- El conjunto final validado alcanzó `35 passed`.
+
+## 7. Validaciones realizadas
+
+### Validación local/Docker
+
+- Pruebas unitarias y de integración del backend.
+- Validación de rutas protegidas.
+- Prueba de transiciones inválidas.
+- Prueba de hash-chain y detección de alteraciones.
+- Prueba de anclaje idempotente.
+- Prueba de fallback de IA y contrato Ollama.
+- Prueba de migraciones y datos sintéticos.
+- Resultado de referencia: `35 passed in 0.97s`.
+
+### Validación en `orivia`
+
+- El contenedor de API quedó activo con Gunicorn.
+- PostgreSQL quedó activo y saludable.
+- `healthcheck.sh` respondió correctamente con estado `ok`.
+- `smoke_test.sh` validó:
+  - health `200`;
+  - readiness `200` con PostgreSQL `ok`;
+  - petición no autenticada a pedidos rechazada con `401`.
+- El servidor quedó sincronizado con `bd1cceb`; el último commit posterior a la validación de código (`bd1cceb`) fue documental y no requirió reinicio del runtime.
+
+## 8. Estado actual
+
+### Completado
+
+- Base Flask/Gunicorn y factory de aplicación.
+- JWT, roles, permisos y middleware de seguridad base.
+- Flujo de pedidos y transiciones.
+- Trazabilidad con cadena hash.
+- Auditoría y verificación.
+- Adaptador inicial de blockchain.
+- IA local/fallback y frontera opcional con Ollama.
+- Docker Compose para API y PostgreSQL.
+- Scripts de prueba, despliegue, healthcheck y smoke test.
+- Módulos empresariales iniciales de Kevin.
+- Integración de readiness con PostgreSQL.
+- Documentación de responsabilidades y operación.
+
+### Pendiente
+
+- Reemplazar completamente `InMemoryOrderRepository` por el repositorio persistente de PostgreSQL.
+- Persistir en PostgreSQL los eventos/timeline de pedidos.
+- Completar el repositorio real de usuarios y el login con verificación de contraseñas.
+- Persistir y revocar refresh tokens.
+- Definir el esquema final compartido entre pedidos, usuarios, inventario y contabilidad.
+- Elegir el proveedor blockchain definitivo y sustituir el adaptador de memoria cuando el alcance lo requiera.
+- Instalar/configurar el modelo Ollama real `gpt-oss:120b` solo si la capacidad del servidor y el costo lo permiten.
+- Completar pruebas de integración con todos los repositorios persistentes.
+- Reforzar observabilidad, rotación de secretos, backups probados y recuperación ante fallos antes de producción.
+
+## 9. Límites actuales y decisiones de seguridad
+
+- El backend no debe presentarse como plenamente persistente mientras el flujo de pedidos continúe usando el repositorio en memoria.
+- El blockchain actual demuestra el contrato de anclaje y verificación, pero no equivale todavía a una red blockchain externa en producción.
+- Ollama no debe bloquear el registro ni la consulta de pedidos.
+- No se deben subir `.env`, llaves privadas, tokens, dumps reales ni credenciales.
+- El servidor `orivia` es staging/prueba; no debe conectarse a datos reales sin una autorización y un diseño de migración explícitos.
+- Los despliegues deben hacerse después de que las pruebas Docker pasen y siempre mediante fast-forward.
+
+## 10. Próximo orden de trabajo
+
+1. Integrar el repositorio de usuarios de Kevin con login, hash de contraseñas y permisos.
+2. Diseñar y migrar el esquema persistente de pedidos y eventos.
+3. Implementar el adaptador PostgreSQL de pedidos respetando el `OrderRepository` definido por Sebas.
+4. Ejecutar pruebas completas con PostgreSQL real dentro de Docker.
+5. Persistir refresh tokens y probar revocación.
+6. Confirmar el proveedor blockchain y conservar la verificación local como respaldo.
+7. Probar Ollama de forma aislada, con timeout y fallback.
+8. Desplegar en `orivia`, ejecutar health/readiness/smoke y registrar el resultado en este historial.
+
