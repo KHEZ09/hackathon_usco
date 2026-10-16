@@ -19,6 +19,24 @@ oriviahealth.tobaru.xyz {
     }
 }
 
+# Frontend estático de ORIVIA. Caddy sirve el export de Next.js sin Node en
+# producción y gestiona el certificado TLS automáticamente para este dominio.
+orivia.tobaru.xyz {
+    encode gzip
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Content-Security-Policy "default-src 'self'; connect-src 'self' https://oriviaurlapi.tobaru.xyz; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    }
+
+    root * /srv
+    file_server
+}
+
 # API oficial de ORIVIA. Solo se enrutan salud y rutas versionadas; el resto
 # devuelve 404 y PostgreSQL nunca se publica.
 oriviaurlapi.tobaru.xyz {
