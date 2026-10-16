@@ -51,7 +51,9 @@ class OllamaClient:
         self._model = model
         self._timeout_seconds = timeout_seconds
 
-    def summarize(self, facts: dict[str, Any]) -> AiInsight:
+    def summarize(self, facts: dict[str, Any], *, kind: str = "summary") -> AiInsight:
+        if not kind:
+            raise ValueError("analysis kind is required")
         payload = json.dumps(
             {
                 "model": self._model,
@@ -73,7 +75,7 @@ class OllamaClient:
         if not text:
             raise ValueError("Ollama returned an empty response")
         return AiInsight(
-            kind="summary",
+            kind=kind,
             text=text,
             source=f"ollama:{self._model}",
         )

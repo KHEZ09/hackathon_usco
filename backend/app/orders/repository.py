@@ -10,6 +10,7 @@ from uuid import uuid4
 from ..audit.service import AuditRecord, create_audit_record
 from ..tracking.event_chain import TraceEvent
 from .service import create_transition
+from .states import InvalidOrderTransition, transition_order
 
 
 @dataclass
@@ -177,7 +178,7 @@ class InMemoryOrderRepository:
             raise KeyError(order_id)
 
         previous_event_hash: str | None = None
-        for event in order.events:
+        for index, event in enumerate(order.events):
             payload = order.payloads.get(event.event_id)
             if (
                 payload is None
@@ -185,6 +186,20 @@ class InMemoryOrderRepository:
                 or not event.verify(payload)
             ):
                 return False
+            if index == 0:
+                if (
+                    event.event_type != "ORDER_CREATED"
+                    or event.previous_status is not None
+                    or event.new_status != "CREATED"
+                ):
+                    return False
+            else:
+                if event.event_type != "STATUS_CHANGED":
+                    return False
+                try:
+                    transition_order(event.previous_status or "", event.new_status)
+                except InvalidOrderTransition:
+                    return False
             previous_event_hash = event.event_hash
         return True
 

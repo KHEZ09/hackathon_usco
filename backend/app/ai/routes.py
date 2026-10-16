@@ -42,7 +42,7 @@ def _insight(facts: dict[str, Any], kind: str) -> AiInsight:
             result = OllamaClient(
                 base_url=base_url,
                 model=current_app.config["OLLAMA_MODEL"],
-            ).summarize({**facts, "analysis_kind": kind})
+            ).summarize({**facts, "analysis_kind": kind}, kind=kind)
             return AiInsight(kind=kind, text=result.text, source=result.source)
         except (OSError, TimeoutError, TypeError, ValueError):
             pass

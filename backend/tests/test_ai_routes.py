@@ -73,10 +73,13 @@ def test_ai_summary_audit_and_analytics_work_without_ollama():
 
     assert summary.status_code == 200
     assert summary.get_json()["insight"]["source"] == "local-rules"
+    assert summary.get_json()["insight"]["kind"] == "summary"
     assert "CREATED" in summary.get_json()["insight"]["text"]
     assert audit.status_code == 200
+    assert audit.get_json()["insight"]["kind"] == "audit"
     assert "verificada" in audit.get_json()["insight"]["text"]
     assert analytics.status_code == 200
+    assert analytics.get_json()["insight"]["kind"] == "analytics"
     assert "1 pedidos" in analytics.get_json()["insight"]["text"]
 
 

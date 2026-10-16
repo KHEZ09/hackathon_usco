@@ -103,6 +103,14 @@ def test_audit_verification_and_blockchain_anchor_flow():
     assert receipt.status_code == 200
     assert receipt.get_json()["anchor"]["verified"] is True
 
+    repeated = client.post(
+        "/api/v1/blockchain/anchors",
+        headers=admin_headers,
+        json={"order_id": order_id},
+    )
+    assert repeated.status_code == 200
+    assert repeated.get_json()["idempotent"] is True
+
 
 def test_tampered_chain_cannot_be_verified_or_anchored():
     app = create_app()
