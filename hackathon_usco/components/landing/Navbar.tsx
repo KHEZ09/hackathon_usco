@@ -4,9 +4,9 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, LayoutDashboard, LogOut, Menu, QrCode, Search, UserPlus, UserRound, X } from "lucide-react";
+import { ChevronDown, Home, LayoutDashboard, LogOut, Menu, QrCode, Search, UserPlus, UserRound, X } from "lucide-react";
 import { OriviaLogo } from "@/components/brand/OriviaLogo";
-import { ROLES, ROLE_HOME, type Role, type Session } from "@/components/auth/roles";
+import { ROLES, ROLE_HOME, ROLE_ORDER, type Role, type Session } from "@/components/auth/roles";
 import { cn } from "@/lib/cn";
 
 const LINKS = [
@@ -17,7 +17,6 @@ const LINKS = [
   { href: "#contacto", label: "Contacto" },
 ];
 
-const ROLE_ORDER: Role[] = ["operador", "administrador", "comprador"];
 
 type Props = {
   session: Session | null;
@@ -56,7 +55,11 @@ export function Navbar({ session, onLogin, onRegister, onLogout }: Props) {
   const buscar = (e: FormEvent) => {
     e.preventDefault();
     const c = codigo.trim().toUpperCase();
-    if (c) router.push(`/ficha/${encodeURIComponent(c)}`);
+    if (c) {
+      router.push(`/ficha/${encodeURIComponent(c)}`);
+      setCodigo("");
+      setMenu(false);
+    }
   };
 
   const role = session ? ROLES[session.role] : null;
@@ -94,15 +97,27 @@ export function Navbar({ session, onLogin, onRegister, onLogout }: Props) {
                 <role.icon className="size-3.5" />
                 {role.label}
               </span>
-              <Link
-                href={ROLE_HOME[session.role]}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-lg transition",
-                  solid ? "bg-bosque text-crema hover:bg-bosque-700" : "bg-crema text-bosque hover:bg-white",
-                )}
-              >
-                <LayoutDashboard className="size-3.5" /> Mi panel
-              </Link>
+              {session.role === "comprador" ? (
+                <Link
+                  href="/"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-lg transition",
+                    solid ? "bg-bosque text-crema hover:bg-bosque-700" : "bg-crema text-bosque hover:bg-white",
+                  )}
+                >
+                  <Home className="size-3.5" /> Inicio
+                </Link>
+              ) : (
+                <Link
+                  href={ROLE_HOME[session.role]}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-lg transition",
+                    solid ? "bg-bosque text-crema hover:bg-bosque-700" : "bg-crema text-bosque hover:bg-white",
+                  )}
+                >
+                  <LayoutDashboard className="size-3.5" /> Mi panel
+                </Link>
+              )}
               <button onClick={onLogout} className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition", ghost)}>
                 <LogOut className="size-3.5" /> Salir
               </button>
@@ -244,9 +259,11 @@ export function Navbar({ session, onLogin, onRegister, onLogout }: Props) {
             <div className="mt-2 border-t border-line pt-2">
               {session ? (
                 <>
-                  <Link href={ROLE_HOME[session.role]} onClick={() => setOpen(false)} className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface-2">
-                    <LayoutDashboard className="size-4" /> Ir a mi panel
-                  </Link>
+                  {session.role !== "comprador" && (
+                    <Link href={ROLE_HOME[session.role]} onClick={() => setOpen(false)} className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface-2">
+                      <LayoutDashboard className="size-4" /> Ir a mi panel
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       setOpen(false);

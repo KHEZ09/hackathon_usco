@@ -14,7 +14,7 @@ export type RegistroCampo = keyof RegistroDatos;
 export type RegistroErrores = Partial<Record<RegistroCampo, string>>;
 
 export const PASSWORD_MIN = 10;
-const PASSWORD_MAX_BYTES = 72;
+export const PASSWORD_MAX_BYTES = 72;
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 const NOMBRE_RE = /^\p{L}+(?:[ '.-]\p{L}+)*$/u;
 
@@ -37,10 +37,10 @@ export function requisitosPendientes(password: string, correo = ""): string[] {
   return faltan;
 }
 
-/** Nivel 0→4 para la barra de fortaleza. */
-export function fortaleza(password: string) {
+/** Nivel 0→4 para la barra de fortaleza. Pasa el correo para penalizar si la pass lo contiene. */
+export function fortaleza(password: string, correo = "") {
   if (!password) return 0;
-  const faltan = requisitosPendientes(password).length;
+  const faltan = requisitosPendientes(password, correo).length;
   return Math.max(1, 4 - Math.ceil(faltan / 1.5));
 }
 

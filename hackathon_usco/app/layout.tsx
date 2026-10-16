@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Allura, Geist_Mono, Montserrat } from "next/font/google";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 const allura = Allura({
@@ -29,7 +31,7 @@ export const viewport: Viewport = {
   themeColor: "#1b3d2e",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="es"

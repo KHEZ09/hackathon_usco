@@ -51,22 +51,24 @@ function Landing() {
 
   const closeLogin = useCallback(() => setLogin((l) => ({ ...l, open: false })), []);
   const closeRegistro = useCallback(() => setRegistro((r) => ({ ...r, open: false })), []);
-  const abrirRegistro = (role?: Role) => {
+  const abrirRegistro = useCallback((role?: Role) => {
     closeLogin();
     setRegistro({ open: true, role });
-  };
-  const onRegistered = (email: string, backendRole: string) => {
+  }, [closeLogin]);
+
+  const onRegistered = useCallback((email: string, backendRole: string) => {
     setRegistro((r) => ({ ...r, open: false }));
-    const mappedRole: Role = backendRole === "ADMIN" || backendRole === "administrador" ? "administrador" : backendRole === "OPERATOR" || backendRole === "operador" ? "operador" : "comprador";
-    if (mappedRole === "comprador") {
-      // Compradores: tras registrarse van directo al login sin notificación ruidosa
-      notify("exito", "Cuenta creada", "Inicia sesión para explorar el cacao de origen.");
-      setLogin({ open: true, role: mappedRole, email });
-    } else {
-      notify("exito", "Cuenta creada", "Inicia sesión con tu nueva cuenta.");
-      setLogin({ open: true, role: mappedRole, email });
-    }
-  };
+    const mappedRole: Role = backendRole === "ADMIN" || backendRole === "administrador"
+      ? "administrador"
+      : backendRole === "OPERATOR" || backendRole === "operador"
+      ? "operador"
+      : "comprador";
+    const msg = mappedRole === "comprador"
+      ? "Inicia sesión para explorar el cacao de origen."
+      : "Inicia sesión con tu nueva cuenta.";
+    notify("exito", "Cuenta creada", msg);
+    setLogin({ open: true, role: mappedRole, email });
+  }, [notify]);
 
   const onSuccess = (s: Session) => {
     writeSession(s);

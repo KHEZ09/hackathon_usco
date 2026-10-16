@@ -6,7 +6,7 @@ import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 type ToastKind = "exito" | "error" | "info";
-type Toast = { id: number; kind: ToastKind; title: string; body?: string };
+type Toast = { id: string; kind: ToastKind; title: string; body?: string };
 type ToastApi = { notify: (kind: ToastKind, title: string, body?: string) => void };
 
 const ToastContext = createContext<ToastApi | null>(null);
@@ -22,13 +22,16 @@ const ICONS = { exito: CheckCircle2, error: AlertTriangle, info: Info } as const
 export function Toaster({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const dismiss = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
+  const dismiss = useCallback((id: string) => setToasts((t) => t.filter((x) => x.id !== id)), []);
 
   const notify = useCallback<ToastApi["notify"]>(
     (kind, title, body) => {
-      const id = Date.now() + Math.random();
+      const id = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`;
       setToasts((t) => [...t.slice(-2), { id, kind, title, body }]);
-      setTimeout(() => dismiss(id), 4200);
+      const duration = kind === "error" ? 6000 : 4200;
+      setTimeout(() => dismiss(id), duration);
     },
     [dismiss],
   );

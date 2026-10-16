@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, Eye, EyeOff, Loader2, X, type LucideIcon } from "lucide-react";
 import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
 import { cn } from "@/lib/cn";
-import { ROLES, type Role } from "@/components/auth/roles";
+import { ROLES, ROLE_ORDER, type Role } from "@/components/auth/roles";
 import { getRegistrationRoles, OriviaApiError, register, type RegistrationRole } from "@/lib/orivia-api";
 import { fortaleza, limpiarTexto, requisitosPendientes, validarRegistro, type RegistroCampo, type RegistroDatos, type RegistroErrores } from "@/lib/registro";
 
@@ -19,45 +19,14 @@ type Props = {
 };
 
 const REGISTRO_ROLES: Array<{
-  id: string;
+  id: Role;
   backendRole: string;
   label: string;
-  sublabel: string;
-  description: string;
   icon: LucideIcon;
 }> = [
-  {
-    id: "operador",
-    backendRole: "OPERATOR",
-    label: "Operador",
-    sublabel: "Panel claro · crema",
-    description: "Recepción de lotes, transformaciones de cacao e incidencias en finca.",
-    icon: ROLES.operador.icon,
-  },
-  {
-    id: "administrador",
-    backendRole: "ADMIN",
-    label: "Administrador",
-    sublabel: "Panel oscuro · carbón",
-    description: "Gestión de inventarios, costos, analítica asistida por IA y auditoría.",
-    icon: ROLES.administrador.icon,
-  },
-  {
-    id: "comprador",
-    backendRole: "BUYER",
-    label: "Comprador",
-    sublabel: "Ficha móvil · QR",
-    description: "Consulta de fichas públicas, origen de lotes, trazabilidad y verificación.",
-    icon: ROLES.comprador.icon,
-  },
-  {
-    id: "consulta",
-    backendRole: "VIEWER",
-    label: "Consulta",
-    sublabel: "Acceso público Â· lectura",
-    description: "Consulta fichas públicas, origen, trazabilidad y estado de los lotes.",
-    icon: ROLES.comprador.icon,
-  },
+  { id: "operador",      backendRole: "OPERATOR", label: "Operador",       icon: ROLES.operador.icon },
+  { id: "administrador", backendRole: "ADMIN",    label: "Administrador",  icon: ROLES.administrador.icon },
+  { id: "comprador",     backendRole: "BUYER",    label: "Comprador",      icon: ROLES.comprador.icon },
 ];
 
 const CAMPO_DEL_ERROR: Record<string, RegistroCampo> = {
@@ -132,7 +101,7 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const rolConfig = REGISTRO_ROLES.find((r) => r.id === datos.rol || r.backendRole === datos.rol);
-    const permitidos = roles?.map((r) => r.role) ?? ["BUYER", "VIEWER"];
+    const permitidos = roles?.map((r) => r.role) ?? ["BUYER", "OPERATOR"];
     const encontrados = validarRegistro({ ...datos, rol: rolConfig?.backendRole ?? "" }, permitidos);
     if (!datos.rol) {
       encontrados.rol = "Por favor selecciona el tipo de cuenta que deseas crear.";
@@ -184,7 +153,7 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
     }
   };
 
-  const nivel = fortaleza(datos.password);
+  const nivel = fortaleza(datos.password, datos.correo);
   const faltan = requisitosPendientes(datos.password, datos.correo);
 
   return (

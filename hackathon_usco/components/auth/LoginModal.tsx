@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, Eye, EyeOff, Loader2, X } from "lucide-react";
 import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
-import { ROLES, type Role, type Session } from "./roles";
+import { ROLES, ROLE_ORDER, resolveRole, type Role, type Session } from "./roles";
 import { cn } from "@/lib/cn";
 import { clearAuthTokens, login as loginApi, OriviaApiError } from "@/lib/orivia-api";
 
@@ -18,7 +18,6 @@ type Props = {
   onSuccess: (session: Session) => void;
 };
 
-const ROLE_ORDER: Role[] = ["operador", "administrador", "comprador"];
 
 export function LoginModal({ open, initialEmail, onRegister, onClose, onSuccess }: Props) {
   return (
@@ -61,13 +60,7 @@ function LoginDialog({ initialEmail, onRegister, onClose, onSuccess }: Omit<Prop
     if (process.env.NEXT_PUBLIC_ORIVIA_DEMO_MODE !== "true") {
       try {
         const response = await loginApi(normalized, password);
-        const backendRoles = (response.user.roles ?? []).map((value) => value.toUpperCase());
-        const backendRole = backendRoles[0] ?? "";
-        const resolvedRole: Role = backendRoles.includes("ADMIN") || backendRoles.includes("ACCOUNTING")
-          ? "administrador"
-          : backendRoles.includes("OPERATOR")
-          ? "operador"
-          : "comprador";
+        const resolvedRole = resolveRole(response.user.roles ?? []);
 
         setStatus("ok");
         setTimeout(() => onSuccess({
@@ -75,7 +68,7 @@ function LoginDialog({ initialEmail, onRegister, onClose, onSuccess }: Omit<Prop
           email: response.user.email,
           startedAt: new Date().toISOString(),
           userId: response.user.user_id,
-          backendRole,
+          backendRole: (response.user.roles ?? [])[0] ?? "",
         }), 450);
       } catch (cause) {
         clearAuthTokens();

@@ -29,7 +29,7 @@ function ModalBody({ onClose, titulo, subtitulo, children, ancho }: Omit<Props, 
       <motion.div
         role="dialog"
         aria-modal="true"
-        aria-label={titulo}
+        aria-labelledby="modal-title"
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 20, opacity: 0 }}
@@ -41,7 +41,7 @@ function ModalBody({ onClose, titulo, subtitulo, children, ancho }: Omit<Props, 
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-base font-semibold">{titulo}</h2>
+            <h2 id="modal-title" className="text-base font-semibold">{titulo}</h2>
             {subtitulo && <p className="mt-0.5 text-xs text-ink-soft">{subtitulo}</p>}
           </div>
           <button onClick={onClose} aria-label="Cerrar" className="rounded-full p-1.5 text-ink-soft hover:bg-surface-2 hover:text-ink">

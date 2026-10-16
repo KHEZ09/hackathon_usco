@@ -3,6 +3,9 @@ import { ClipboardList, QrCode, ShieldCheck, type LucideIcon } from "lucide-reac
 
 export type Role = "operador" | "administrador" | "comprador";
 
+/** Orden canónico para mostrar los roles en listas y selects. */
+export const ROLE_ORDER: Role[] = ["operador", "administrador", "comprador"];
+
 export type Session = {
   role: Role;
   email: string;
@@ -99,5 +102,16 @@ export function useHydrated() {
 export const ROLE_HOME: Record<Role, string> = {
   operador: "/operador",
   administrador: "/admin",
-  comprador: "/ficha/CAC002",
+  comprador: "/",
 };
+
+/**
+ * Mapea los roles devueltos por el backend (strings en mayúscula) al rol canónico
+ * del frontend. Centraliza la lógica para no duplicarla en LoginModal y LandingPage.
+ */
+export function resolveRole(backendRoles: string[]): Role {
+  const upper = backendRoles.map((r) => r.toUpperCase());
+  if (upper.includes("ADMIN") || upper.includes("ACCOUNTING")) return "administrador";
+  if (upper.includes("OPERATOR")) return "operador";
+  return "comprador";
+}

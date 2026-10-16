@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, LogOut } from "lucide-react";
 import { OriviaLogo } from "@/components/brand/OriviaLogo";
 import { LoginModal } from "@/components/auth/LoginModal";
-import { ROLES, useHydrated, useSession, writeSession, type Role } from "@/components/auth/roles";
+import { ROLES, ROLE_HOME, useHydrated, useSession, writeSession, type Role } from "@/components/auth/roles";
 import { Toaster, useToast } from "@/components/ui/Toaster";
 import { clearAuthTokens } from "@/lib/orivia-api";
 
@@ -37,7 +37,7 @@ function Shell({ rol, tema, titulo, subtitulo, children }: Props) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-line bg-surface/85 backdrop-blur-xl">
+      <header aria-label="Cabecera del panel" className="sticky top-0 z-40 border-b border-line bg-surface/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <Link href="/" aria-label="Volver al inicio" className="shrink-0">
@@ -83,6 +83,7 @@ function Shell({ rol, tema, titulo, subtitulo, children }: Props) {
 function RoleGate({ rol, actual }: { rol: Role; actual?: Role }) {
   const [open, setOpen] = useState(false);
   const { notify } = useToast();
+  const router = useRouter();
   const info = ROLES[rol];
   const close = useCallback(() => setOpen(false), []);
 
@@ -116,6 +117,7 @@ function RoleGate({ rol, actual }: { rol: Role; actual?: Role }) {
           writeSession(s);
           close();
           notify("exito", `Bienvenido, ${ROLES[s.role].label}`);
+          router.push(ROLE_HOME[s.role]);
         }}
       />
     </div>

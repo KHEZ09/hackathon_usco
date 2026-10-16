@@ -5,6 +5,9 @@
 
 import { useSyncExternalStore } from "react";
 import type { EvidenceStep } from "./evidence";
+import { MERMA_UMBRAL } from "./demo-data";
+
+export { MERMA_UMBRAL };
 
 export type Estado = "PENDIENTE" | "LIBERADO" | "BLOQUEADO";
 export type Origen = "Rivera" | "Campoalegre" | "Algeciras";
@@ -63,7 +66,6 @@ export const FINCAS: Record<Origen, string> = {
   Algeciras: "Finca Alto Bonito",
 };
 export const ETAPAS = ["Fermentación", "Secado", "Fermentación y secado", "Tostión", "Descascarillado", "Molienda", "Empaque"];
-export const MERMA_UMBRAL = 15;
 
 const SISTEMA = "sistema@orivia.co";
 const OPERADOR = "operador@orivia.co";
@@ -162,10 +164,15 @@ export function useOnline() {
 
 // ── Utilidades ─────────────────────────────────────────────────────────────
 const round1 = (n: number) => Math.round(n * 10) / 10;
-const nextId = (prefix: string, count: number) => `${prefix}-${String(count + 1).padStart(4, "0")}`;
+/** Genera un ID único tomando el máximo existente + 1, evitando colisiones si se eliminaron entradas. */
+const nextId = (prefix: string, existing: string[]) => {
+  const nums = existing.map((id) => parseInt(id.replace(/^[A-Z]+-/, ""), 10)).filter(Number.isFinite);
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return `${prefix}-${String(next).padStart(4, "0")}`;
+};
 
 function audit(d: Datos, e: Omit<EventoAuditoria, "id" | "cuando">): EventoAuditoria {
-  return { ...e, id: nextId("AU", d.auditoria.length), cuando: new Date().toISOString() };
+  return { ...e, id: nextId("AU", d.auditoria.map((a) => a.id)), cuando: new Date().toISOString() };
 }
 
 export function inventario(d: Datos, loteId: string) {
@@ -301,7 +308,7 @@ export function registrarTransformacion(
     return { ok: false, error: "Una salida mayor que la entrada requiere justificación en incidencias." };
 
   const t: Transformacion = {
-    id: nextId("TR", d.transformaciones.length),
+    id: nextId("TR", d.transformaciones.map((t) => t.id)),
     loteId: lote.id,
     etapa: input.etapa,
     entradaKg: round1(input.entradaKg),

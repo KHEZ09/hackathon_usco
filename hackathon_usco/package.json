@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx lib/store.test.ts && tsx lib/cluster.test.ts && tsx lib/registro.test.ts"
+    "type-check": "tsc --noEmit",
+    "test": "tsx lib/store.test.ts; tsx lib/cluster.test.ts; tsx lib/registro.test.ts",
+    "clean": "Remove-Item -Recurse -Force .next"
   },
   "dependencies": {
     "clsx": "^2.1.1",
