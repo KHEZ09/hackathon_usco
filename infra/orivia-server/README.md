@@ -22,9 +22,9 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
 - La API registra método, ruta, código y `X-Request-ID`, sin registrar tokens ni cuerpos de solicitud.
 - El clúster usa las migraciones y repositorios PostgreSQL compartidos de Kevin
   cuando el servidor corre con `ORIVIA_ORDER_REPOSITORY=postgres`; los lotes
-  siguen en memoria hasta que exista su migración. No se presenta la memoria
-  como persistencia de producción. La persistencia PostgreSQL de pedidos,
-  eventos, auditorías y anclajes continúa siendo la prueba obligatoria.
+  usan la migración propia `007_lot_traceability.sql`. La persistencia
+  PostgreSQL de pedidos, lotes, eventos, auditorías y anclajes continúa siendo
+  la prueba obligatoria.
 
 ## Servidor objetivo
 

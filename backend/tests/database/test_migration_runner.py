@@ -11,6 +11,7 @@ def test_migrations_are_ordered_and_have_transaction_boundaries():
         "004_orders_traceability_persistence.sql",
         "005_cluster_network.sql",
         "006_seed_cluster_synthetic.sql",
+        "007_lot_traceability.sql",
     ]
     for file in files:
         content = file.read_text(encoding="utf-8")

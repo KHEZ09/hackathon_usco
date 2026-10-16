@@ -41,8 +41,9 @@ local de solo lectura.
 
 El clúster usa el adaptador de memoria en desarrollo y el repositorio PostgreSQL
 de Kevin cuando `ORIVIA_ORDER_REPOSITORY=postgres`; el contrato HTTP y los
-serializadores son la frontera común. Los lotes usan por ahora un adaptador
-determinista en memoria porque todavía no existe una migración de lotes.
+serializadores son la frontera común. Los lotes siguen el mismo selector y su
+migración `007_lot_traceability.sql` conserva lotes, eventos y auditorías en
+PostgreSQL.
 
 La API permite CORS únicamente para los orígenes definidos en
 `ORIVIA_CORS_ORIGINS`, separados por coma. En desarrollo se habilitan por

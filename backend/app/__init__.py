@@ -13,6 +13,7 @@ from .cluster.repository import InMemoryClusterRepository
 from .cluster.routes import cluster_bp, public_cluster_bp
 from .config import Settings
 from .database.registration import register_kevin_modules
+from .lots.postgres_repository import PostgresLotRepository
 from .lots.repository import InMemoryLotRepository
 from .lots.routes import lots_bp, public_lots_bp
 from .orders.postgres_repository import PostgresOrderRepository
@@ -154,6 +155,9 @@ def create_app(settings: Settings | None = None) -> Flask:
         )
     else:
         app.extensions["orivia_cluster_repository"] = InMemoryClusterRepository()
-    app.extensions["orivia_lot_repository"] = InMemoryLotRepository()
+    if settings.order_repository_backend == "postgres":
+        app.extensions["orivia_lot_repository"] = PostgresLotRepository()
+    else:
+        app.extensions["orivia_lot_repository"] = InMemoryLotRepository()
 
     return app

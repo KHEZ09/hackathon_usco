@@ -15,7 +15,7 @@ rectificar, analizar errores, complementar, auditar y comprobar nuevamente.
 | RF08–RF09 | Estado de lote y disponibilidad pública/privada | CAC001 cambia a `BLOCKED` y no queda disponible | Cubierto | Frontend para visualización |
 | RF10 | Auditoría de cambio de estado y verificación de cadena | Auditoría y `history_verified` | Cubierto en adaptador | PostgreSQL para durable |
 | RF11–RF12 | Exportación y balance existentes permanecen en módulos de Kevin | No se modifican ni se rompen; suite completa pasa | Sin regresión detectada | Kevin / frontend según ruta |
-| Persistencia | `OrderRepository` y clúster usan PostgreSQL en producción; readiness tiene timeout de 2 s | 68 pruebas pasan; selección memory/postgres no rompe la factory | Pedidos y clúster listos; lotes adapter temporal | Migración de lotes aún pendiente |
+| Persistencia | `OrderRepository`, clúster y lotes usan PostgreSQL en producción; readiness tiene timeout de 2 s | 68 pruebas pasan; migración `007` ordenada y selección memory/postgres no rompe la factory | Pedidos, clúster y lotes listos | Ninguna en backend; falta ejercitar un reinicio real con CAC001 |
 | Auditoría | Reutilización de `AuditRecord` inmutable | Prueba de auditoría de CAC001 | Listo | Ninguna |
 | Blockchain | Hash-chain de lotes y anclaje existente de pedidos | Verificación de eventos y pruebas de anclaje existentes | Listo para evidencia local | Proveedor público es decisión posterior |
 | IA | No se altera el límite read-only ni el fallback local | Suite IA existente pasa | Sin regresión | Ollama es opcional |
@@ -31,9 +31,7 @@ compileall app tests: OK
 
 ## Faltantes reales, separados del bloque de Sebas
 
-1. Falta una migración/repositorio PostgreSQL para lotes y su integración con el
-   hash-chain; el clúster ya tiene migraciones y repositorios compartidos.
-2. Frontend debe construir directorio, necesidades, conexión, confianza y
+1. Frontend debe construir directorio, necesidades, conexión, confianza y
    timeline del lote.
-3. El equipo debe hacer prueba Docker y smoke test en `orivia` después del push.
-4. La selección de blockchain público y HTTPS quedan fuera de esta entrega.
+2. El equipo debe hacer prueba Docker y smoke test en `orivia` después del push.
+3. La selección de blockchain público y HTTPS quedan fuera de esta entrega.

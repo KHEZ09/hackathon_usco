@@ -13,6 +13,7 @@ debe editar una migración que ya haya sido aplicada; se debe crear otra.
 004_orders_traceability_persistence.sql
 005_cluster_network.sql
 006_seed_cluster_synthetic.sql
+007_lot_traceability.sql
 ```
 
 `001_initial.sql` crea usuarios, roles, proveedores, clientes, productos,
@@ -34,6 +35,11 @@ pedidos. No reemplaza las tablas de los módulos de Kevin.
 
 `006_seed_cluster_synthetic.sql` agrega actores, necesidades, ofertas,
 conexiones y señales de confianza sintéticas.
+
+`007_lot_traceability.sql` crea la persistencia propia de los lotes de
+trazabilidad de Sebas, sus eventos hash-encadenados y auditorías. Incluye los
+lotes sintéticos `CAC001`, `CAC002` y `CAC003`; la aplicación crea el primer
+evento de registro de cada lote de forma idempotente al consultarlo.
 
 ## Aplicar migraciones
 
