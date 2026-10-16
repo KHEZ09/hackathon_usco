@@ -199,8 +199,8 @@ No se debe desarrollar este backend dentro de `app/` ni mezclarlo con el reposit
 |---|---|---|
 | Sebas | Flask/Gunicorn, seguridad, JWT, pedidos, trazabilidad, blockchain e IA | `backend/app/security/`, `auth_tokens/`, `orders/`, `tracking/`, `audit/`, `blockchain/`, `ai/` |
 | Kevin | Usuarios, PostgreSQL, modelos, migraciones, catálogo, contabilidad, reportes e integraciones externas | `backend/app/users/`, `database/`, `catalog/`, `accounting/`, `reports/`, `integrations/`, `backend/migrations/` |
-| Ángel | UX, flujos, wireframes, arquitectura de información y pruebas de usabilidad | `hackathon_usco/design/`, `hackathon_usco/docs/ux/` |
-| Daniel | Diseño visual, sistema de componentes, responsive, accesibilidad y frontend | `hackathon_usco/components/`, `hackathon_usco/app/`, `hackathon_usco/styles/` |
+| Ángel | UX, flujos, wireframes, arquitectura de información y pruebas de usabilidad | `frontend/design/`, `frontend/docs/ux/` |
+| Daniel | Diseño visual, sistema de componentes, responsive, accesibilidad y frontend | `frontend/components/`, `frontend/app/`, `frontend/styles/` |
 
 Ángel y Daniel coordinan juntos la experiencia y el diseño. No deben modificar la lógica crítica del backend sin acordarlo con Sebas y Kevin.
 

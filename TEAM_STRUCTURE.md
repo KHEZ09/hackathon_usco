@@ -33,8 +33,8 @@ Además de los documentos generales, trabaja bajo:
 
 Además de los documentos generales, trabaja bajo:
 
-- `hackathon_usco/design/README.md` — UX, flujos, wireframes y tokens.
-- `hackathon_usco/docs/ux/README.md` — accesibilidad, pruebas y criterios visuales.
+- `frontend/design/README.md` — UX, flujos, wireframes y tokens.
+- `frontend/docs/ux/README.md` — accesibilidad, pruebas y criterios visuales.
 - `PLAN_HACKATON_ORIVIA.md` — flujo de demo y perfiles de usuario.
 - `ARQUITECTURA_ORIVIA_HACKATON.md` — límites de UX frente a seguridad, datos e IA.
 
@@ -42,9 +42,9 @@ Además de los documentos generales, trabaja bajo:
 
 Además de los documentos generales, trabaja bajo:
 
-- `hackathon_usco/components/README.md` — sistema de componentes.
-- `hackathon_usco/styles/README.md` — estilos, responsive y accesibilidad.
-- `hackathon_usco/design/README.md` — tokens y referencias visuales.
+- `frontend/components/README.md` — sistema de componentes.
+- `frontend/styles/README.md` — estilos, responsive y accesibilidad.
+- `frontend/design/README.md` — tokens y referencias visuales.
 - `PLAN_HACKATON_ORIVIA.md` — flujo de demo y criterios de experiencia.
 
 ## Flujo Git obligatorio del equipo
@@ -113,19 +113,19 @@ tests/integrations/
 
 ## Ángel y Daniel — UX, diseño y frontend
 
-Su código vive en `../hackathon_usco/`:
+Su código vive en `../frontend/`:
 
 ```text
-../hackathon_usco/app/                # páginas Next.js
-../hackathon_usco/components/         # componentes compartidos
-../hackathon_usco/components/orders/  # interfaz de pedidos
-../hackathon_usco/components/tracking/# interfaz de trazabilidad
-../hackathon_usco/components/dashboard/# paneles y analítica visual
-../hackathon_usco/design/             # UX, flujos, wireframes y pantallas
-../hackathon_usco/design/tokens/      # tokens visuales
-../hackathon_usco/design/screens/     # referencias de pantallas
-../hackathon_usco/styles/             # estilos y responsive
-../hackathon_usco/docs/ux/            # accesibilidad y pruebas de usabilidad
+../frontend/app/                # páginas Next.js
+../frontend/components/         # componentes compartidos
+../frontend/components/orders/  # interfaz de pedidos
+../frontend/components/tracking/# interfaz de trazabilidad
+../frontend/components/dashboard/# paneles y analítica visual
+../frontend/design/             # UX, flujos, wireframes y pantallas
+../frontend/design/tokens/      # tokens visuales
+../frontend/design/screens/     # referencias de pantallas
+../frontend/styles/             # estilos y responsive
+../frontend/docs/ux/            # accesibilidad y pruebas de usabilidad
 ```
 
 ## Reglas de coordinación

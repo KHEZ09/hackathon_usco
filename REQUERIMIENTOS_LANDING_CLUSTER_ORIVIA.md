@@ -1,6 +1,7 @@
 # ORIVIA — Requerimientos de la landing para el clúster digital cacaotero
 
 **Fecha de revisión:** 16 de octubre de 2026  
+**Estado de implementación consultado:** commit `1e3a866` en `main`
 **Alcance:** propósito, contenido, interacciones públicas, datos y cambios requeridos en la landing para comunicar la propuesta central de ORIVIA como clúster digital cacaotero.  
 **Límite:** este documento especifica la landing; no describe ni reemplaza los flujos de operación de los paneles internos.
 
@@ -188,14 +189,15 @@ Por tanto:
 | Marca y cacao Huila | Hero, origen, proceso, paisaje, lotes y narrativa ORIVIA. | Base visual y narrativa ya representa cacao y procedencia. |
 | Proceso agroindustrial | Secciones de recepción/fermentación/secado/empaque y trazabilidad de tres lotes. | Parcial: explica el recorrido del producto, pero no desarrolla el mapa de actores y relaciones. |
 | Exploración | Navbar busca un lote por código; hay tarjetas de producto y enlaces a ficha/QR. | Parcial: permite descubrir productos demo; no ofrece directorio de actores, necesidades u oportunidades con filtros. |
-| Fichas públicas | `/ficha/[lote]` muestra origen, pasos y estado sin costos, usando datos locales. | Parcial: ficha funcional de demo, aún no basada en consulta integrada al clúster/API. |
+| Fichas públicas | `/ficha/[lote]` presenta datos de demo y consulta `GET /catalog/traceability` sin token; si hay coincidencia, muestra campos remotos como complemento. | Parcial: la vista de ficha y su línea de tiempo siguen usando la tienda local; no toda la información deriva de un mismo flujo de lote persistido en el servidor. |
 | Confianza/verificación | SHA-256 y diálogo que simula una verificación local. | Parcial: no equivale a una conexión real con blockchain ni a una señal de confianza construida desde confirmaciones. |
 | Analítica/impacto | Gráficos y valores predefinidos de demo. | Parcial: no deben presentarse como métricas actuales de la red ni como datos de campo. |
 | Conexiones/consentimiento | No se encontró flujo de solicitud y aceptación de conexión desde la landing. | Pendiente de producto y contrato API. |
 | Tipos de actor | Contenido cacaotero centrado en productores/lotes; no se encontró exploración de todos los actores del clúster. | Pendiente de ampliar contenidos y fuente de datos. |
-| Sesión/roles | El login de frontend es local/demo; el comprador va a `/ficha/CAC002`. | Parcial: el backend tiene login real, aún pendiente de integración al frontend. |
+| Sesión/roles | Login y registro llaman a la API en modo normal. Comprador permanece en la landing; operador y administrador van a su panel. | Desalineación pendiente: el registro muestra Operador/Administrador/Comprador; el `.env.example` de backend permite por defecto Comprador/Consulta (`VIEWER`), excluye siempre Administrador y deja configurable Operador. La validación puede rechazar una opción visible y Consulta no se ofrece. Ante error de red en alta, el frontend muestra éxito sin crear usuario en servidor ni store local. El rol de UI no autoriza operaciones. |
+| Clúster dentro del producto | La pestaña «Red del clúster» está implementada en los paneles internos con actores, necesidades, ofertas, conexiones y coincidencias sintéticas. | No está integrada a la landing pública y sus datos se guardan localmente; no debe presentarse como directorio vivo conectado a la API. |
 
-**Conclusión de estado:** la landing es una base cacaotera sólida para origen, proceso, lotes y verificación de demostración. La propuesta central de clúster ya está definida en los documentos, pero **aún no está plenamente representada como experiencia de descubrimiento de actores, necesidades, ofertas y conexiones**. Esas capacidades no deben declararse construidas hasta que existan datos y flujos integrados.
+**Conclusión de estado:** la landing conserva una base cacaotera para origen, proceso, lotes y verificación de demostración. El clúster ya tiene una experiencia funcional de prototipo en paneles internos, pero **la landing pública aún no ofrece el descubrimiento de actores, necesidades, ofertas y conexiones definido en esta especificación**, y el prototipo interno usa datos locales. Esas capacidades no deben declararse conectadas a la red real hasta integrar sus datos y flujos con la API.
 
 ## 10. Criterios de aceptación para la próxima actualización
 

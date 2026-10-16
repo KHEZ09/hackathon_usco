@@ -15,7 +15,7 @@ Repositorio del proyecto ORIVIA para la hackatón de agroindustria de la USCO.
 
 ## Código
 
-- `hackathon_usco/`: frontend Next.js.
+- `frontend/`: frontend Next.js.
 - `backend/`: API Flask de ORIVIA.
 - `infra/orivia-server/`: despliegue versionado para Lightsail `orivia`, Compose, healthcheck, variables de ejemplo y firewall UFW.
 

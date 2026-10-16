@@ -6,7 +6,7 @@ Configuración versionada para desplegar el backend de ORIVIA en la instancia Li
 
 - **Sebas:** mantiene `backend/app/security/`, `auth_tokens/`, `orders/`, `tracking/`, `audit/`, `blockchain/`, `ai/`, `cluster/` y `lots/`.
 - **Kevin:** mantiene `backend/app/users/`, `database/`, `catalog/`, `accounting/`, `reports/`, `integrations/` y `backend/migrations/`.
-- **Ángel y Daniel:** mantienen la referencia visual y el frontend en `hackathon_usco/design/`, `components/`, `styles/` y `docs/ux/`.
+- **Ángel y Daniel:** mantienen la referencia visual y el frontend en `frontend/design/`, `components/`, `styles/` y `docs/ux/`.
 
 Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despliegue real.
 

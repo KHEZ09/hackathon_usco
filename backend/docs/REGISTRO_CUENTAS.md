@@ -47,7 +47,7 @@ Cuerpo del POST: `full_name`, `email`, `password`, `password_confirmation`, `rol
 
 ```bash
 cd backend && pytest -q tests/users/test_self_registration.py
-cd hackathon_usco && npm test
+cd frontend && npm test
 ```
 
 Casos: registro exitoso (hash bcrypt, sin contraseña en la respuesta, login posterior), correo duplicado (consulta previa y restricción única), contraseña débil, datos inválidos, rol no autorizado, campos de privilegio ignorados y límite de intentos.

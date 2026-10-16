@@ -61,15 +61,15 @@ backend/app/ai/
 ### Carpetas de UX y diseño — Ángel y Daniel
 
 ```text
-hackathon_usco/design/              # wireframes, flujos y decisiones UX
-hackathon_usco/design/tokens/       # colores, tipografías, espaciado y estados
-hackathon_usco/design/screens/      # referencias de pantallas
-hackathon_usco/components/          # sistema de componentes y UI
-hackathon_usco/components/orders/   # vistas de pedidos
-hackathon_usco/components/tracking/ # vistas de trazabilidad
-hackathon_usco/components/dashboard/# paneles y analítica visual
-hackathon_usco/styles/              # estilos globales y responsive
-hackathon_usco/docs/ux/             # criterios de accesibilidad y pruebas
+frontend/design/              # wireframes, flujos y decisiones UX
+frontend/design/tokens/       # colores, tipografías, espaciado y estados
+frontend/design/screens/      # referencias de pantallas
+frontend/components/          # sistema de componentes y UI
+frontend/components/orders/   # vistas de pedidos
+frontend/components/tracking/ # vistas de trazabilidad
+frontend/components/dashboard/# paneles y analítica visual
+frontend/styles/              # estilos globales y responsive
+frontend/docs/ux/             # criterios de accesibilidad y pruebas
 ```
 
 No se debe crear el backend Flask dentro de la raíz del repositorio ni mezclarlo con el frontend Next.js de `app/`. ORIVIA permanece aislado dentro de `backend/`.

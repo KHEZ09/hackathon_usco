@@ -1,9 +1,9 @@
 # ORIVIA — Matriz de trabajo y auditoría del estado actual
 
-**Fecha de corte:** 15 de octubre de 2026
+**Fecha de corte:** 16 de octubre de 2026
 **Repositorio:** `KHEZ09/hackathon_usco`
 **Rama revisada:** `main`
-**Commit revisado:** `e35f9f5` — `docs(orivia): record authentication deployment status`
+**Commit revisado:** `1e3a866` — `fix(frontend): restore requested registration profiles`
 **Modelo utilizado para la asistencia técnica:** GPT 5.6 Luna
 
 ## Propósito
@@ -32,7 +32,7 @@ El flujo de trabajo acordado es:
 
 ## Estado de GitHub
 
-El repositorio principal está en `main` y, durante esta auditoría, se encontraba sincronizado con `origin/main` en el commit `e35f9f5`.
+El repositorio principal está en `main` y, durante esta revisión, se encontraba sincronizado con `origin/main` en `1e3a866`.
 
 Los archivos principales del proyecto están organizados en la raíz:
 
@@ -44,7 +44,7 @@ Los archivos principales del proyecto están organizados en la raíz:
 - `PLAN_HACKATON_ORIVIA.md`: plan general de la hackatón.
 - `TEAM_STRUCTURE.md`: distribución del trabajo.
 
-También existen archivos y una carpeta `hackathon_usco/` sin rastrear dentro del checkout. No forman parte de esta auditoría y no deben eliminarse ni incorporarse automáticamente sin revisar su origen.
+La aplicación frontend está bajo `frontend/`. La última revisión aquí amplía el registro frontend; los estados del servidor de las secciones siguientes corresponden a la última comprobación que ya estaba documentada y no se volvieron a verificar para esta actualización.
 
 ## Estado del servidor oficial
 
@@ -157,7 +157,7 @@ Antes de borrar cualquier cosa se debe confirmar con Kevin si necesita conservar
 | IA y Ollama | Sebas | Fallback local y rutas opcionales | Integración real opcional | MVP listo | Sí para mostrar resultados |
 | Pruebas y smoke tests | Sebas + Kevin | Suites y verificadores | `55 passed`, persistencia y auth real correctas | Completo | No |
 | CORS, errores y anti-abuso de login | Sebas | `backend/app/__init__.py`, `security/rate_limit.py` y pruebas | Activo en `4653273` | Completo backend | Solo configurar el origen real |
-| Frontend y UX | Ángel + Daniel | Estructura y avances documentados | No aplica todavía | En curso | Sí |
+| Frontend y UX | Ángel + Daniel | `frontend/`, `ESTRUCTURA_FRONTEND_ORIVIA.md`, suites de lógica y commits hasta `1e3a866` | No revalidado en este corte | Implementado parcialmente; operación y clúster siguen con datos locales; revisar desalineación entre perfiles de registro y API | Sí |
 
 ## Trabajo realizado
 
@@ -202,10 +202,15 @@ Antes de borrar cualquier cosa se debe confirmar con Kevin si necesita conservar
 
 ### Frontend y UX
 
-- Estructura inicial de frontend.
-- Documentación de UX.
-- Base de landing y login.
-- Preparación de los flujos que consumirán la API.
+- Landing cacaotera ORIVIA con hero por scroll/Canvas, relato de origen, proceso audiovisual en cinco etapas, trazabilidad demo, analítica y fichas/QR.
+- Paneles de operador y administrador, ficha pública de comprador y red de clúster dentro de los paneles internos.
+- Inicio de sesión conectado a la API y roles de autoservicio consultados desde backend. En el login, `VIEWER` se normaliza a la vista pública de comprador/consulta.
+- El último commit restauró tres perfiles visibles de registro (Operador, Administrador y Comprador); el `.env.example` del backend permite por defecto Comprador y Consulta (`VIEWER`), excluye siempre Administrador y permite configurar Operador. La lista visible requiere ajuste coordinado con el entorno desplegado.
+- Lecturas de overview y márgenes para el panel de administrador, sincronización de integración y consulta pública de trazabilidad conectadas a la API.
+- Operaciones de lotes, clúster y cadena de eventos de demostración persistidas localmente en `localStorage`; no equivalen a escrituras transaccionales en PostgreSQL.
+- Ajuste del balance local de inventario para transformaciones multietapa, control de estado por rol dentro del store y pruebas automatizadas para store, clúster y validaciones de registro. La presencia de scripts de prueba no acredita un informe E05 ejecutado.
+- Cambios visuales responsive en navegación, registro, proceso, ilustración botánica y paneles; el comprador conserva la landing después de iniciar sesión.
+- El historial registra estos hitos, entre otros, en `60bee71`, `54f568b`, `556d7df`, `d2a64b2`, `1a6255e`, `6bacdb5`, `3fba59b`, `f0588e0` y `1e3a866`. El reparto del área se asigna conjuntamente a Ángel y Daniel; los commits no establecen autoría personal de cada componente.
 
 ## Pendientes puramente backend
 
@@ -216,18 +221,17 @@ Antes de borrar cualquier cosa se debe confirmar con Kevin si necesita conservar
 5. Verificar backups y restauración en un entorno aislado.
 6. Configurar HTTPS mediante dominio/proxy aprobado y completar la observabilidad operativa.
 
-## Pendientes que requieren frontend
+## Pendientes que requieren frontend o coordinación frontend/backend
 
-1. Pantalla de login.
-2. Almacenamiento seguro del token.
-3. Renovación automática mediante refresh token.
-4. Gestión visual de roles y permisos.
-5. Creación y consulta de pedidos.
-6. Visualización de estados y timeline de trazabilidad.
-7. Consulta de auditorías.
-8. Evidencia visual del anclaje blockchain.
-9. Resúmenes, analíticas y explicaciones de IA.
-10. Manejo de errores, expiración de sesión y permisos.
+1. Conectar recepción, transformación, inventario, estados, auditoría, economía y exportación de lotes a operaciones transaccionales persistidas en backend.
+2. Sustituir el contenido local de la ficha por el recorrido público del mismo flujo persistido, manteniendo la lista permitida de datos y ocultando costos internos.
+3. Integrar la vista de red del clúster a los endpoints de actores, necesidades, ofertas y conexiones; ahora es un prototipo local dentro de paneles, no una experiencia pública de descubrimiento.
+4. Alinear los perfiles ofrecidos en registro con `GET /auth/register/roles`: el formulario actual permite seleccionar Administrador, que el autoservicio excluye, y omite Consulta (`VIEWER`), permitida por defecto. Confirmar además si el entorno habilita Operador.
+5. Revisar el fallback de registro que muestra éxito cuando falla la red, aunque no cree usuario en backend ni store local, y corregir el mensaje/flujo.
+6. Completar el manejo de sesión/perfil: el cliente usa login y refresh, pero debe verificarse la carga de usuario actual, revocación server-side al cerrar sesión y casos de expiración.
+7. Usar endpoints de pedidos, auditoría, blockchain e IA desde vistas concretas solo cuando el flujo de demo aprobado lo requiera; el cliente tiene funciones disponibles que no implican integración UI completa.
+8. Completar evidencias E05/E06: resultados reales de pruebas, medición de 100 registros y prueba observada de usabilidad con mejora antes/después.
+9. Revisar en entorno de evaluación la configuración de URL de API, CORS, cuentas de prueba, acceso móvil y la alternativa local si falla Internet.
 
 ## Trabajo compartido que puede avanzar en paralelo
 
@@ -248,7 +252,4 @@ PostgreSQL real. La mayor inconsistencia restante es el stack adicional de
 `8001`. Puede ser de Kevin, pero no se debe afirmarlo sin confirmación ni
 detenerlo unilateralmente.
 
-La integración frontend ya puede comenzar sobre pedidos persistentes,
-trazabilidad, auditoría, blockchain local, IA y autenticación real. El único
-pendiente de coordinación del backend es decidir el destino seguro del stack
-adicional y completar las mejoras de operación antes de producción.
+El frontend ya integra una parte de la autenticación y consultas de API, mientras que la operación principal de lotes y la red del clúster siguen usando datos locales. La demostración integrada requiere cerrar las brechas descritas en `OPERACION_PRUEBA_FUEGO_ORIVIA.md`; esta actualización no vuelve a comprobar el servidor ni certifica los resultados de prueba allí registrados.
