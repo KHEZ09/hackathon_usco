@@ -13,6 +13,11 @@ PostgreSQL no se publica directamente hacia Internet.
 
 El archivo `.env` existe únicamente en el servidor. Debe contener como mínimo `ORIVIA_ENV`, `ORIVIA_JWT_SECRET_KEY` y `ORIVIA_DATABASE_URL`. En producción la clave JWT debe ser única y tener al menos 32 bytes.
 
+La imagen de producción se ejecuta con un usuario sin privilegios de root, la
+API queda enlazada a `127.0.0.1:8000`, PostgreSQL solo se expone dentro de la
+red privada de Docker y el Compose local exige configurar el archivo `.env` en
+lugar de incluir contraseñas fijas.
+
 ## Despliegue actual de staging
 
 El entorno oficial documentado es `admin@orivia`, directorio
@@ -40,6 +45,9 @@ curl http://127.0.0.1:8001/ready
 - Las migraciones 001, 002, 003 y 004 deben aparecer aplicadas o como `SKIP`.
 - El backup debe restaurarse sobre una base temporal antes de considerarse
   comprobado.
+- `ruff check app tests` debe finalizar sin hallazgos.
+- El frontend debe pasar `npm run lint`, `npm run test`, `npm run build` y
+  `npm audit --omit=dev --audit-level=high`.
 
 ## Límites
 

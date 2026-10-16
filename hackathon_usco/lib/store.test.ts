@@ -7,8 +7,6 @@
 
 import assert from "node:assert/strict";
 import {
-  inventario,
-  merma,
   mermaLote,
   economia,
   alertas,
@@ -19,7 +17,6 @@ import {
   restablecerDemo,
   getSnapshot,
   siguienteIdLote,
-  type Datos,
   type Lote,
 } from "./store";
 
