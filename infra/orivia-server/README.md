@@ -94,6 +94,17 @@ Después de un despliegue, ejecutar también el smoke test, que no crea datos:
 bash infra/orivia-server/scripts/smoke_test.sh
 ```
 
+`deploy.sh` aplica automáticamente las migraciones pendientes antes de validar
+la API. Después del despliegue, comprobar la persistencia real con:
+
+```bash
+bash infra/orivia-server/scripts/persistence_test.sh
+```
+
+La prueba crea un pedido sintético, cambia su estado, verifica la cadena,
+ancla el último evento, recrea la aplicación y confirma que todo sigue legible;
+finalmente elimina únicamente los datos de prueba.
+
 No se debe desplegar un cambio que no haya pasado `test.sh`.
 
 ## Despliegue inicial
@@ -128,7 +139,7 @@ No usar `down -v` salvo que se haya respaldado y aprobado explícitamente la eli
 
 ## Pendientes antes de producción
 
-- Persistir pedidos, eventos, auditoría y anclajes blockchain en PostgreSQL.
 - Ejecutar una prueba de rotación de refresh tokens contra una base PostgreSQL real.
+- Definir el proveedor blockchain público, si aplica.
 - Configurar HTTPS mediante un proxy y dominio aprobado.
 - Añadir backups, restauración probada y alertas de presupuesto AWS.

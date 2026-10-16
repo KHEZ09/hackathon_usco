@@ -21,6 +21,9 @@ cd "$REPO_DIR"
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --build
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps
 
+echo "Aplicando migraciones PostgreSQL..."
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T api python scripts/migrate.py
+
 for attempt in $(seq 1 15); do
   if curl --fail --silent --show-error http://127.0.0.1:8000/health; then
     echo

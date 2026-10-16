@@ -45,7 +45,8 @@ def create_anchor():
         )
 
     event_hash = _repository().timeline(order_id)[-1].event_hash
-    existing = current_app.extensions["orivia_anchor_receipts"].get(event_hash)
+    anchor = current_app.extensions["orivia_blockchain_anchor"]
+    existing = anchor.get(event_hash)
     if existing is not None:
         return (
             jsonify(
@@ -61,7 +62,7 @@ def create_anchor():
             200,
         )
 
-    receipt = current_app.extensions["orivia_blockchain_anchor"].anchor(event_hash)
+    receipt = anchor.anchor(event_hash)
     current_app.extensions["orivia_anchor_receipts"][event_hash] = receipt
     return (
         jsonify(
@@ -81,10 +82,10 @@ def create_anchor():
 @require_access_token
 @require_permissions("blockchain:read")
 def get_anchor(event_hash: str):
-    receipt = current_app.extensions["orivia_anchor_receipts"].get(event_hash)
+    anchor = current_app.extensions["orivia_blockchain_anchor"]
+    receipt = anchor.get(event_hash)
     if receipt is None:
         return jsonify({"error": "ANCHOR_NOT_FOUND"}), 404
-    anchor = current_app.extensions["orivia_blockchain_anchor"]
     return jsonify(
         {
             "anchor": {

@@ -12,6 +12,9 @@ class AnchorReceipt:
 
 
 class BlockchainAnchor(Protocol):
+    def get(self, event_hash: str) -> AnchorReceipt | None:
+        ...
+
     def anchor(self, event_hash: str) -> AnchorReceipt:
         ...
 
@@ -29,6 +32,15 @@ class MemoryBlockchainAnchor:
         if not event_hash:
             raise ValueError("event_hash is required")
         self._anchored_hashes.add(event_hash)
+        return AnchorReceipt(
+            event_hash=event_hash,
+            status="ANCHORED",
+            reference=f"memory://{event_hash}",
+        )
+
+    def get(self, event_hash: str) -> AnchorReceipt | None:
+        if event_hash not in self._anchored_hashes:
+            return None
         return AnchorReceipt(
             event_hash=event_hash,
             status="ANCHORED",

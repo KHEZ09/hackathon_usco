@@ -21,11 +21,10 @@ Este backend pertenece al repositorio de la hackatón USCO y se prepara para des
 - Ejecución de producción con Gunicorn.
 - Docker Compose con PostgreSQL para desarrollo.
 
-La ruta de pedidos actualmente usa un repositorio en memoria para permitir el
-trabajo independiente de Sebas y las pruebas del MVP. No es persistencia de
-producción: Kevin lo reemplazará por PostgreSQL mediante el mismo contrato.
-Los registros de auditoría y comprobantes blockchain de esta fase también son
-temporales y se pierden al reiniciar el proceso.
+La ruta de pedidos usa memoria en desarrollo y PostgreSQL en producción mediante
+el mismo contrato `OrderRepository`. En producción se conservan los pedidos,
+eventos de trazabilidad, auditorías y anclajes después de reiniciar el proceso.
+La selección se controla con `ORIVIA_ORDER_REPOSITORY=memory|postgres`.
 
 Los endpoints de IA funcionan sin servicios externos mediante un resumen local
 determinista. Ollama es opcional: al configurar `OLLAMA_BASE_URL`, se utiliza
@@ -87,6 +86,17 @@ export ORIVIA_DATABASE_URL=postgresql://orivia:orivia_dev_password@localhost:543
 python scripts/migrate.py
 ```
 
+La migración `004_orders_traceability_persistence.sql` integra el contrato de
+pedidos de Sebas con las tablas compartidas de Kevin. Para habilitar cuentas
+demo sin subir contraseñas al repositorio:
+
+```bash
+export ORIVIA_DEMO_OPERATOR_PASSWORD='...'
+export ORIVIA_DEMO_ADMIN_PASSWORD='...'
+export ORIVIA_DEMO_BUYER_PASSWORD='...'
+python scripts/provision_demo_users.py
+```
+
 Scripts disponibles:
 
 - `scripts/bootstrap.sh`: crea el entorno virtual e instala dependencias.
@@ -105,5 +115,6 @@ Los endpoints de Kevin incluyen usuarios, catálogo, proveedores, clientes, inve
 
 ## Responsabilidades pendientes de integración
 
-- Conectar los fundamentos de pedidos, auditoría, blockchain e IA a rutas Flask y persistencia.
-- Añadir pruebas integrales del flujo pedido → trazabilidad → verificación → resumen.
+- Completar la selección del proveedor blockchain público, si la hackatón lo exige.
+- Integrar el frontend con los endpoints persistentes y sus credenciales demo.
+- Mantener pruebas de integración y restauración sobre el servidor oficial.

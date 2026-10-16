@@ -83,11 +83,18 @@ el mismo pedido devuelve `200` con `idempotent=true`.
 
 ## Integración con PostgreSQL
 
-El `OrderRepository` es el límite entre nuestras rutas y la persistencia. Kevin
-puede reemplazar `InMemoryOrderRepository` sin cambiar las rutas, siempre que
-conserve `create`, `list`, `get`, `transition`, `timeline`, `audits` y
-`verify_timeline`.
+El `OrderRepository` es el límite entre nuestras rutas y la persistencia. La
+aplicación usa `InMemoryOrderRepository` en desarrollo y
+`PostgresOrderRepository` cuando `ORIVIA_ORDER_REPOSITORY=postgres` (valor
+predeterminado del entorno de producción). Ambos conservan `create`, `list`,
+`get`, `transition`, `timeline`, `audits` y `verify_timeline`.
 
-La versión actual mantiene pedidos y anclajes en memoria para la demo. La
-persistencia después de reiniciar requiere el adaptador PostgreSQL y sus
-migraciones.
+La migración `004_orders_traceability_persistence.sql` agrega el payload público
+del pedido y el hash completo del evento sin reemplazar las tablas de Kevin.
+Los pedidos, eventos, auditorías y anclajes sobreviven al reinicio del proceso
+cuando se usa PostgreSQL.
+
+El anclaje PostgreSQL se identifica como `postgres://orivia/blockchain_anchor/<id>`.
+Es evidencia durable local para la hackatón; no se presenta como una transacción
+de una red blockchain pública. La interfaz `BlockchainAnchor` permite conectar
+posteriormente un proveedor real sin modificar las rutas del frontend.

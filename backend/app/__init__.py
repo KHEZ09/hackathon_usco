@@ -6,9 +6,11 @@ from .ai.routes import ai_bp
 from .audit.routes import audit_bp
 from .auth_tokens.routes import auth_bp
 from .blockchain.adapter import MemoryBlockchainAnchor
+from .blockchain.postgres_anchor import PostgresBlockchainAnchor
 from .blockchain.routes import blockchain_bp
 from .config import Settings
 from .database.registration import register_kevin_modules
+from .orders.postgres_repository import PostgresOrderRepository
 from .orders.repository import InMemoryOrderRepository
 from .orders.routes import orders_bp
 from .routes import health_bp
@@ -27,6 +29,7 @@ def create_app(settings: Settings | None = None) -> Flask:
         ACCESS_TOKEN_TTL_SECONDS=settings.access_token_ttl_seconds,
         REFRESH_TOKEN_TTL_SECONDS=settings.refresh_token_ttl_seconds,
         DATABASE_URL=settings.database_url,
+        ORDER_REPOSITORY_BACKEND=settings.order_repository_backend,
         OLLAMA_BASE_URL=settings.ollama_base_url,
         OLLAMA_MODEL=settings.ollama_model,
         MAX_CONTENT_LENGTH=1 * 1024 * 1024,
@@ -60,10 +63,6 @@ def create_app(settings: Settings | None = None) -> Flask:
             ),
             413,
         )
-    app.extensions["orivia_order_repository"] = InMemoryOrderRepository()
-    app.extensions["orivia_blockchain_anchor"] = MemoryBlockchainAnchor()
-    app.extensions["orivia_anchor_receipts"] = {}
-
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
     app.register_blueprint(orders_bp, url_prefix="/api/v1/orders")
@@ -71,5 +70,13 @@ def create_app(settings: Settings | None = None) -> Flask:
     app.register_blueprint(blockchain_bp, url_prefix="/api/v1/blockchain")
     app.register_blueprint(ai_bp, url_prefix="/api/v1/ai")
     register_kevin_modules(app)
+
+    if settings.order_repository_backend == "postgres":
+        app.extensions["orivia_order_repository"] = PostgresOrderRepository()
+        app.extensions["orivia_blockchain_anchor"] = PostgresBlockchainAnchor()
+    else:
+        app.extensions["orivia_order_repository"] = InMemoryOrderRepository()
+        app.extensions["orivia_blockchain_anchor"] = MemoryBlockchainAnchor()
+    app.extensions["orivia_anchor_receipts"] = {}
 
     return app
