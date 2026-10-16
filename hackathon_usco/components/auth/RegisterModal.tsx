@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Eye, EyeOff, Loader2, RotateCw, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, Check, Eye, EyeOff, Loader2, X, type LucideIcon } from "lucide-react";
 import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
 import { cn } from "@/lib/cn";
 import { ROLES, type Role } from "@/components/auth/roles";
@@ -74,7 +74,6 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
   const [estado, setEstado] = useState<"idle" | "loading" | "ok">("idle");
   const [roles, setRoles] = useState<RegistrationRole[] | null>(null);
   const [rolesError, setRolesError] = useState(false);
-  const [intento, setIntento] = useState(0);
   const nombreRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -103,12 +102,18 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
         if (!vivo) return;
         setRoles(lista);
         setRolesError(false);
+        setDatos((actual) => {
+          const seleccionado = REGISTRO_ROLES.find((r) => r.id === actual.rol || r.backendRole === actual.rol);
+          if (seleccionado && lista.some((r) => r.role === seleccionado.backendRole)) return actual;
+          const primero = REGISTRO_ROLES.find((r) => lista.some((permitido) => permitido.role === r.backendRole));
+          return { ...actual, rol: primero?.id ?? "" };
+        });
       })
-      .catch(() => vivo && setRolesError(false)); // Graceful fallback
+      .catch(() => vivo && setRolesError(true));
     return () => {
       vivo = false;
     };
-  }, [intento]);
+  }, []);
 
   const cambiar = (campo: RegistroCampo, valor: string) => {
     setDatos((d) => ({ ...d, [campo]: valor }));
@@ -118,10 +123,14 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const permitidos = ["operador", "administrador", "comprador", "OPERATOR", "ADMIN", "BUYER", "VIEWER"];
-    const encontrados = validarRegistro(datos, permitidos);
+    const rolConfig = REGISTRO_ROLES.find((r) => r.id === datos.rol || r.backendRole === datos.rol);
+    const permitidos = roles?.map((r) => r.role) ?? ["BUYER", "VIEWER"];
+    const encontrados = validarRegistro({ ...datos, rol: rolConfig?.backendRole ?? "" }, permitidos);
     if (!datos.rol) {
       encontrados.rol = "Por favor selecciona el tipo de cuenta que deseas crear.";
+    }
+    if (rolesError) {
+      encontrados.rol = "No se pudieron consultar los perfiles disponibles. Intenta de nuevo.";
     }
     setErrores(encontrados);
     if (Object.keys(encontrados).length) return;
@@ -129,7 +138,11 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
     setEstado("loading");
     setGeneral(null);
     const correo = limpiarTexto(datos.correo).toLowerCase();
-    const rolConfig = REGISTRO_ROLES.find((r) => r.id === datos.rol || r.backendRole === datos.rol) ?? REGISTRO_ROLES[0];
+    if (!rolConfig) {
+      setEstado("idle");
+      setGeneral("Selecciona un perfil permitido por ORIVIA.");
+      return;
+    }
 
     try {
       await register({
@@ -228,7 +241,7 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                  {REGISTRO_ROLES.map((r) => {
+                  {REGISTRO_ROLES.filter((r) => !roles || roles.some((permitido) => permitido.role === r.backendRole)).map((r) => {
                     const selected = datos.rol === r.id || datos.rol === r.backendRole;
                     const Icon = r.icon;
                     return (
