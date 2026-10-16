@@ -197,6 +197,7 @@ La operación normal del equipo es:
 | `090e575` | Kevin / GPT 5.6 Luna | Formateo de pruebas de backend. | Se dejó el conjunto de pruebas consistente. |
 | `a59ee09` | Sebas / GPT 5.6 Luna | Verificación final del núcleo Sebas y smoke checks. | Se completaron pruebas, correcciones de Docker y validación del despliegue. |
 | `bd1cceb` | Kevin / GPT 5.6 Luna | Documentación de módulos de datos y despliegue. | Se actualizó la referencia documental de la capa de Kevin. |
+| `2b126c6` | Sebas / GPT 5.6 Luna | Login real, bcrypt, JWT con roles/permisos y refresh tokens rotables. | Se conectó la autenticación al repositorio de usuarios y a la tabla persistente de refresh tokens. |
 
 ## 6. Correcciones importantes realizadas
 
@@ -229,7 +230,8 @@ La operación normal del equipo es:
 
 - Se corrigió `backend/Dockerfile.test` para copiar también `migrations/` y `scripts/`.
 - La corrección resolvió el fallo causado por la prueba de migraciones tras integrar los módulos de Kevin.
-- El conjunto final validado alcanzó `35 passed`.
+- El conjunto de referencia anterior alcanzó `35 passed`.
+- La nueva autenticación añadió pruebas específicas de login, permisos y rotación de refresh tokens.
 
 ## 7. Validaciones realizadas
 
@@ -242,7 +244,10 @@ La operación normal del equipo es:
 - Prueba de anclaje idempotente.
 - Prueba de fallback de IA y contrato Ollama.
 - Prueba de migraciones y datos sintéticos.
-- Resultado de referencia: `35 passed in 0.97s`.
+- Resultado de referencia anterior: `35 passed in 0.97s`.
+- Verificación nueva de autenticación: `8 passed`.
+- Verificación local sin PostgreSQL: `34 passed, 4 deselected`; readiness y
+  migraciones deben repetirse dentro de Docker o en `orivia`.
 
 ### Validación en `orivia`
 
@@ -261,6 +266,8 @@ La operación normal del equipo es:
 
 - Base Flask/Gunicorn y factory de aplicación.
 - JWT, roles, permisos y middleware de seguridad base.
+- Login real con bcrypt y repositorio de usuarios de PostgreSQL.
+- Refresh tokens opacos persistidos, expirables, rotables y revocables.
 - Flujo de pedidos y transiciones.
 - Trazabilidad con cadena hash.
 - Auditoría y verificación.
@@ -276,8 +283,6 @@ La operación normal del equipo es:
 
 - Reemplazar completamente `InMemoryOrderRepository` por el repositorio persistente de PostgreSQL.
 - Persistir en PostgreSQL los eventos/timeline de pedidos.
-- Completar el repositorio real de usuarios y el login con verificación de contraseñas.
-- Persistir y revocar refresh tokens.
 - Definir el esquema final compartido entre pedidos, usuarios, inventario y contabilidad.
 - Elegir el proveedor blockchain definitivo y sustituir el adaptador de memoria cuando el alcance lo requiera.
 - Instalar/configurar el modelo Ollama real `gpt-oss:120b` solo si la capacidad del servidor y el costo lo permiten.
@@ -295,12 +300,10 @@ La operación normal del equipo es:
 
 ## 10. Próximo orden de trabajo
 
-1. Integrar el repositorio de usuarios de Kevin con login, hash de contraseñas y permisos.
-2. Diseñar y migrar el esquema persistente de pedidos y eventos.
-3. Implementar el adaptador PostgreSQL de pedidos respetando el `OrderRepository` definido por Sebas.
-4. Ejecutar pruebas completas con PostgreSQL real dentro de Docker.
-5. Persistir refresh tokens y probar revocación.
-6. Confirmar el proveedor blockchain y conservar la verificación local como respaldo.
-7. Probar Ollama de forma aislada, con timeout y fallback.
-8. Desplegar en `orivia`, ejecutar health/readiness/smoke y registrar el resultado en este historial.
+1. Diseñar y migrar el esquema persistente de pedidos y eventos.
+2. Implementar el adaptador PostgreSQL de pedidos respetando el `OrderRepository` definido por Sebas.
+3. Ejecutar pruebas completas con PostgreSQL real dentro de Docker.
+4. Confirmar el proveedor blockchain y conservar la verificación local como respaldo.
+5. Probar Ollama de forma aislada, con timeout y fallback.
+6. Desplegar en `orivia`, ejecutar health/readiness/smoke y registrar el resultado en este historial.
 

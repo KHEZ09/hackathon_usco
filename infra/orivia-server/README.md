@@ -128,7 +128,7 @@ No usar `down -v` salvo que se haya respaldado y aprobado explícitamente la eli
 
 ## Pendientes antes de producción
 
-- Integrar usuarios, migraciones y repositorios PostgreSQL.
-- Hacer que `/ready` compruebe realmente la base de datos.
+- Persistir pedidos, eventos, auditoría y anclajes blockchain en PostgreSQL.
+- Ejecutar una prueba de rotación de refresh tokens contra una base PostgreSQL real.
 - Configurar HTTPS mediante un proxy y dominio aprobado.
 - Añadir backups, restauración probada y alertas de presupuesto AWS.
