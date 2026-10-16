@@ -1,12 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { motion, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { Check, ChevronLeft, ChevronRight, Droplets, Leaf, Package, QrCode as QrIcon, Share2, Sun, type LucideIcon } from "lucide-react";
 import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
-import { CACAO_STAGES, STAGE_RANGES, type ProcessStage } from "@/data/cacaoProcessData";
-import { CacaoLeaf } from "./Botanica";
-import { EscenaCosecha, EscenaEmpaque, EscenaFermentacion, EscenaSecado } from "./proceso/Escenas";
+import { CACAO_STAGES, PROCESS_SEQUENCE, STAGE_RANGES, frameForProgress, type ProcessStage } from "@/data/cacaoProcessData";
+import { ProcessSequence } from "./proceso/ProcessSequence";
 import { EscenaQr } from "./proceso/EscenaQr";
 import { Caligrafia } from "./proceso/Caligrafia";
 import { AccionEtapa } from "./proceso/AccionEtapa";
@@ -20,8 +19,6 @@ const ICONOS: Record<ProcessStage["id"], LucideIcon> = {
   verificacion: QrIcon,
 };
 
-const etapa = (id: ProcessStage["id"]) => CACAO_STAGES.find((s) => s.id === id)!;
-
 const MOTAS = Array.from({ length: 30 }, (_, i) => ({
   left: (i * 37) % 100,
   top: (i * 53) % 100,
@@ -31,12 +28,15 @@ const MOTAS = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 /**
- * "Del grano al producto": recorrido scroll-world del cacao. Todo el contenido sale de
- * data/cacaoProcessData.ts; cada etapa combina capas fotográficas, vectores y partículas con física.
+ * "Del grano al producto": el recorrido del video como una sola secuencia continua en Canvas
+ * (mazorca → apertura → cajón → bandeja → saco) guiada por el scroll y suavizada con un resorte.
+ * Encima va la interfaz real: stepper, textos y botones de data/cacaoProcessData.ts y el QR verificable.
  */
 export function PodSection() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const suave = useSpring(p, { stiffness: 110, damping: 26, mass: 0.35 });
+  const frame = useTransform(suave, (v) => frameForProgress(v));
   const [activa, setActiva] = useState(0);
 
   useMotionValueEvent(p, "change", (v) => {
@@ -53,13 +53,28 @@ export function PodSection() {
     window.scrollTo({ top: top + recorrido * (STAGE_RANGES[destino][0] + 0.06), behavior: "smooth" });
   };
 
-  const hojas = useTransform(p, [0.2, 0.32], [0, 1]);
-  const hojasY = useTransform(p, [0, 1], ["10%", "-25%"]);
+  // En la etapa del QR el recorrido se oscurece y se desenfoca detrás de la tarjeta.
+  const [qa] = STAGE_RANGES[CACAO_STAGES.length - 1];
+  const velo = useTransform(p, [qa - 0.02, qa + 0.05], [0, 0.72]);
+  const desenfoque = useTransform(p, [qa - 0.02, qa + 0.05], ["blur(0px)", "blur(6px)"]);
+  const entrada = useTransform(p, [0, 0.04], [1.06, 1]);
 
   return (
     <section ref={ref} id="proceso" aria-label="Del grano al producto" className="relative h-[620svh] px-3 sm:px-6">
       <div className="sticky top-3 h-[calc(100svh-1.5rem)] overflow-hidden rounded-[2.5rem] bg-[#121211] text-crema">
-        <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(ellipse_at_55%_45%,rgba(201,138,43,0.12),transparent_60%)]" />
+        {/* Recorrido continuo */}
+        <motion.div style={{ filter: desenfoque, scale: entrada }} className="absolute inset-x-0 top-0 bottom-[34%] lg:bottom-0">
+          <ProcessSequence sequence={PROCESS_SEQUENCE} frame={frame} fallback={CACAO_STAGES[0].visualAsset.fallbackImage} />
+          {/* Integración: viñetas y degradados donde vive la interfaz */}
+          <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,transparent_55%,rgba(18,18,17,0.65))]" />
+          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#121211] to-transparent" />
+          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#121211] to-transparent" />
+          <div aria-hidden="true" className="absolute inset-y-0 left-0 hidden w-[42%] bg-[linear-gradient(90deg,#121211_0%,rgba(18,18,17,0.92)_38%,transparent)] lg:block" />
+          <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-[44%] bg-[linear-gradient(270deg,#121211_0%,rgba(18,18,17,0.88)_42%,transparent)] lg:block" />
+        </motion.div>
+        <motion.div aria-hidden="true" style={{ opacity: velo }} className="pointer-events-none absolute inset-0 bg-[#121211]" />
+
+        {/* Partículas doradas del video */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
           {MOTAS.map((m, i) => (
             <span
@@ -70,24 +85,10 @@ export function PodSection() {
           ))}
         </div>
 
-        {/* El secado ocupa todo el escenario, como el plano completo del video */}
-        <EscenaSecado p={p} stage={etapa("secado")} />
-
-        {/* Escenas centrales */}
+        {/* QR verificable */}
         <div className="absolute inset-x-0 top-28 bottom-[42%] lg:inset-y-0 lg:left-[24%] lg:right-[26%]">
-          <EscenaCosecha p={p} stage={etapa("cosecha")} />
-          <EscenaFermentacion p={p} stage={etapa("fermentacion")} />
-          <EscenaEmpaque p={p} stage={etapa("empaque")} fondo={etapa("secado")} />
           <EscenaQr p={p} />
         </div>
-
-        {/* Hojas de cacao en los bordes, desenfocadas */}
-        <motion.div aria-hidden="true" style={{ opacity: hojas, y: hojasY }} className="pointer-events-none absolute inset-0">
-          <CacaoLeaf tone="profundo" className="absolute top-[4%] -left-24 w-80 rotate-[35deg] opacity-70 blur-[3px]" />
-          <CacaoLeaf tone="medio" className="absolute top-[40%] -right-28 hidden w-96 -scale-x-100 -rotate-[20deg] opacity-60 blur-[4px] sm:block" />
-          <CacaoLeaf tone="profundo" className="absolute -bottom-10 -left-16 w-72 -rotate-[15deg] opacity-60 blur-[5px]" />
-          <CacaoLeaf tone="medio" className="absolute -top-10 right-[20%] hidden w-64 rotate-[160deg] opacity-40 blur-[6px] lg:block" />
-        </motion.div>
 
         <button
           onClick={() => irA(activa - 1)}
@@ -111,7 +112,6 @@ export function PodSection() {
     </section>
   );
 }
-
 function Stepper({ activa, onIr }: { activa: number; onIr: (i: number) => void }) {
   return (
     <nav aria-label="Etapas del proceso" className="absolute top-20 left-4 z-10 sm:left-8 lg:top-1/2 lg:w-[22%] lg:-translate-y-1/2">
@@ -168,6 +168,16 @@ function Panel({ activa, p }: { activa: number; p: MotionValue<number> }) {
           {s.badgeText && <p className="text-[0.62rem] font-semibold tracking-[0.28em] text-[#f3c77e] uppercase">{s.badgeText}</p>}
           <h3 className="mt-2 text-2xl leading-tight font-semibold sm:text-3xl">{s.title}</h3>
           <p className="mt-3 text-[0.8rem] leading-relaxed text-crema/70">{s.description}</p>
+          {s.metrics && (
+            <dl className="mt-3 flex flex-wrap gap-2">
+              {s.metrics.map((m) => (
+                <div key={m.label} className="rounded-xl border border-crema/15 bg-crema/[0.06] px-3 py-1.5">
+                  <dt className="text-[0.55rem] font-semibold tracking-[0.22em] text-crema/55">{m.label}</dt>
+                  <dd className="font-mono text-sm font-semibold text-[#f3c77e]">{m.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
           <div className="mt-5 flex items-center gap-2">
             <AccionEtapa stage={s} />
             <CompartirBtn />

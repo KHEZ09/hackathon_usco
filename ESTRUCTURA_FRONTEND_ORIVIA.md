@@ -71,13 +71,11 @@ La ruta principal `app/page.tsx` renderiza `components/landing/LandingPage.tsx`,
    4. Empaque: saco ORIVIA con SHA-256, granos cayendo, anillo orbital y destellos.
    5. QR verificable: tarjeta con sello «VERIFICADO», QR real hacia `/ficha/CAC001` y «Cada grano tiene una historia» escrito con el scroll.
 
-   **Contenido editable:** textos, insignias, botones (`navigate`, `modal` o `scroll`), métricas y assets de cada etapa están en `data/cacaoProcessData.ts` (`CACAO_STAGES`, interfaz `ProcessStage`). Los componentes de `components/landing/proceso/` solo los presentan:
-   - `FrameSequence.tsx`: etapa `canvas-sequence`. La cosecha es una secuencia de 31 cuadros WebP en Canvas 2D que se mezclan con el scroll.
-   - `LayeredScene.tsx`: escenas `layered-vector`. Capas con profundidad, paralaje e inclinación 3D suave según el puntero, con resortes de Framer Motion.
-   - `ParticleField.tsx`: física en Canvas 2D a 60 fps. Granos con gravedad, rebote, reposo y repulsión del puntero; un toque suelta una ráfaga. También vapor y chispas. Se pausa fuera de pantalla y respeta `prefers-reduced-motion`.
-   - `Vectores.tsx`: medidor de humedad (lee la métrica del archivo de datos), anillo orbital en dos mitades que rodea el saco, destellos y haces de sol.
+   **Contenido editable:** textos, insignias, botones (`navigate`, `modal` o `scroll`), métricas y tramos de la secuencia de cada etapa están en `data/cacaoProcessData.ts` (`CACAO_STAGES`, `PROCESS_SEQUENCE`, interfaz `ProcessStage`). Los componentes de `components/landing/proceso/` solo los presentan:
+   - `ProcessSequence.tsx`: el recorrido completo del video (mazorca → apertura → cajón → bandeja → saco) como una sola secuencia continua de 152 cuadros WebP en Canvas 2D. Cada etapa recorre su tramo (`sequenceRange`); el avance se suaviza con un resorte de Framer Motion y los cuadros se funden solo en el instante del cambio para evitar doble imagen. Carga por prioridad cerca del cuadro actual y se pausa fuera de pantalla.
+   - `PodSection.tsx`: integra la secuencia con degradados y viñetas, partículas doradas, stepper, textos, métricas, flechas, progreso y la etapa final.
    - `AccionEtapa.tsx`: los modales «Registrar una etapa» y «Ver alertas» usan los datos reales del almacén local; «Verificar un producto» abre la verificación SHA-256 de CAC001.
-   - `EscenaQr.tsx` y `Caligrafia.tsx`: la etapa del QR verificable, reutilizada sin cambios.
+   - `EscenaQr.tsx` y `Caligrafia.tsx`: la etapa del QR verificable, que se conserva; el recorrido se oscurece y desenfoca detrás de la tarjeta.
 6. **Trazabilidad — `TraceSection.tsx`:** selector de CAC001–CAC003, pasos de recepción, fermentación, secado y producto, cantidades, responsables, estados y alerta visual de merma.
 7. **Analítica — `AnalyticsSection.tsx`:** gráficas de muestra, asistente visual para explicar una alerta y tarjeta con costo unitario, margen y supuestos.
 8. **Historia de producto — `StoryBanner.tsx`:** frases de marca rotativas, gráfico de cosecha y bloque de verificación.
@@ -151,7 +149,7 @@ El tema también ofrece superficies, tarjetas, texto y bordes semánticos que se
 En `hackathon_usco/public/media/` se encuentran:
 
 - `hero/f000.jpg`–`hero/f072.jpg`: 73 cuadros (0–3,6 s, 20 fps) del video de referencia del cacaotal con la libélula.
-- `proceso/cosecha/c000.webp`–`c030.webp` (secuencia de apertura de la mazorca) y `proceso/fermentacion.webp`, `secado.webp` y `empaque.webp` (capas): extraídos de `gemini_generated_video_dc3571d6.mp4`. Los `.jpg` de la misma carpeta son el respaldo.
+- `proceso/viaje/v000.webp`–`v151.webp`: recorrido continuo de `gemini_generated_video_dc3571d6.mp4` (0,4 s – 7,95 s a 20 fps). La interfaz impresa del video se recortó o se tapó: la barra superior, el texto lateral, las flechas, los puntos y el cursor. Los `.jpg` de la misma carpeta son el respaldo mientras carga.
 - `proceso/cosecha.jpg`, `apertura.jpg`, `fermentacion.jpg`, `secado.jpg` y `empaque.jpg`: cinco recortes fijos de `gemini_generated_video_dc3571d6.mp4`, también proporcionado por el equipo. Se limpiaron el cursor y la interfaz impresos en el video; el video no se incluye en el repositorio. Los 35 cuadros anteriores de la mazorca (`mazorca/`) se eliminaron.
 - `hero-poster.jpg`, `cacaotal.jpg`, `cosecha-mano.jpg`, `mazorcas-arbol.jpg`, `paisaje-cacao.jpg` y `mazorca-abierta.jpg`: recortes fijos del mismo video.
 
