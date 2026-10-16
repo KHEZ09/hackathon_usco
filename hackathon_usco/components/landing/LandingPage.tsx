@@ -57,16 +57,27 @@ function Landing() {
   };
   const onRegistered = (email: string, backendRole: string) => {
     setRegistro((r) => ({ ...r, open: false }));
-    notify("exito", "Cuenta creada", "Inicia sesión con tu nueva cuenta.");
     const mappedRole: Role = backendRole === "ADMIN" || backendRole === "administrador" ? "administrador" : backendRole === "OPERATOR" || backendRole === "operador" ? "operador" : "comprador";
-    setLogin({ open: true, role: mappedRole, email });
+    if (mappedRole === "comprador") {
+      // Compradores: tras registrarse van directo al login sin notificación ruidosa
+      notify("exito", "Cuenta creada", "Inicia sesión para explorar el cacao de origen.");
+      setLogin({ open: true, role: mappedRole, email });
+    } else {
+      notify("exito", "Cuenta creada", "Inicia sesión con tu nueva cuenta.");
+      setLogin({ open: true, role: mappedRole, email });
+    }
   };
 
   const onSuccess = (s: Session) => {
     writeSession(s);
     closeLogin();
-    notify("exito", `Bienvenido, ${ROLES[s.role].label}`, `Abriendo ${ROLES[s.role].tema.toLowerCase()}…`);
-    router.push(ROLE_HOME[s.role]);
+    if (s.role === "comprador") {
+      // Los compradores se quedan en la landing page
+      notify("exito", `Bienvenido, ${ROLES[s.role].label}`, "Explora el origen y trazabilidad del cacao.");
+    } else {
+      notify("exito", `Bienvenido, ${ROLES[s.role].label}`, `Abriendo ${ROLES[s.role].tema.toLowerCase()}…`);
+      router.push(ROLE_HOME[s.role]);
+    }
   };
 
   const logout = () => {
