@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Boxes, ClipboardPlus, ExternalLink, Factory, History, Repeat2, Search } from "lucide-react";
+import { AlertTriangle, Boxes, ClipboardPlus, ExternalLink, Factory, History, Plus, RefreshCw, Repeat2, Search } from "lucide-react";
 import { useSession } from "@/components/auth/roles";
 import { useToast } from "@/components/ui/Toaster";
 import {
@@ -25,6 +25,7 @@ import { Button, Card, CardTitle, EstadoBadge, Field, Input, Kpi, Select, Table,
 import { PanelTabs } from "../PanelTabs";
 import { ClusterView } from "../cluster/ClusterView";
 import { cn } from "@/lib/cn";
+import { ApiOrder, createOrder, listOrders, transitionOrder } from "@/lib/orivia-api";
 
 const newIdem = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 const hoy = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
@@ -54,6 +55,8 @@ function OperacionOperador() {
         <Kpi label="Alertas operativas" value={String(avisos.length)} tone={avisos.length ? "alerta" : "normal"} hint={`Merma > ${MERMA_UMBRAL}%`} />
       </div>
 
+      <ApiOrdersCard />
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="min-w-0 space-y-6">
           <RecepcionForm />
@@ -78,6 +81,127 @@ function OperacionOperador() {
 
       <RegistroCard />
     </div>
+  );
+}
+
+const ORDER_TRANSITIONS: Record<string, string[]> = {
+  CREATED: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["IN_PREPARATION", "CANCELLED"],
+  IN_PREPARATION: ["IN_TRANSIT", "CANCELLED"],
+  IN_TRANSIT: ["DELIVERED"],
+  DELIVERED: [],
+  CANCELLED: [],
+};
+
+const apiOrderId = (order: ApiOrder) => String(order.id ?? order.order_id ?? "");
+
+function ApiOrdersCard() {
+  const { notify } = useToast();
+  const [orders, setOrders] = useState<ApiOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({ product: "Cacao de origen", quantity: "", origin: "Rivera", destination: "Centro de transformación" });
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setOrders(await listOrders());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudieron cargar los pedidos persistidos.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void refresh(), 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    const quantity = Number(form.quantity);
+    if (!form.product.trim() || !Number.isFinite(quantity) || quantity <= 0 || !form.origin.trim() || !form.destination.trim()) {
+      setError("Completa producto, cantidad mayor que cero, origen y destino.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await createOrder({ product: form.product.trim(), quantity, origin: form.origin.trim(), destination: form.destination.trim() });
+      setOrders((current) => [response.order, ...current.filter((order) => apiOrderId(order) !== apiOrderId(response.order))]);
+      setForm({ ...form, quantity: "" });
+      notify("exito", "Pedido persistido", "Se creó el pedido y el backend generó su primer evento de trazabilidad.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "El backend rechazó el pedido.");
+      notify("error", "No se creó el pedido", cause instanceof Error ? cause.message : "Respuesta inválida del backend.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const changeStatus = async (order: ApiOrder, nextStatus: string) => {
+    const orderId = apiOrderId(order);
+    if (!orderId || !nextStatus) return;
+    setSaving(true);
+    try {
+      const response = await transitionOrder(orderId, nextStatus);
+      setOrders((current) => current.map((item) => apiOrderId(item) === orderId ? response.order : item));
+      notify("exito", "Estado actualizado", `${orderId} pasó a ${nextStatus}. Se añadió un evento a la cadena.`);
+    } catch (cause) {
+      notify("error", "No se actualizó el estado", cause instanceof Error ? cause.message : "El backend rechazó la transición.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card className="border-bosque-500/25 bg-bosque-500/[0.04]">
+      <CardTitle
+        icon={<Repeat2 className="size-4" />}
+        title="Pedidos operativos persistidos"
+        hint="Flujo real contra la API: crear pedido, moverlo por estados y generar eventos que después audita el administrador."
+        action={
+          <Button variant="secundario" onClick={() => void refresh()} disabled={loading || saving}>
+            <RefreshCw className={cn("size-3.5", loading && "animate-spin")} /> Actualizar
+          </Button>
+        }
+      />
+      <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" noValidate>
+        <Field label="Producto"><Input value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} /></Field>
+        <Field label="Cantidad"><Input type="number" min="0.1" step="0.1" value={form.quantity} placeholder="120" onChange={(e) => setForm({ ...form, quantity: e.target.value })} /></Field>
+        <Field label="Origen"><Input value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} /></Field>
+        <Field label="Destino"><Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} /></Field>
+        <div className="flex items-end"><Button type="submit" className="w-full py-3" disabled={saving}><Plus className="size-4" /> Crear pedido</Button></div>
+      </form>
+      {error && <p className="mt-3 rounded-xl bg-cereza/10 px-3.5 py-2.5 text-xs text-cereza">{error}</p>}
+      <div className="mt-5">
+        <Table head={["Pedido", "Producto", "Ruta", "Cantidad", "Estado", "Siguiente acción"]} empty={!loading && orders.length === 0}>
+          {orders.map((order) => {
+            const orderId = apiOrderId(order);
+            const status = String(order.status ?? "—");
+            const options = ORDER_TRANSITIONS[status] ?? [];
+            return (
+              <tr key={orderId}>
+                <Td className="font-mono text-[0.68rem] font-semibold">{orderId || "—"}</Td>
+                <Td>{String(order.product ?? "—")}</Td>
+                <Td className="max-w-52 text-[0.68rem]">{String(order.origin ?? "—")} → {String(order.destination ?? "—")}</Td>
+                <Td>{String(order.quantity ?? "—")}</Td>
+                <Td><span className="rounded-full bg-bosque-500/12 px-2.5 py-1 text-[0.62rem] font-bold text-bosque-500">{status}</span></Td>
+                <Td>
+                  <Select value="" disabled={saving || options.length === 0} onChange={(e) => void changeStatus(order, e.target.value)} aria-label={`Cambiar estado de ${orderId}`} className="w-auto min-w-36 py-2 text-xs">
+                    <option value="">{options.length ? "Cambiar estado" : "Sin acciones"}</option>
+                    {options.map((option) => <option key={option} value={option}>{option}</option>)}
+                  </Select>
+                </Td>
+              </tr>
+            );
+          })}
+        </Table>
+      </div>
+    </Card>
   );
 }
 

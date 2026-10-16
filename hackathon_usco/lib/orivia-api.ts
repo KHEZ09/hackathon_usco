@@ -34,7 +34,38 @@ export type ReportOverview = {
   orders: { order_count: number; revenue: number | string } | null;
 };
 
-export type ApiOrder = Record<string, unknown> & { order_id?: string; status?: string };
+export type ApiOrder = Record<string, unknown> & {
+  id?: string;
+  order_id?: string;
+  created_by?: string;
+  product?: string;
+  quantity?: number;
+  origin?: string;
+  destination?: string;
+  status?: string;
+  created_at?: string;
+};
+export type ApiOrderEvent = Record<string, unknown> & {
+  id?: string;
+  event_hash?: string;
+  type?: string;
+  new_status?: string;
+  previous_status?: string | null;
+  occurred_at?: string;
+};
+export type ApiBlockchainReceipt = Record<string, unknown> & {
+  event_hash?: string;
+  status?: string;
+  reference?: string;
+  network?: string;
+  transaction_id?: string | null;
+  block_number?: number | null;
+  chain_id?: number | null;
+  contract_address?: string | null;
+  verified?: boolean;
+};
+export type ApiOrderMutationResponse = { order: ApiOrder; blockchain?: ApiBlockchainReceipt };
+export type ApiAuditVerification = { order_id?: string; verified?: boolean; event_count?: number };
 export type ApiClusterActor = Record<string, unknown> & { id?: string; name?: string; type?: string };
 export type ApiClusterNeed = Record<string, unknown> & { need_id?: string; title?: string };
 export type ApiAiResult = Record<string, unknown>;
@@ -179,31 +210,32 @@ export async function getCurrentUser() {
 }
 
 export async function listOrders() {
-  const response = await request<{ data: ApiOrder[] } | ApiOrder[]>("/orders");
-  return Array.isArray(response) ? response : response.data;
+  const response = await request<{ orders?: ApiOrder[]; data?: ApiOrder[] } | ApiOrder[]>("/orders");
+  return Array.isArray(response) ? response : response.orders ?? response.data ?? [];
 }
 
 export async function getOrder(orderId: string) {
-  return request<ApiOrder>(`/orders/${encodeURIComponent(orderId)}`);
+  const response = await request<{ order?: ApiOrder } | ApiOrder>(`/orders/${encodeURIComponent(orderId)}`);
+  return "order" in response && response.order ? response.order : response;
 }
 
 export async function createOrder(payload: { product: string; quantity: number; origin: string; destination: string }) {
-  return request<ApiOrder>("/orders", { method: "POST", body: JSON.stringify(payload) });
+  return request<ApiOrderMutationResponse>("/orders", { method: "POST", body: JSON.stringify(payload) });
 }
 
 export async function transitionOrder(orderId: string, status: string) {
-  return request<ApiOrder>(`/orders/${encodeURIComponent(orderId)}/status`, {
+  return request<ApiOrderMutationResponse>(`/orders/${encodeURIComponent(orderId)}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });
 }
 
 export async function getOrderTimeline(orderId: string) {
-  return request<Record<string, unknown>>(`/orders/${encodeURIComponent(orderId)}/timeline`);
+  return request<{ events: ApiOrderEvent[] }>(`/orders/${encodeURIComponent(orderId)}/timeline`);
 }
 
 export async function getOrderAudit(orderId: string, verify = false) {
-  return request<Record<string, unknown>>(`/audit/orders/${encodeURIComponent(orderId)}${verify ? "/verify" : ""}`);
+  return request<ApiAuditVerification & { audits?: Record<string, unknown>[] }>(`/audit/orders/${encodeURIComponent(orderId)}${verify ? "/verify" : ""}`);
 }
 
 export async function getPublicLot(lotId: string) {
@@ -269,11 +301,23 @@ export async function getAiAnalytics(payload: Record<string, unknown> = {}) {
 }
 
 export async function getBlockchainAnchor(eventHash: string) {
-  return request<Record<string, unknown>>(`/blockchain/anchors/${encodeURIComponent(eventHash)}`);
+  const response = await request<{ anchor?: ApiBlockchainReceipt }>(`/blockchain/anchors/${encodeURIComponent(eventHash)}`);
+  return response.anchor ?? {};
 }
 
-export async function createBlockchainAnchor(payload: { event_hash: string }) {
-  return request<Record<string, unknown>>("/blockchain/anchors", { method: "POST", body: JSON.stringify(payload) });
+/** El backend recibe order_id y ancla el último evento íntegro del pedido. */
+export async function createBlockchainAnchor(orderId: string) {
+  return request<{ anchor: ApiBlockchainReceipt; idempotent?: boolean }>("/blockchain/anchors", {
+    method: "POST",
+    body: JSON.stringify({ order_id: orderId }),
+  });
+}
+
+/** Solo ADMIN puede listar usuarios; nunca se usa en la landing pública. */
+export async function listUsers(status?: "ACTIVE" | "BLOCKED" | "SUSPENDED") {
+  const suffix = status ? `?status=${encodeURIComponent(status)}` : "";
+  const response = await request<{ data: ApiUser[] }>(`/users${suffix}`);
+  return response.data;
 }
 
 export type RegistrationRole = { role: string; label: string };

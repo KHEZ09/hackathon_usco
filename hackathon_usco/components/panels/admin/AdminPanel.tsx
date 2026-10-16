@@ -48,6 +48,7 @@ import { PanelTabs } from "../PanelTabs";
 import { ClusterView } from "../cluster/ClusterView";
 import { ASOCIACION_ID, useCluster } from "@/lib/cluster";
 import { syncIntegration, useKevinOverview } from "@/lib/orivia-api";
+import { OperationalAuditCard } from "./OperationalAuditCard";
 
 type Dialogo = { tipo: "bloquear" | "liberar"; lote: Lote } | { tipo: "reset" } | null;
 
@@ -162,6 +163,8 @@ function OperacionAdmin() {
           </div>
         ) : null}
       </Card>
+
+      <OperationalAuditCard />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Yield de operación" value={`${kpis.yield}`} unit="%" hint="kg producidos / kg consumidos" tone="bien" />
