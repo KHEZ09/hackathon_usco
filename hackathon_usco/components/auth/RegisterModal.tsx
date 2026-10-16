@@ -192,14 +192,14 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
           </div>
         </div>
 
-        <div className="overflow-y-auto p-6 sm:p-9">
+        <div className="overflow-y-auto p-5 sm:p-7 max-h-[94svh]">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 text-center">
               <p className="text-[0.6rem] font-semibold tracking-[0.35em] text-tierra uppercase dark:text-tierra-300">Registro ORIVIA</p>
-              <h2 id="registro-title" className="mt-2 text-3xl leading-none font-bold tracking-tight text-ink">
+              <h2 id="registro-title" className="mt-2 text-2xl sm:text-3xl leading-none font-bold tracking-tight text-ink">
                 Crea tu cuenta
               </h2>
-              <div className="mx-auto mt-3 h-px w-10 rounded-full bg-bosque/30" />
+              <div className="mx-auto mt-2.5 h-px w-10 rounded-full bg-bosque/30" />
             </div>
             <button onClick={onClose} className="shrink-0 rounded-full p-2 text-ink-soft transition hover:bg-surface-2 hover:text-ink" aria-label="Cerrar registro">
               <X className="size-5" />
@@ -215,19 +215,19 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
               <p className="max-w-xs text-sm text-ink-soft">Ya puedes iniciar sesión con tu correo y la contraseña que acabas de crear.</p>
             </motion.div>
           ) : (
-            <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
-              {/* 1. Tipo de cuenta (primera opción a marcar) */}
-              <fieldset className="space-y-2.5">
+            <form onSubmit={submit} className="mt-5 space-y-3.5" noValidate>
+              {/* 1. Tipo de cuenta (1 fila x 3 columnas, centrado, solo icono e identificador) */}
+              <fieldset className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <legend className="text-xs font-semibold uppercase tracking-wider text-ink">
+                  <legend className="text-[0.7rem] font-semibold uppercase tracking-wider text-ink">
                     1. Elige tu tipo de cuenta
                   </legend>
-                  <span className={cn("text-[0.68rem] font-medium transition", datos.rol ? "text-bosque dark:text-bosque-300" : "text-ink-soft")}>
-                    {datos.rol ? "✓ Perfil seleccionado" : "Requerido"}
+                  <span className={cn("text-[0.65rem] font-medium transition", datos.rol ? "text-bosque dark:text-bosque-300" : "text-ink-soft")}>
+                    {datos.rol ? "✓ Seleccionado" : "Requerido"}
                   </span>
                 </div>
 
-                <div className="grid gap-2">
+                <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
                   {REGISTRO_ROLES.map((r) => {
                     const selected = datos.rol === r.id || datos.rol === r.backendRole;
                     const Icon = r.icon;
@@ -238,60 +238,41 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
                         onClick={() => cambiar("rol", r.id)}
                         aria-pressed={selected}
                         className={cn(
-                          "group relative flex items-center gap-3.5 rounded-2xl border p-3 text-left transition-all duration-200",
+                          "group relative flex flex-col items-center justify-center gap-1.5 rounded-2xl border py-3 px-2 text-center transition-all duration-200",
                           selected
-                            ? "border-bosque bg-bosque/10 shadow-sm ring-2 ring-bosque/25 dark:border-bosque-400 dark:bg-bosque-950/50"
-                            : "border-line bg-surface hover:border-bosque-300 hover:bg-surface-2",
+                            ? "border-bosque bg-bosque text-crema shadow-md shadow-bosque/25 ring-2 ring-bosque/30"
+                            : "border-line bg-surface text-ink hover:border-bosque-300 hover:bg-surface-2",
                         )}
                       >
                         <div
                           className={cn(
-                            "grid size-9 shrink-0 place-items-center rounded-xl transition-colors",
+                            "grid size-9 place-items-center rounded-xl transition-colors",
                             selected
-                              ? "bg-bosque text-crema shadow-sm"
+                              ? "bg-crema/15 text-crema"
                               : "bg-surface-2 text-ink-soft group-hover:text-ink",
                           )}
                         >
-                          <Icon className="size-4" />
+                          <Icon className="size-5" />
                         </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-ink">{r.label}</span>
-                            <span className="rounded-md bg-crema/40 px-1.5 py-0.5 text-[0.6rem] font-medium text-ink-soft dark:bg-card">
-                              {r.sublabel}
-                            </span>
-                          </div>
-                          <p className="mt-0.5 line-clamp-1 text-[0.7rem] text-ink-soft">
-                            {r.description}
-                          </p>
-                        </div>
-
-                        <div className="shrink-0">
-                          <div
-                            className={cn(
-                              "grid size-5 place-items-center rounded-full border transition-all",
-                              selected
-                                ? "border-bosque bg-bosque text-crema shadow-sm"
-                                : "border-line bg-surface group-hover:border-ink-soft",
-                            )}
-                          >
-                            {selected && <Check className="size-3 stroke-[2.5]" />}
-                          </div>
-                        </div>
+                        <span className="text-xs font-bold tracking-tight">{r.label}</span>
+                        {selected && (
+                          <span className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-arena text-bosque shadow-sm">
+                            <Check className="size-3 stroke-[3]" />
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
                 {errores.rol && (
-                  <p role="alert" className="mt-1 rounded-xl bg-cereza/10 px-3.5 py-2 text-xs font-medium text-cereza dark:text-[#f08a8c]">
+                  <p role="alert" className="mt-1 rounded-xl bg-cereza/10 px-3 py-1.5 text-xs font-medium text-cereza dark:text-[#f08a8c]">
                     {errores.rol}
                   </p>
                 )}
               </fieldset>
 
-              <div className="my-2 border-t border-line/60 pt-3">
-                <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-wider text-ink-soft">
+              <div className="pt-1">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-wider text-ink-soft">
                   2. Tus datos y credenciales
                 </p>
               </div>
@@ -421,7 +402,7 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
 
 function entrada(conError: boolean) {
   return cn(
-    "mt-1.5 w-full rounded-xl border bg-surface px-4 py-3 text-sm text-ink outline-none transition focus:ring-4",
+    "mt-1 w-full rounded-xl border bg-surface px-3.5 py-2.5 text-sm text-ink outline-none transition focus:ring-4",
     conError ? "border-cereza focus:border-cereza focus:ring-cereza/15" : "border-line focus:border-bosque-500 focus:ring-bosque-500/15",
   );
 }
