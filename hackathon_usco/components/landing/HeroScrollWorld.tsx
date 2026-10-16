@@ -1,18 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { motion, useAnimationFrame, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
 import { CacaoLeaf, CacaoPod, useWind } from "./Botanica";
-import { OriviaEmblema } from "@/components/brand/OriviaLogo";
-
-// Secuencia extraída del video de referencia del cacaotal: 73 cuadros a 20 fps (0 s – 3,6 s).
-const FRAME_COUNT = 73;
-const FPS = 20;
-const INTRO_END = 28; // la libélula entra en escena al cargar (1,4 s)
-const SCRUB_END = FRAME_COUNT - 1; // último cuadro del hero antes de la transición
-const IDLE_MID = 22; // vuelo suspendido en reposo alrededor de este cuadro
-const IDLE_AMP = 5;
-const frameSrc = (i: number) => `/media/hero/f${String(i).padStart(3, "0")}.jpg`;
+import { RealisticDragonfly } from "./RealisticDragonfly";
+import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
 
 const MOTES = Array.from({ length: 24 }, (_, i) => ({
   left: (i * 37) % 100,
@@ -22,27 +14,21 @@ const MOTES = Array.from({ length: 24 }, (_, i) => ({
   duration: 11 + (i % 5) * 2,
 }));
 
-const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
-
 /**
- * Hero "scroll world": la secuencia del cacaotal con la libélula se reproduce como intro,
- * mantiene un vuelo suspendido en reposo y luego se controla con el scroll mientras la
- * página principal sube y la cubre.
+ * Hero limpio y cinematográfico con logotipo y título centrados,
+ * fotografía nítida del cacaotal y libélula viva sobrevolando la escena.
  */
 export function HeroScrollWorld() {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduce = useReducedMotion();
   const wind = useWind(1.2);
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ["start start", "end end"] });
 
-  useFrameScrub(canvasRef, scrollYProgress, !!reduce);
-
-  const frameScale = useTransform(scrollYProgress, [0, 0.33, 1], [1, 1.04, 1.18]);
+  const frameScale = useTransform(scrollYProgress, [0, 0.33, 1], [1, 1.04, 1.15]);
   const frameY = useTransform(scrollYProgress, [0.33, 1], ["0%", "-6%"]);
-  const emblemY = useTransform(scrollYProgress, [0, 0.5], ["0%", "-60%"]);
-  const emblemOpacity = useTransform(scrollYProgress, [0.12, 0.42], [1, 0]);
-  const shade = useTransform(scrollYProgress, [0.3, 1], [0, 0.7]);
+  const contentY = useTransform(scrollYProgress, [0, 0.5], ["0%", "-40%"]);
+  const contentOpacity = useTransform(scrollYProgress, [0.15, 0.45], [1, 0]);
+  const shade = useTransform(scrollYProgress, [0.3, 1], [0, 0.75]);
   const cueOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
   const leafLeftX = useTransform(scrollYProgress, [0.15, 0.85], ["-45%", "5%"]);
   const leafRightX = useTransform(scrollYProgress, [0.2, 0.9], ["50%", "-4%"]);
@@ -52,48 +38,59 @@ export function HeroScrollWorld() {
   const podRotate = useTransform(wind ?? scrollYProgress, (v) => (wind ? -v * 1.8 : 0));
 
   return (
-    <section ref={wrapRef} aria-label="Bienvenida ORIVIA" className="relative h-[250svh] bg-bosque-950">
+    <section ref={wrapRef} aria-label="Bienvenida ORIVIA" className="relative h-[240svh] bg-bosque-950">
       <h1 className="sr-only">ORIVIA — Del origen al mundo. Trazabilidad del cacao del Huila.</h1>
 
       <div className="sticky top-0 h-svh overflow-hidden">
-        {/* Relleno para pantallas verticales: el mismo cuadro, desenfocado */}
+        {/* Relleno para pantallas verticales: el mismo cuadro desenfocado */}
         <div
           aria-hidden="true"
           className="absolute inset-0 scale-110 bg-cover bg-center opacity-70 blur-2xl sm:hidden"
           style={{ backgroundImage: "url(/media/hero-poster.jpg)" }}
         />
 
-        {/* Cuadro 16:9 que cubre la pantalla; las capas se alinean en % del video */}
+        {/* Fotografía limpia cinematográfica 16:9 en alta definición */}
         <motion.div
           style={{ scale: frameScale, y: frameY }}
-          className="@container absolute top-1/2 left-1/2 aspect-video w-[max(100vw,177.78svh)] -translate-x-1/2 -translate-y-1/2 max-sm:w-[280vw] max-sm:[mask-image:linear-gradient(transparent,black_10%,black_90%,transparent)]"
+          className="@container absolute top-1/2 left-1/2 aspect-video w-[max(100vw,177.78svh)] -translate-x-1/2 -translate-y-1/2 max-sm:w-[280vw]"
         >
-          <canvas
-            ref={canvasRef}
-            aria-hidden="true"
+          <div
+            role="img"
+            aria-label="Cacaotal en el Huila, agricultor sosteniendo un fruto de cacao rojo maduro"
             className="absolute inset-0 size-full bg-cover bg-center"
-            style={{ backgroundImage: `url(${frameSrc(0)})` }}
+            style={{ backgroundImage: "url(/media/hero-clean.jpg)" }}
           />
-          {/* Difumina la barra y el botón impresos en el video; la navegación real va encima */}
-          <div className="absolute inset-x-0 top-0 h-[15%] bg-bosque-950/20 backdrop-blur-xl [mask-image:linear-gradient(black_55%,transparent)]" />
-          {/* Difumina el logotipo antiguo impreso en el video */}
-          <div className="absolute top-0 left-[30%] h-[36%] w-[40%] bg-bosque-950/30 backdrop-blur-2xl [mask-image:radial-gradient(closest-side,black_60%,transparent)]" />
+          {/* Suave viñeta perimetral transparente y homogénea */}
+          <div className="absolute inset-0 bg-gradient-to-t from-bosque-950/60 via-transparent to-black/25" />
         </motion.div>
 
-        {/* Logotipo nuevo con aura, alineado sobre el cuadro */}
+        {/* Libélula hiperrealista animada que sobrevuela con vida orgánica el cacaotal */}
+        {/* Libélula hiperrealista animada que sobrevuela con vida orgánica el cacaotal */}
+        <HeroSpiralDragonfly progress={scrollYProgress} />
+
+        {/* Logotipo (isotipo) + Título ORIVIA centrados */}
         <motion.div
-          style={{ y: emblemY, opacity: emblemOpacity }}
-          className="pointer-events-none absolute inset-x-0 top-[11svh] flex justify-center sm:top-[9svh]"
+          style={{ y: contentY, opacity: contentOpacity }}
+          className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center -translate-y-2 sm:-translate-y-4"
         >
-          <div aria-hidden="true" className="absolute top-1/2 left-1/2 h-[150%] w-[min(90vw,620px)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(closest-side,rgba(12,29,21,0.55),transparent)]" />
-          <motion.div initial={{ opacity: 0, scale: 0.92, filter: "blur(8px)" }} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} transition={{ delay: 0.3, duration: 1.4, ease: [0.22, 1, 0.36, 1] }}>
-            <OriviaEmblema className="scale-[0.72] sm:scale-90 lg:scale-100" />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, filter: "blur(10px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            transition={{ delay: 0.25, duration: 1.3, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col items-center text-center"
+          >
+            <OriviaIsotipo className="h-24 sm:h-32 lg:h-36 drop-shadow-[0_10px_24px_rgba(226,184,110,0.4)]" />
+            <span className="mt-4 text-4xl font-light tracking-[0.32em] text-crema [text-shadow:0_0_28px_rgba(226,184,110,0.55)] sm:text-6xl lg:text-7xl">
+              ORIVIA
+            </span>
+            <span className="mt-3 text-[0.62rem] font-light tracking-[0.42em] text-crema/85 sm:text-xs">
+              DEL ORIGEN AL MUNDO
+            </span>
           </motion.div>
         </motion.div>
 
         {/* Atmósfera: viñetas, neblina y partículas de luz */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/50 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-bosque-950/75 to-transparent" />
           <div className="absolute top-[38%] -left-1/4 h-40 w-[150%] animate-mist rounded-full bg-crema/10 blur-3xl" />
           <div className="absolute top-[58%] -left-1/4 h-28 w-[150%] animate-mist rounded-full bg-crema/[0.07] blur-3xl [animation-direction:reverse]" />
@@ -113,7 +110,7 @@ export function HeroScrollWorld() {
           ))}
         </div>
 
-        {/* Hojas y mazorca de cacao en primer plano: la cámara se adentra en el cacaotal */}
+        {/* Hojas y fruto de cacao en primer plano: la cámara se adentra en el cacaotal */}
         <motion.div
           aria-hidden="true"
           style={{ x: leafLeftX, rotate: leafRotate, opacity: leafOpacity }}
@@ -167,96 +164,98 @@ function ScrollCue({ opacity }: { opacity: MotionValue<number> }) {
   );
 }
 
-function useFrameScrub(
-  canvasRef: React.RefObject<HTMLCanvasElement | null>,
-  progress: MotionValue<number>,
-  reduce: boolean,
-) {
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+/**
+ * Trayectoria viva de vuelo en el cacaotal:
+ * - Sobrevuela con gracia todo el espacio aéreo de la pantalla.
+ * - Evita la zona central donde está el logo/título ORIVIA.
+ * - Orientación y giro dinámico según la dirección de vuelo (scaleX).
+ * - Alabeo (roll) en curvas, cabeceo (pitch) y profundidad Z dinámica.
+ */
+function HeroSpiralDragonfly({ progress }: { progress: MotionValue<number> }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const visualRef = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+  const lastFacingRight = useRef(true);
 
-    const frames = Array.from({ length: FRAME_COUNT }, (_, i) => {
-      const img = new Image();
-      img.decoding = "async";
-      img.src = frameSrc(i);
-      return img;
-    });
-    const ready = (i: number) => frames[i].complete && frames[i].naturalWidth > 0;
+  useAnimationFrame((time) => {
+    if (!containerRef.current || !visualRef.current || reduce) return;
+    const t = time / 1000;
+    const p = progress.get();
 
-    let phase: "espera" | "intro" | "live" = "espera";
-    let introStart = 0;
-    let shown = reduce ? INTRO_END : 0;
-    let drawn = -1;
-    let raf = 0;
+    // Múltiples frecuencias para un vuelo orgánico e impredecible
+    const a1 = t * 0.38;
+    const a2 = t * 0.27;
+    const a3 = t * 0.17;
 
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.min(Math.round(canvas.offsetWidth * dpr), 2560);
-      canvas.height = Math.round((canvas.width * 9) / 16);
-      drawn = -1;
-    };
-    resize();
-    const observer = new ResizeObserver(resize);
-    observer.observe(canvas);
+    // Trayectoria amplia que recorre bordes y esquinas de la pantalla
+    let rawX =
+      50 +
+      30 * Math.cos(a1) +
+      10 * Math.sin(a2 * 1.7) +
+      4 * Math.cos(t * 2.1);
+    let rawY =
+      50 +
+      24 * Math.sin(a1 * 0.85) +
+      8 * Math.cos(a3 * 2.3) +
+      3 * Math.sin(t * 3.1);
 
-    // Dibuja el cuadro fraccional mezclando los dos cuadros vecinos.
-    const draw = (index: number) => {
-      if (Math.abs(index - drawn) < 0.002) return;
-      const a = Math.max(0, Math.min(FRAME_COUNT - 1, Math.floor(index)));
-      const b = Math.min(FRAME_COUNT - 1, a + 1);
-      const mix = index - a;
-      if (!ready(a)) return;
-      ctx.globalAlpha = 1;
-      ctx.drawImage(frames[a], 0, 0, canvas.width, canvas.height);
-      if (mix > 0.02 && ready(b)) {
-        ctx.globalAlpha = mix;
-        ctx.drawImage(frames[b], 0, 0, canvas.width, canvas.height);
-        ctx.globalAlpha = 1;
-      }
-      drawn = index;
-    };
+    // Con el scroll (p), la libélula desciende guiando hacia la siguiente sección
+    rawX += p * 12;
+    rawY += p * 35;
 
-    const tick = (now: number) => {
-      raf = requestAnimationFrame(tick);
-      const p = progress.get();
+    // Zona de exclusión suave alrededor del logo central (~50vw, ~46vh)
+    const logoCX = 50;
+    const logoCY = 46;
+    const dx = rawX - logoCX;
+    const dy = rawY - logoCY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const safeRadius = 24; // radio mínimo en unidades vw/vh alrededor del logo
 
-      if (phase === "espera") {
-        // Arranca cuando la parte de la intro está cargada.
-        if (!frames.slice(0, INTRO_END + 1).every((_, i) => ready(i))) return;
-        phase = reduce || p > 0.02 ? "live" : "intro";
-        introStart = now;
-      }
+    if (dist < safeRadius && dist > 0.1) {
+      const push = ((safeRadius - dist) / safeRadius) * 1.15;
+      rawX += (dx / dist) * safeRadius * push;
+      rawY += (dy / dist) * safeRadius * push;
+    }
 
-      if (phase === "intro") {
-        shown = ((now - introStart) / 1000) * FPS;
-        if (shown >= INTRO_END || p > 0.02) {
-          shown = Math.min(shown, INTRO_END);
-          phase = "live";
-        }
-        draw(shown);
-        return;
-      }
+    // Mantener dentro de la pantalla visible
+    const x = Math.max(4, Math.min(96, rawX));
+    const y = Math.max(4, Math.min(92, rawY));
 
-      if (p >= 0.999) return; // hero cubierto: no gastar trabajo
+    // Derivadas para dirección del vuelo
+    const vx =
+      -30 * Math.sin(a1) * 0.38 +
+      10 * 1.7 * Math.cos(a2 * 1.7) * 0.27 +
+      -4 * 2.1 * Math.sin(t * 2.1);
+    const vy =
+      24 * 0.85 * Math.cos(a1 * 0.85) * 0.38 +
+      -8 * 2.3 * Math.sin(a3 * 2.3) * 0.17 +
+      3 * 3.1 * Math.cos(t * 3.1);
 
-      const scrub = Math.min(1, p * 3);
-      const target =
-        scrub > 0.002
-          ? INTRO_END + easeInOut(scrub) * (SCRUB_END - INTRO_END)
-          : reduce
-            ? INTRO_END
-            : IDLE_MID + IDLE_AMP * Math.sin((now - introStart) / 520);
+    if (Math.abs(vx) > 0.6) {
+      lastFacingRight.current = vx > 0;
+    }
 
-      shown += (target - shown) * 0.14;
-      draw(shown);
-    };
-    raf = requestAnimationFrame(tick);
+    // Inclinación biomecánica 3D
+    const facingMult = lastFacingRight.current ? 1 : -1;
+    const tilt = Math.max(-16, Math.min(16, vy * 1.3 * facingMult));
+    const pitch = Math.max(-12, Math.min(12, -vy * 0.9));
+    const scale = 0.92 + 0.16 * Math.sin(a1);
 
-    return () => {
-      cancelAnimationFrame(raf);
-      observer.disconnect();
-    };
-  }, [canvasRef, progress, reduce]);
+    containerRef.current.style.left = `${x}vw`;
+    containerRef.current.style.top = `${y}vh`;
+    containerRef.current.style.transform = "translate(-50%, -50%)";
+
+    visualRef.current.style.transform = `scale(${scale}) scaleX(${facingMult}) rotate(${tilt}deg) rotateX(${pitch}deg)`;
+  });
+
+  return (
+    <div
+      ref={containerRef}
+      className="pointer-events-none fixed top-1/2 left-1/2 z-20 w-24 sm:w-36 lg:w-44 -translate-x-1/2 -translate-y-1/2 transform-gpu"
+    >
+      <div ref={visualRef} className="w-full transition-transform duration-200 ease-out origin-center">
+        <RealisticDragonfly className="w-full" wingSpeed={0.048} glow />
+      </div>
+    </div>
+  );
 }

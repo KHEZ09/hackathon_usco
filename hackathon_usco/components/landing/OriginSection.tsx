@@ -7,8 +7,8 @@ import { Eyebrow, Reveal } from "./Reveal";
 import { cn } from "@/lib/cn";
 
 const STORIES = [
-  { img: "/media/cosecha-mano.jpg", tag: "Cosecha", title: "Cosecha a mano, mazorca por mazorca", lugar: "Rivera, Huila", lote: "CAC001" },
-  { img: "/media/mazorcas-arbol.jpg", tag: "Cultivo", title: "Mazorcas que nacen del tronco", lugar: "Algeciras, Huila", lote: "CAC003" },
+  { img: "/media/cosecha-mano.jpg", tag: "Cosecha", title: "Cosecha a mano, fruto por fruto de cacao", lugar: "Rivera, Huila", lote: "CAC001" },
+  { img: "/media/mazorcas-arbol.jpg", tag: "Cultivo", title: "Frutos de cacao que nacen del tronco", lugar: "Algeciras, Huila", lote: "CAC003" },
   { img: "/media/paisaje-cacao.jpg", tag: "Origen", title: "Cacaotales entre la neblina", lugar: "Campoalegre, Huila", lote: "CAC002" },
   { img: "/media/mazorca-abierta.jpg", tag: "Beneficio", title: "Granos frescos listos para fermentar", lugar: "Rivera, Huila", lote: "CAC001" },
   { img: "/media/cacaotal.jpg", tag: "Territorio", title: "Sombra, montaña y suelo vivo", lugar: "Algeciras, Huila", lote: "CAC003" },
@@ -36,13 +36,13 @@ export function OriginSection() {
   }, [paused, reduce]);
 
   return (
-    <section id="origen" className="relative mx-auto grid max-w-6xl scroll-mt-24 items-center gap-12 px-5 pt-40 pb-24 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:pt-48">
+    <section id="origen" className="relative mx-auto grid max-w-6xl scroll-mt-6 sm:scroll-mt-8 lg:scroll-mt-10 items-center gap-10 px-5 pt-20 pb-20 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:pt-24 lg:pb-24">
       <Reveal>
         <Eyebrow>Cacao del Huila</Eyebrow>
-        <h2 className="mt-5 text-4xl leading-[1.08] font-semibold tracking-tight text-ink sm:text-5xl">
+        <h2 className="mt-5 max-w-sm text-4xl leading-[1.08] font-semibold tracking-tight text-ink sm:text-5xl">
           Del origen al mundo, <span className="font-light text-tierra">lote por lote.</span>
         </h2>
-        <p className="mt-6 max-w-md text-[0.95rem] leading-relaxed text-ink-soft">
+        <p className="mt-6 max-w-[330px] sm:max-w-[350px] lg:max-w-[320px] xl:max-w-[350px] text-[0.93rem] leading-relaxed text-ink-soft">
           ORIVIA une la recepción, la fermentación, el secado, el inventario y los costos de la asociación cacaotera en una sola
           historia: clara para el operador, controlable para el administrador y verificable para quien compra.
         </p>

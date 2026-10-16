@@ -10,7 +10,7 @@ import {
   useTransform,
   type MotionValue,
 } from "framer-motion";
-import { Dragonfly } from "./Dragonfly";
+import { RealisticDragonfly } from "./RealisticDragonfly";
 import { CacaoBean, CacaoLeaf, CacaoPod, useWind } from "./Botanica";
 
 // Ruta de la libélula: se detiene en los márgenes y cruza rápido entre secciones.
@@ -65,13 +65,13 @@ export function ScrollCompanion({ targetRef }: { targetRef: RefObject<HTMLElemen
           <SideCluster wind={wind} />
         </motion.div>
         <motion.div style={{ y: rightY }} className="absolute top-[42%] -right-28 hidden w-80 -scale-x-100 xl:block">
-          <SideCluster wind={wind} conMazorca />
+          <SideCluster wind={wind} conCacao />
         </motion.div>
 
         <motion.div style={{ x, y }} className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2">
           <div className="animate-hover">
             <div className="transition-transform duration-300" style={{ transform: facingLeft ? "scaleX(-1)" : "none" }}>
-              <Dragonfly className="w-16 drop-shadow-[0_10px_14px_rgba(12,29,21,0.3)] sm:w-24" />
+              <RealisticDragonfly className="w-20 drop-shadow-[0_12px_20px_rgba(12,29,21,0.45)] sm:w-28" wingSpeed={0.05} />
             </div>
           </div>
         </motion.div>
@@ -94,11 +94,11 @@ function Bean({ bean, progress }: { bean: (typeof BEANS)[number]; progress: Moti
   );
 }
 
-function SideCluster({ wind, conMazorca }: { wind?: MotionValue<number>; conMazorca?: boolean }) {
+function SideCluster({ wind, conCacao }: { wind?: MotionValue<number>; conCacao?: boolean }) {
   const fallback = useSpring(0);
   const w = wind ?? fallback;
   const hojas = useTransform(w, (v) => v * 1.2);
-  const mazorca = useTransform(w, (v) => -v * 2);
+  const cacao = useTransform(w, (v) => -v * 2);
   return (
     <div className="relative blur-[3px]">
       <motion.div style={{ rotate: hojas }} className="origin-left">
@@ -112,8 +112,8 @@ function SideCluster({ wind, conMazorca }: { wind?: MotionValue<number>; conMazo
           <CacaoLeaf tone="brote" className="w-full" />
         </div>
       </motion.div>
-      {conMazorca && (
-        <motion.div style={{ rotate: mazorca }} className="absolute top-8 left-[46%] w-16 origin-top">
+      {conCacao && (
+        <motion.div style={{ rotate: cacao }} className="absolute top-8 left-[46%] w-16 origin-top">
           <CacaoPod tone="amarilla" className="w-full drop-shadow-[0_16px_16px_rgba(0,0,0,0.35)]" />
         </motion.div>
       )}

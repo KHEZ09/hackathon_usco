@@ -12,7 +12,7 @@ const POD_FRAMES = 35;
 const podSrc = (i: number) => `/media/mazorca/p${String(i).padStart(3, "0")}.jpg`;
 
 const PASOS = [
-  { icon: Leaf, titulo: "Finca La Esperanza", detalle: "Cosecha de mazorcas maduras · Rivera" },
+  { icon: Leaf, titulo: "Finca La Esperanza", detalle: "Cosecha de cacao maduro · Rivera" },
   { icon: Timer, titulo: "Fermentación", detalle: "6 días en cajones de madera" },
   { icon: Sun, titulo: "Secado", detalle: "Secado solar hasta 7% de humedad" },
   { icon: Package, titulo: "Empaque", detalle: "Lote sellado con su huella SHA-256" },
@@ -21,7 +21,7 @@ const PASOS = [
 
 const noop = () => () => {};
 
-/** Sección "Del grano al producto": la mazorca se abre con el scroll y se encienden las etapas. */
+/** Sección "Del grano al producto": el cacao se abre con el scroll y se encienden las etapas. */
 export function PodSection() {
   const ref = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -52,7 +52,7 @@ export function PodSection() {
           {/* Etapas */}
           <div className="lg:order-1">
             <p className="text-[0.65rem] font-semibold tracking-[0.32em] text-ambar uppercase">Del grano al producto</p>
-            <h2 className="mt-3 max-w-xs text-2xl leading-tight font-semibold sm:text-4xl">Una mazorca, cada etapa a la vista.</h2>
+            <h2 className="mt-3 max-w-xs text-2xl leading-tight font-semibold sm:text-4xl">Cada fruto de cacao, su historia a la vista.</h2>
             <ol className="mt-6 hidden space-y-3 lg:block">
               {PASOS.map((s, i) => (
                 <li key={s.titulo} className={cn("flex items-center gap-3 transition-all duration-500", i <= paso ? "opacity-100" : "opacity-30")}>
@@ -73,11 +73,11 @@ export function PodSection() {
             </ol>
           </div>
 
-          {/* Mazorca */}
+          {/* Cacao */}
           <motion.div style={{ scale: podScale, rotate: podRotate }} className="relative mx-auto h-full max-h-[78svh] w-full max-w-[460px] lg:order-2 lg:h-[82svh]">
             <canvas
               ref={canvasRef}
-              aria-label="Mazorca de cacao que se abre mostrando sus granos"
+              aria-label="Fruto de cacao que se abre mostrando sus granos"
               role="img"
               className="absolute inset-0 size-full"
             />

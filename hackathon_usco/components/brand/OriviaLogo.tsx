@@ -14,7 +14,7 @@ const BEANS: Array<[number, number, number]> = [
   [68, 70, -28], [74.5, 80, 24], [67.5, 90, -24], [75, 100, 22], [68, 110, -22], [74.5, 120, 20], [68.5, 130, -18], [73, 139, 14],
 ];
 
-/** Isotipo ORIVIA: montaña sobre una mazorca de cacao abierta que muestra sus granos. */
+/** Isotipo ORIVIA: montaña sobre un fruto de cacao abierto que muestra sus granos. */
 export function OriviaIsotipo({ className, tone = "claro", title = "ORIVIA", glow = true }: IsotipoProps) {
   const id = useId();
   const crema = tone === "claro" ? "#EFE3CF" : "#E9D8BC";

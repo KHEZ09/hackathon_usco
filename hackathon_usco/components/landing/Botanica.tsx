@@ -72,7 +72,7 @@ const POD: Record<PodTone, [string, string, string]> = {
   amarilla: ["#f6c35a", "#d0821f", "#7a3d10"],
 };
 
-/** Mazorca de cacao con surcos longitudinales, textura rugosa y brillo. Vertical, pedúnculo arriba. */
+/** Fruto de cacao con surcos longitudinales, textura rugosa y brillo. Vertical, pedúnculo arriba. */
 export function CacaoPod({ className, tone = "roja" }: { className?: string; tone?: PodTone }) {
   const id = useId();
   const [light, mid, dark] = POD[tone];
@@ -145,8 +145,8 @@ type BranchProps = {
 };
 
 /**
- * Rama de cacao con hojas y mazorcas colgando del tallo (cauliflora).
- * Hojas y mazorcas oscilan con su propio ritmo y responden al viento del scroll.
+ * Rama de cacao con hojas y frutos de cacao colgando del tallo (cauliflora).
+ * Hojas y frutos oscilan con su propio ritmo y responden al viento del scroll.
  */
 export function CacaoBranch({ className, wind, lado = "izquierda" }: BranchProps) {
   const id = useId();
@@ -154,7 +154,7 @@ export function CacaoBranch({ className, wind, lado = "izquierda" }: BranchProps
   const w = wind ?? fallback;
   const rama = useTransform(w, (v) => v * 0.35);
   const hojas = useTransform(w, (v) => v * 1.1);
-  const mazorcas = useTransform(w, (v) => -v * 1.6);
+  const cacaos = useTransform(w, (v) => -v * 1.6);
 
   const leaves: Array<{ x: number; y: number; r: number; s: number; tone: LeafTone; d: number }> = [
     { x: 40, y: 150, r: -32, s: 0.9, tone: "profundo", d: 0 },
@@ -207,7 +207,7 @@ export function CacaoBranch({ className, wind, lado = "izquierda" }: BranchProps
       {pods.map((p, i) => (
         <motion.div
           key={i}
-          style={{ rotate: mazorcas, left: `${(p.x / 600) * 100}%`, top: `${(p.y / 300) * 100}%`, width: `${13 * p.s}%` }}
+          style={{ rotate: cacaos, left: `${(p.x / 600) * 100}%`, top: `${(p.y / 300) * 100}%`, width: `${13 * p.s}%` }}
           className="absolute origin-top -translate-x-1/2"
         >
           <div className="origin-top animate-sway" style={{ animationDelay: `${-p.d}s`, animationDuration: "6.5s" }}>
