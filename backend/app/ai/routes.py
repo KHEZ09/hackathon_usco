@@ -17,9 +17,11 @@ def _repository() -> OrderRepository:
     return current_app.extensions["orivia_order_repository"]
 
 
-def _order_facts(order_id: str) -> tuple[dict[str, Any] | None, tuple[Any, int] | None]:
+def _order_facts(
+    order_id: str, *, public: bool = False
+) -> tuple[dict[str, Any] | None, tuple[Any, int] | None]:
     order = _repository().get(order_id)
-    if order is None or not can_read_order(order, audit=True):
+    if order is None or not can_read_order(order, audit=not public, public=public):
         return None, (jsonify({"error": "ORDER_NOT_FOUND"}), 404)
     return (
         {
@@ -70,7 +72,7 @@ def _response(insight: AiInsight, facts: dict[str, Any]) -> tuple[Any, int]:
 @require_access_token
 @require_permissions("orders:read")
 def order_summary(order_id: str):
-    facts, error = _order_facts(order_id)
+    facts, error = _order_facts(order_id, public=True)
     if error:
         return error
     return _response(_insight(facts, "summary"), facts)
@@ -90,7 +92,11 @@ def order_audit_insight(order_id: str):
 @require_access_token
 @require_permissions("orders:read")
 def analytics():
-    orders = [order for order in _repository().list() if can_read_order(order)]
+    orders = [
+        order
+        for order in _repository().list()
+        if can_read_order(order, public=True)
+    ]
     facts = {
         "order_count": len(orders),
         "statuses": sorted({order.status for order in orders}),

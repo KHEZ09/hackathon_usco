@@ -50,7 +50,7 @@ def test_ai_summary_audit_and_analytics_work_without_ollama():
             app,
             subject="viewer-1",
             role="viewer",
-            permissions=["orders:read"],
+            permissions=["orders:read", "orders:read:public"],
         ),
     )
     audit = client.post(
@@ -68,7 +68,7 @@ def test_ai_summary_audit_and_analytics_work_without_ollama():
             app,
             subject="viewer-1",
             role="viewer",
-            permissions=["orders:read"],
+            permissions=["orders:read", "orders:read:public"],
         ),
     )
 
@@ -124,7 +124,7 @@ def test_ai_falls_back_to_local_rules_when_ollama_is_unavailable(monkeypatch):
             app,
             subject="viewer-fallback",
             role="viewer",
-            permissions=["orders:read"],
+            permissions=["orders:read", "orders:read:public"],
         ),
     )
 

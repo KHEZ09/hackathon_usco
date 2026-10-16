@@ -35,6 +35,7 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
     "viewer": frozenset(
         {
             "orders:read",
+            "orders:read:public",
             "tracking:read",
             "blockchain:read",
             "cluster:read",
