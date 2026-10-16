@@ -133,9 +133,9 @@
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-line: var(--line);
-  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
-  --font-script: var(--font-allura), cursive;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: Montserrat, ui-sans-serif, system-ui, sans-serif;
+  --font-script: Allura, "Brush Script MT", cursive;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 html {
@@ -145,6 +145,26 @@ html {
 body {
   background: var(--surface);
   color: var(--ink);
+}
+
+/*
+ * Static-export fallback. Framer Motion serializes initial opacity/transform
+ * values into the HTML. If the JS bundle is delayed or blocked, the page must
+ * still be readable; once /reveal.js runs, normal animation styles take over.
+ */
+html:not(.orivia-js-ready) [style*="opacity:0"],
+html:not(.orivia-js-ready) [style*="opacity: 0"] {
+  opacity: 1 !important;
+}
+
+html:not(.orivia-js-ready) [style*="transform:"],
+html:not(.orivia-js-ready) [style*="transform: "] {
+  transform: none !important;
+}
+
+html:not(.orivia-js-ready) [style*="filter:"],
+html:not(.orivia-js-ready) [style*="filter: "] {
+  filter: none !important;
 }
 
 ::selection {

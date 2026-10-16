@@ -6,7 +6,7 @@ oriviahealth.tobaru.xyz {
         X-Frame-Options "DENY"
         Referrer-Policy "no-referrer"
         Permissions-Policy "camera=(), microphone=(), geolocation=()"
-        Content-Security-Policy "default-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
+        Content-Security-Policy "default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
         Cache-Control "no-store"
     }
 
@@ -19,8 +19,8 @@ oriviahealth.tobaru.xyz {
     }
 }
 
-# Frontend estático de ORIVIA. Caddy sirve el export de Next.js sin Node en
-# producción y gestiona el certificado TLS automáticamente para este dominio.
+# Frontend Node/Next de ORIVIA. Caddy publica el proceso privado de Next en
+# localhost:3000 y gestiona el certificado TLS automáticamente para este dominio.
 orivia.tobaru.xyz {
     encode gzip
 
@@ -29,12 +29,11 @@ orivia.tobaru.xyz {
         X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
         Permissions-Policy "camera=(), microphone=(), geolocation=()"
-        Content-Security-Policy "default-src 'self'; connect-src 'self' https://oriviaurlapi.tobaru.xyz; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
+        Content-Security-Policy "default-src 'self'; connect-src 'self' https://oriviaurlapi.tobaru.xyz; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
         Strict-Transport-Security "max-age=31536000; includeSubDomains"
     }
 
-    root * /srv
-    file_server
+    reverse_proxy frontend:3000
 }
 
 # API oficial de ORIVIA. Solo se enrutan salud y rutas versionadas; el resto

@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Hostinger sirve el frontend como archivos estáticos. Todas las rutas
-  // públicas y de panel tienen su HTML generado en `out/`.
-  output: "export",
+  // Producción en ORIVIA corre como servidor Node/Next en localhost:3000.
+  output: "standalone",
   trailingSlash: true,
   devIndicators: false,
   turbopack: {

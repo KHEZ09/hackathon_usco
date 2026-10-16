@@ -47,7 +47,29 @@ services:
       - caddy_config:/config
     depends_on:
       - api
+      - frontend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - orivia_private
+
+  frontend:
+    build:
+      context: ../../frontend
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      NEXT_PUBLIC_ORIVIA_API_URL: https://oriviaurlapi.tobaru.xyz/api/v1
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
     security_opt:
       - no-new-privileges:true
     networks:
