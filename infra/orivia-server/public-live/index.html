@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ORIVIA · Salud de la red</title>
+    <meta name="description" content="Panel público de operación y documentación de la API de ORIVIA." />
+    <title>ORIVIA API Control · Salud y endpoints</title>
     <style>
       :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; background: #10251d; color: #f7f0df; }
       * { box-sizing: border-box; }
@@ -34,7 +35,30 @@
       .muted { color: #91aa99; font-size: .78rem; }
       .notice { margin-top: 12px; padding: 13px 16px; border-radius: 14px; background: #e5bb6918; color: #ead8af; font-size: .78rem; line-height: 1.5; }
       code { color: #e5bb69; }
+      .api-docs { margin-top: 12px; }
+      .api-docs-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+      .api-docs-header p { max-width: 680px; margin: 6px 0 0; color: #91aa99; font-size: .78rem; line-height: 1.5; }
+      .api-base { padding: 8px 11px; border: 1px solid #ffffff18; border-radius: 10px; color: #7ce3aa; background: #ffffff09; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .73rem; white-space: nowrap; }
+      .endpoint-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .endpoint-group { overflow: hidden; border: 1px solid #ffffff12; border-radius: 15px; background: #ffffff07; }
+      .endpoint-group summary { cursor: pointer; padding: 13px 14px; color: #f7f0df; font-size: .82rem; font-weight: 800; list-style-position: inside; }
+      .endpoint-group summary::marker { color: #e5bb69; }
+      .endpoint-table { width: calc(100% - 28px); margin: 0 14px 12px; font-size: .72rem; }
+      .endpoint-table td, .endpoint-table th { padding: 8px 0; }
+      .endpoint-table th { font-size: .61rem; }
+      .method { display: inline-block; min-width: 45px; padding: 3px 5px; border-radius: 5px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .62rem; font-weight: 800; text-align: center; }
+      .method.get { color: #7ce3aa; background: #7ce3aa18; }
+      .method.post { color: #8db9ff; background: #8db9ff18; }
+      .method.patch { color: #e5bb69; background: #e5bb6918; }
+      .method.delete { color: #ef8377; background: #ef837718; }
+      .api-path { color: #d7e3d6; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+      .api-auth { color: #91aa99; white-space: nowrap; }
+      .integration { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+      .integration pre { overflow: auto; margin: 12px 0 0; padding: 14px; border: 1px solid #ffffff12; border-radius: 12px; color: #d7e3d6; background: #07130e; font-size: .73rem; line-height: 1.55; }
+      .checklist { margin: 12px 0 0; padding-left: 18px; color: #b8cabb; font-size: .78rem; line-height: 1.65; }
+      .checklist li::marker { color: #7ce3aa; }
       @media (max-width: 760px) { header { flex-direction: column; } .cards, .grid { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
+      @media (max-width: 760px) { .endpoint-groups, .integration { grid-template-columns: 1fr; } .api-docs-header { flex-direction: column; } .api-base { white-space: normal; overflow-wrap: anywhere; } }
       @media (max-width: 460px) { main { width: min(100% - 22px, 1120px); padding-top: 24px; } .cards { grid-template-columns: 1fr 1fr; } .card { padding: 15px; } .value { font-size: 1.55rem; } }
     </style>
   </head>
@@ -42,9 +66,9 @@
     <main>
       <header>
         <div>
-          <p class="eyebrow">ORIVIA · observabilidad pública</p>
+          <p class="eyebrow">ORIVIA · API control · observabilidad pública</p>
           <h1>Salud de la red</h1>
-          <p class="intro">Estado agregado de trazabilidad, pedidos, clúster y anclajes. Se actualiza automáticamente sin publicar datos personales ni credenciales.</p>
+          <p class="intro">Estado agregado de trazabilidad, pedidos, clúster y anclajes, junto con el mapa operativo de la API. Se actualiza automáticamente sin publicar datos personales, payloads privados ni credenciales.</p>
         </div>
         <div class="live" aria-live="polite"><span id="dot" class="dot"></span><span id="connection">Conectando…</span></div>
       </header>
@@ -54,6 +78,67 @@
         <section class="panel"><h2>Estados actuales</h2><div id="states" class="muted">Cargando…</div></section>
         <section class="panel"><h2>Últimos cambios observados</h2><table><thead><tr><th>Origen</th><th>Evento</th><th>Hora</th></tr></thead><tbody id="changes"><tr><td colspan="3" class="muted">Cargando…</td></tr></tbody></table></section>
       </div>
+
+      <section class="panel api-docs" aria-labelledby="api-docs-title">
+        <div class="api-docs-header">
+          <div><h2 id="api-docs-title">Gestor público de la API</h2><p>Consulta rápida de rutas, permisos y propósito. Las rutas privadas requieren un Bearer token válido; este panel nunca ejecuta operaciones de escritura.</p></div>
+          <code class="api-base">https://oriviaurlapi.tobaru.xyz/api/v1</code>
+        </div>
+        <div class="endpoint-groups">
+          <details class="endpoint-group" open><summary>Salud y sesión</summary><table class="endpoint-table"><thead><tr><th>Método</th><th>Ruta</th><th>Acceso</th></tr></thead><tbody>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/health</code></td><td class="api-auth">Público</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/ready</code></td><td class="api-auth">Público</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/auth/login</code></td><td class="api-auth">Público</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/auth/me</code></td><td class="api-auth">Bearer</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/auth/refresh</code></td><td class="api-auth">Refresh</td></tr>
+          </tbody></table></details>
+          <details class="endpoint-group" open><summary>Pedidos y auditoría</summary><table class="endpoint-table"><thead><tr><th>Método</th><th>Ruta</th><th>Permiso</th></tr></thead><tbody>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/orders</code></td><td class="api-auth">orders:create</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/orders · /orders/{id}</code></td><td class="api-auth">orders:read</td></tr>
+            <tr><td><span class="method patch">PATCH</span></td><td><code class="api-path">/orders/{id}/status</code></td><td class="api-auth">orders:update</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/orders/{id}/timeline</code></td><td class="api-auth">tracking:read</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/audit/orders/{id}[/verify]</code></td><td class="api-auth">audit:read</td></tr>
+          </tbody></table></details>
+          <details class="endpoint-group"><summary>Blockchain e IA</summary><table class="endpoint-table"><thead><tr><th>Método</th><th>Ruta</th><th>Permiso</th></tr></thead><tbody>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/blockchain/anchors</code></td><td class="api-auth">blockchain:anchor</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/blockchain/anchors/{hash}</code></td><td class="api-auth">blockchain:read</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/ai/orders/{id}/summary</code></td><td class="api-auth">orders:read</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/ai/orders/{id}/audit</code></td><td class="api-auth">audit:read</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/ai/analytics</code></td><td class="api-auth">orders:read</td></tr>
+          </tbody></table></details>
+          <details class="endpoint-group"><summary>Clúster y lotes</summary><table class="endpoint-table"><thead><tr><th>Método</th><th>Ruta</th><th>Acceso</th></tr></thead><tbody>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/public/cluster/actors · /needs</code></td><td class="api-auth">Público</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/cluster/actors · /needs</code></td><td class="api-auth">cluster:read</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/cluster/needs</code></td><td class="api-auth">needs:create</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/cluster/connections</code></td><td class="api-auth">connections:create</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/cluster/actors/{id}/trust</code></td><td class="api-auth">trust:read</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/public/lots/{id}</code></td><td class="api-auth">Público</td></tr>
+            <tr><td><span class="method patch">PATCH</span></td><td><code class="api-path">/lots/{id}/status</code></td><td class="api-auth">lots:status</td></tr>
+          </tbody></table></details>
+          <details class="endpoint-group"><summary>Catálogo y usuarios</summary><table class="endpoint-table"><thead><tr><th>Método</th><th>Ruta</th><th>Acceso</th></tr></thead><tbody>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/catalog/products · /traceability</code></td><td class="api-auth">Público</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/suppliers · /customers</code></td><td class="api-auth">catalog:read</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/users · /users/{id}</code></td><td class="api-auth">ADMIN/propio</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/users</code></td><td class="api-auth">ADMIN</td></tr>
+            <tr><td><span class="method patch">PATCH</span></td><td><code class="api-path">/users/{id}</code></td><td class="api-auth">ADMIN/propio</td></tr>
+            <tr><td><span class="method delete">DELETE</span></td><td><code class="api-path">/users/{id}</code></td><td class="api-auth">ADMIN</td></tr>
+          </tbody></table></details>
+          <details class="endpoint-group"><summary>Contabilidad e integraciones</summary><table class="endpoint-table"><thead><tr><th>Método</th><th>Ruta</th><th>Permiso</th></tr></thead><tbody>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/accounting/inventory · /costs</code></td><td class="api-auth">accounting:read</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/accounting/alerts · /margins</code></td><td class="api-auth">accounting:read</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/accounting/lots/{id}/cost</code></td><td class="api-auth">accounting:write</td></tr>
+            <tr><td><span class="method get">GET</span></td><td><code class="api-path">/reports/overview</code></td><td class="api-auth">reports:read</td></tr>
+            <tr><td><span class="method post">POST</span></td><td><code class="api-path">/integrations/{provider}/sync</code></td><td class="api-auth">integrations:sync</td></tr>
+          </tbody></table></details>
+        </div>
+      </section>
+
+      <section class="integration">
+        <article class="panel"><h2>Integración rápida</h2><pre>NEXT_PUBLIC_ORIVIA_API_URL=https://oriviaurlapi.tobaru.xyz/api/v1
+Authorization: Bearer &lt;access_token&gt;
+Content-Type: application/json</pre></article>
+        <article class="panel"><h2>Reglas de seguridad</h2><ul class="checklist"><li>El frontend no guarda secretos ni llama PostgreSQL.</li><li>Un 401 limpia sesión; 403 significa permiso insuficiente.</li><li>La IA es de solo lectura y blockchain reporta evidencia verificable.</li><li>El refresh token se rota y el anterior deja de ser válido.</li></ul></article>
+      </section>
       <div id="notice" class="notice" role="status">La vista se refresca cada 5 segundos. Última revisión: —</div>
     </main>
     <script>
