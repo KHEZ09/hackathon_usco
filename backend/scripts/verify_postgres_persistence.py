@@ -5,7 +5,12 @@ from __future__ import annotations
 import json
 import os
 import sys
+from pathlib import Path
 from uuid import UUID, uuid4
+
+# Running this file directly places /app/scripts first on sys.path. Add the
+# application root explicitly so the same command works in the production image.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app import create_app
 from app.auth_tokens.jwt_service import TokenService
