@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify
 
+from ..orders.access import can_read_order
 from ..orders.repository import OrderRepository, audit_to_dict
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
-from ..orders.access import can_read_order
 
 audit_bp = Blueprint("audit", __name__)
 
