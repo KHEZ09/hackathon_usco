@@ -25,7 +25,7 @@ import { Button, Card, CardTitle, EstadoBadge, Field, Input, Kpi, Select, Table,
 import { PanelTabs } from "../PanelTabs";
 import { ClusterView } from "../cluster/ClusterView";
 import { cn } from "@/lib/cn";
-import { ApiOrder, createLot, createOrder, hasApiSession, listOrders, transformLot, transitionOrder } from "@/lib/orivia-api";
+import { ApiOrder, createLot, createOrder, hasApiSession, listLots, listOrders, transformLot, transitionOrder } from "@/lib/orivia-api";
 import { sincronizarConBackend, useSincronizacionBackend } from "@/lib/backend-sync";
 import { mensajeError } from "@/lib/errores-api";
 import { SyncBadge } from "../SyncBadge";
@@ -61,6 +61,7 @@ function OperacionOperador() {
       </div>
 
       <ApiOrdersCard />
+      <ApiLotsCard />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="min-w-0 space-y-6">
@@ -86,6 +87,62 @@ function OperacionOperador() {
 
       <RegistroCard />
     </div>
+  );
+}
+
+function ApiLotsCard() {
+  const [lots, setLots] = useState<Record<string, unknown>[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!hasApiSession()) {
+      setLoading(false);
+      setError("Inicia sesión con una cuenta del backend para consultar lotes persistidos.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      setLots(await listLots());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudieron cargar los lotes persistidos.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void refresh(), 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
+
+  return (
+    <Card className="border-ambar/25 bg-ambar/[0.035]">
+      <CardTitle
+        icon={<Boxes className="size-4" />}
+        title="Lotes persistidos en PostgreSQL"
+        hint="Vista real del backend: inventario, merma, historial íntegro y certificados disponibles."
+        action={<Button variant="secundario" onClick={() => void refresh()} disabled={loading}><RefreshCw className={cn("size-3.5", loading && "animate-spin")} /> Actualizar</Button>}
+      />
+      {error && <p className="mb-3 rounded-xl bg-cereza/10 px-3.5 py-2.5 text-xs text-cereza">{error}</p>}
+      <Table head={["Lote", "Origen", "Disponible", "Estado", "Historial", "Eventos / anclajes"]} empty={!loading && lots.length === 0}>
+        {lots.map((lot) => {
+          const timeline = Array.isArray(lot.timeline) ? lot.timeline as Record<string, unknown>[] : [];
+          const anchored = timeline.filter((event) => Boolean(event.blockchain)).length;
+          return (
+            <tr key={String(lot.id)}>
+              <Td className="font-mono text-[0.68rem] font-semibold">{String(lot.id ?? "-")}</Td>
+              <Td>{String(lot.origin ?? "-")}</Td>
+              <Td>{String(lot.available_kg ?? "-")} / {String(lot.received_kg ?? "-")} kg</Td>
+              <Td><EstadoBadge estado={({ PENDING: "PENDIENTE", LIBERATED: "LIBERADO", BLOCKED: "BLOQUEADO" } as Record<string, "PENDIENTE" | "LIBERADO" | "BLOQUEADO">)[String(lot.status ?? "PENDING")] ?? "PENDIENTE"} /></Td>
+              <Td>{lot.history_verified ? "Íntegro" : "Revisar"}</Td>
+              <Td>{timeline.length} / {anchored} blockchain</Td>
+            </tr>
+          );
+        })}
+      </Table>
+    </Card>
   );
 }
 
@@ -221,6 +278,12 @@ function RecepcionForm() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!hasApiSession() && process.env.NEXT_PUBLIC_ORIVIA_DEMO_MODE !== "true") {
+      const message = "La operación real requiere iniciar sesión en el backend.";
+      setError(message);
+      notify("error", "Sesión requerida", message);
+      return;
+    }
     const id = form.id || sugerido;
     setSaving(true);
     if (hasApiSession()) {
@@ -319,6 +382,13 @@ function TransformacionForm() {
 
   const enviar = async (payload: Payload, reenvio = false) => {
     setSaving(true);
+    if (!hasApiSession() && process.env.NEXT_PUBLIC_ORIVIA_DEMO_MODE !== "true") {
+      const message = "La operación real requiere iniciar sesión en el backend.";
+      setError(message);
+      notify("error", "Sesión requerida", message);
+      setSaving(false);
+      return;
+    }
     if (hasApiSession()) {
       try {
         const remote = await transformLot({

@@ -134,13 +134,16 @@ class InMemoryLotRepository:
         return self._lots.get(lot_id)
 
     def list(self, *, origin: str | None = None, status: str | None = None) -> list[LotRecord]:
-        """Lotes filtrados por origen (contiene, sin distinguir mayúsculas) y estado (RF11)."""
-        lots = sorted(self._lots.values(), key=lambda lot: lot.created_at)
-        if origin:
-            lots = [lot for lot in lots if origin.casefold() in lot.origin.casefold()]
-        if status:
-            lots = [lot for lot in lots if lot.status == status.upper()]
-        return lots
+        """Return a stable, optionally filtered snapshot for operational dashboards."""
+        normalized = status.strip().upper() if status else None
+        normalized_origin = origin.casefold() if origin else None
+        with self._lock:
+            lots = list(self._lots.values())
+        if normalized_origin:
+            lots = [lot for lot in lots if normalized_origin in lot.origin.casefold()]
+        if normalized:
+            lots = [lot for lot in lots if lot.status == normalized]
+        return sorted(lots, key=lambda lot: (lot.created_at, lot.lot_id), reverse=True)
 
     def create(
         self,

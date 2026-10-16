@@ -2,6 +2,16 @@
 
 Repositorio del proyecto ORIVIA para la hackatón de agroindustria de la USCO.
 
+## Entrega
+
+El paquete oficial E01-E10 está en `documents/`, con la entrada principal en
+`ENTREGA.md`. Las fuentes de código son `backend/`, `frontend/` e `infra/`.
+
+La API persiste lotes en PostgreSQL, encadena eventos con hashes, expone una
+proyección pública para QR y usa Polygon Amoy cuando la wallet tiene POL. Si el
+RPC no está disponible, el anclaje durable local permanece auditable y la API no
+inventa un certificado EVM.
+
 ## Documentación de trabajo
 
 - `PLAN_HACKATON_ORIVIA.md`: plan general, prioridades y criterios de demo.

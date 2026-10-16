@@ -288,6 +288,12 @@ export async function getLot(lotId: string) {
   return request<Record<string, unknown>>(`/lots/${encodeURIComponent(lotId)}`);
 }
 
+export async function listLots(status?: "PENDING" | "LIBERATED" | "BLOCKED") {
+  const suffix = status ? `?status=${encodeURIComponent(status)}` : "";
+  const response = await request<{ data: Record<string, unknown>[] }>(`/lots${suffix}`);
+  return response.data;
+}
+
 export async function getLotTimeline(lotId: string) {
   return request<Record<string, unknown>>(`/lots/${encodeURIComponent(lotId)}/timeline`);
 }

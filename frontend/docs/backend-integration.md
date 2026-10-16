@@ -45,21 +45,20 @@ conectar el frontend directamente a PostgreSQL.
 `lib/orivia-api.ts` ofrece funciones para pedidos, lotes, línea de tiempo,
 clúster, analítica/IA, anclajes blockchain, registro y catálogo. La existencia
 de una función cliente no significa que toda la interfaz use ese endpoint.
-Recepción, transformación, estado de lotes y parte de la auditoría operativa
-siguen gestionándose en el store local (`localStorage`); no deben presentarse
-como escritura persistida en PostgreSQL.
+Recepción y transformación escriben en la API cuando existe sesión. El panel de
+operador consulta `GET /lots` y muestra el inventario, historial hash-chain y
+anclajes que devuelve PostgreSQL. El store local se conserva únicamente como
+modo demo explícito (`NEXT_PUBLIC_ORIVIA_DEMO_MODE=true`); en producción no se
+permite presentarlo como escritura persistida.
 
 El cliente expone `getCurrentUser()` para `/auth/me`, pero la interfaz no lo usa
 para reconstruir el perfil visual del servidor después de una recarga. El cierre
 de sesión elimina los tokens del navegador, pero el flujo actual no solicita su
 revocación al backend.
 
-El registro normal usa la API. Si la solicitud falla por un error de red
-(`status === 0`), el formulario muestra éxito y abre el inicio de sesión como si
-la cuenta se hubiera creado, aunque no se haya guardado en el servidor ni en el
-store local. El siguiente inicio de sesión sigue consultando la API salvo que se
-active el modo de demostración; no usar esa ruta para validar el registro o la
-persistencia.
+El registro normal usa la API. Un fallo de red no confirma la cuenta: la interfaz
+conserva el error y exige reintento. El siguiente inicio de sesión siempre
+consulta la API salvo que se active el modo de demostración explícito.
 
 ## Manejo de credenciales
 

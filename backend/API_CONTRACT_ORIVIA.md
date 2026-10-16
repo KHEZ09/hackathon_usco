@@ -182,6 +182,7 @@ una prueba legal, financiera ni de identidad.
 | Método | Ruta | Permiso | Uso |
 | --- | --- | --- | --- |
 | POST | `/api/v1/lots` | `lots:create` | RF01: registrar recepción |
+| GET | `/api/v1/lots` | `lots:read` | Panel operativo: lotes persistidos, inventario, historial y anclajes |
 | POST | `/api/v1/lots/{lot_id}/transformations` | `lots:transform` | RF02/RF08: transformar, calcular merma y actualizar disponible |
 | GET | `/api/v1/public/lots/{lot_id}` | No | Estado público, cadena de hashes y anclaje blockchain verificable |
 | GET | `/api/v1/lots/{lot_id}` | `lots:read` | Lote, cantidades, auditorías e integridad |
