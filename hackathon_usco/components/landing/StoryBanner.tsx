@@ -36,7 +36,7 @@ export function StoryBanner() {
             <div
               aria-hidden="true"
               className="absolute inset-0 -z-10 bg-cover bg-center opacity-55"
-              style={{ backgroundImage: "url(/media/paisaje-montanas.jpg)" }}
+              style={{ backgroundImage: "url(/media/cacaotal.jpg)" }}
             />
             <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-r from-bosque-950/90 via-bosque-950/55 to-bosque-950/25" />
 

@@ -30,6 +30,9 @@
   --animate-mote: mote 14s linear infinite;
   --animate-mist: mist 38s linear infinite;
   --animate-hover: hover 2.6s ease-in-out infinite;
+  --animate-logo-glow: logo-glow 4s ease-in-out infinite;
+  --animate-sway: sway 5s ease-in-out infinite;
+  --animate-drift: drift 18s ease-in-out infinite;
 
   @keyframes glow {
     0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.96); }
@@ -44,6 +47,19 @@
   @keyframes mist {
     from { transform: translateX(-30%); }
     to { transform: translateX(30%); }
+  }
+  @keyframes logo-glow {
+    0%, 100% { opacity: 0.7; transform: scale(0.94); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-2.2deg); }
+    50% { transform: rotate(2.6deg); }
+  }
+  @keyframes drift {
+    0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    50% { transform: translate3d(14px, -22px, 0) rotate(160deg); }
+    100% { transform: translate3d(0, 0, 0) rotate(360deg); }
   }
   @keyframes hover {
     0%, 100% { transform: translateY(0); }
@@ -70,6 +86,17 @@
     --ink-soft: #a7b1aa;
     --line: #2f3631;
   }
+}
+
+/* Panel del administrador: tema carbón fijo */
+[data-tema="oscuro"] {
+  --surface: #1a1a1a;
+  --surface-2: #232323;
+  --card: #202221;
+  --ink: #f1ebe0;
+  --ink-soft: #a5a69e;
+  --line: #313432;
+  color-scheme: dark;
 }
 
 [data-tema="claro"] {

@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { ClipboardList, QrCode, ShieldCheck, type LucideIcon } from "lucide-react";
 
 export type Role = "operador" | "administrador" | "comprador";
@@ -76,3 +77,20 @@ export function writeSession(session: Session | null) {
   }
   listeners.forEach((l) => l());
 }
+
+export function useSession() {
+  return useSyncExternalStore(subscribeSession, getSessionSnapshot, () => null);
+}
+
+const noop = () => () => {};
+/** true solo en el cliente después de hidratar (evita parpadeos de contenido dependiente de localStorage). */
+export function useHydrated() {
+  return useSyncExternalStore(noop, () => true, () => false);
+}
+
+/** Ruta de inicio de cada rol después de iniciar sesión. */
+export const ROLE_HOME: Record<Role, string> = {
+  operador: "/operador",
+  administrador: "/admin",
+  comprador: "/ficha/CAC002",
+};

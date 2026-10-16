@@ -60,20 +60,31 @@ La documentación de equipo asigna UX, diseño visual y frontend a **Ángel y Da
 
 La ruta principal `app/page.tsx` renderiza `components/landing/LandingPage.tsx`, que compone estas áreas:
 
-1. **Navegación — `Navbar.tsx`:** logotipo ORIVIA, enlaces a secciones, menú para móvil, llamada a iniciar sesión y estado visual que cambia con el scroll.
-2. **Hero — `HeroScrollWorld.tsx`:** portada de pantalla completa con una secuencia de 61 cuadros (20 fps) dibujada en Canvas y controlada por scroll. Incluye una versión de fondo para pantallas estrechas, viñetas, neblina, partículas y hojas en primer plano.
-3. **Acompañamiento de scroll — `ScrollCompanion.tsx`:** colibrí y hojas que siguen una trayectoria por las secciones.
-4. **Origen — `OriginSection.tsx`:** carrusel de historias con imágenes, ubicación y lote.
-5. **Trazabilidad — `TraceSection.tsx`:** selector de CAC001–CAC003, pasos de recepción, fermentación, secado y producto, cantidades, responsables, estados y alerta visual de merma.
-6. **Analítica — `AnalyticsSection.tsx`:** gráficas de muestra, asistente visual para explicar una alerta y tarjeta con costo unitario, margen y supuestos.
-7. **Historia de producto — `StoryBanner.tsx`:** frases de marca rotativas, gráfico de cosecha y bloque de verificación.
-8. **Productos y verificación — `BlockchainSection.tsx`:** tarjetas de producto y modal que permite recalcular hashes y simular la alteración de un dato.
-9. **Cierre — `SiteFooter.tsx`:** marca, enlaces de plataforma y contacto.
+1. **Navegación — `Navbar.tsx`:** logotipo ORIVIA, enlaces a secciones, menú para móvil y botón «Iniciar sesión» con menú de los tres roles y búsqueda de ficha por código de lote. Con sesión activa muestra el rol y el acceso «Mi panel».
+2. **Hero — `HeroScrollWorld.tsx`:** portada de pantalla completa ambientada en un cacaotal, con una secuencia de 73 cuadros (20 fps) dibujada en Canvas: intro, vuelo suspendido de la libélula en reposo y control por scroll. El logotipo antiguo impreso en el video se difumina y se superpone el logotipo nuevo con aura. Incluye neblina, partículas, hojas y una mazorca de cacao en primer plano que se mecen con el viento del scroll.
+3. **Acompañamiento de scroll — `ScrollCompanion.tsx`:** libélula que recorre los márgenes de las secciones, ramas de cacao laterales con viento y granos de cacao flotando en tres profundidades.
+4. **Origen — `OriginSection.tsx`:** carrusel 3D tipo *coverflow* con arrastre, teclado y avance automático.
+5. **Proceso — `PodSection.tsx`:** sección oscura fijada al scroll donde una mazorca real (35 cuadros del video) se abre en capas mientras se encienden las etapas Finca → Fermentación → Secado → Empaque → QR, con un QR funcional hacia la ficha pública.
+6. **Trazabilidad — `TraceSection.tsx`:** selector de CAC001–CAC003, pasos de recepción, fermentación, secado y producto, cantidades, responsables, estados y alerta visual de merma.
+7. **Analítica — `AnalyticsSection.tsx`:** gráficas de muestra, asistente visual para explicar una alerta y tarjeta con costo unitario, margen y supuestos.
+8. **Historia de producto — `StoryBanner.tsx`:** frases de marca rotativas, gráfico de cosecha y bloque de verificación.
+9. **Productos y verificación — `BlockchainSection.tsx`:** tarjetas con inclinación 3D (`TiltCard.tsx`), carrusel deslizable en móvil, modal de verificación y enlace a la ficha pública.
+10. **Cierre — `SiteFooter.tsx`:** marca, enlaces de plataforma y contacto.
+
+### Paneles por rol
+
+| Ruta | Rol | Contenido |
+|---|---|---|
+| `/operador` | Operador (tema crema) | Recepción de lote (RF01) con validación de cantidad y lote único; transformación (RF02/RF08) que impide consumir más del disponible y rechaza reenvíos con la misma clave de idempotencia; inventario recibido/consumido/disponible con filtros; registro de transformaciones; indicador del nodo local Raspberry Pi y operaciones pendientes de sincronizar. |
+| `/admin` | Administrador (tema carbón) | Alertas automáticas de merma y margen (RF04); KPIs de yield, merma, costo y margen; grafo 3D de procedencia en Canvas (rota, hover y clic); asistente de explicación con hechos separados de la interpretación; bloqueo/liberación con motivo y auditoría (RF09/RF10); balance económico con fórmulas y supuestos editables y auditados (RF05/RF12); tabla de lotes con filtros y exportación CSV (RF11). |
+| `/ficha/[lote]` | Comprador (pública, móvil) | Origen, línea de tiempo del proceso y estado, sin costos ni márgenes (RF06); QR generado localmente; verificación de la cadena SHA-256 con simulación de alteración; solicitud de pedido solo para lotes liberados. |
+
+Los paneles comparten `components/panels/PanelShell.tsx` (cabecera, conectividad y control de acceso por rol) y `components/panels/ui.tsx`. El estado operativo vive en `lib/store.ts` y persiste en `localStorage` (RF07); la cadena de evidencia está en `lib/evidence.ts` y el generador QR en `lib/qr.ts` (adaptación del algoritmo de Project Nayuki, licencia MIT), verificado decodificando códigos de prueba con jsQR.
 
 Componentes de apoyo:
 
-- `components/brand/OriviaLogo.tsx`: isotipo y logotipo ORIVIA dibujados como SVG en el código.
-- `components/landing/Botanica.tsx` y `Hummingbird.tsx`: hojas, rama de cacao/café y colibrí vectoriales.
+- `components/brand/OriviaLogo.tsx`: isotipo nuevo (montaña sobre mazorca de cacao abierta con sus granos) y logotipo, dibujados en SVG con aura dorada pulsante.
+- `components/landing/Botanica.tsx` y `Dragonfly.tsx`: hojas de cacao (incluidos brotes cobrizos), mazorcas, granos, rama con mazorcas cauliflóricas, hook de viento ligado a la velocidad del scroll y libélula vectorial.
 - `components/landing/Reveal.tsx`: entradas progresivas de secciones.
 - `components/auth/LoginModal.tsx` y `roles.ts`: modal de acceso de demostración con los perfiles operador, administrador y comprador.
 - `components/ui/Toaster.tsx`: avisos de éxito, error e información.
@@ -107,9 +118,15 @@ El tema también ofrece superficies, tarjetas, texto y bordes semánticos que se
 
 ## 6. Recursos gráficos y procedencia
 
-En `hackathon_usco/public/media/` se encuentran fotografías con nombres como `cafetal.jpg`, `paisaje-montanas.jpg`, `paisaje-derecha.jpg`, `rama-frutos.jpg` y `hero-poster.jpg`, además de 61 cuadros `hero/f000.jpg`–`hero/f060.jpg`. El comentario de `HeroScrollWorld.tsx` describe estos cuadros como extraídos de un video de referencia.
+En `hackathon_usco/public/media/` se encuentran:
 
-**Pendiente de E08:** los Markdown revisados no indican el origen, autor, licencia ni condiciones de uso de esas fotografías y del video de referencia. El equipo debe completar esa procedencia antes de declarar el inventario de componentes y material externo.
+- `hero/f000.jpg`–`hero/f072.jpg`: 73 cuadros (0–3,6 s, 20 fps) del video de referencia del cacaotal con la libélula.
+- `mazorca/p000.jpg`–`mazorca/p034.jpg`: 35 cuadros recortados del mismo video donde la mazorca se abre en capas.
+- `hero-poster.jpg`, `cacaotal.jpg`, `cosecha-mano.jpg`, `mazorcas-arbol.jpg`, `paisaje-cacao.jpg` y `mazorca-abierta.jpg`: recortes fijos del mismo video.
+
+Los cuadros y recortes se extrajeron en el navegador con Canvas a partir del archivo `gemini_generated_video_61935365.mp4`, proporcionado por el equipo como referencia visual generada con Google Gemini. El video original no se incluye en el repositorio. Las imágenes de la primera versión (ambientada por error en café) se eliminaron.
+
+**Pendiente de E08:** el equipo debe confirmar y declarar las condiciones de uso del video generado con Gemini y su autoría dentro del inventario de material externo.
 
 En una conversación anterior se procesaron dos imágenes de logo proporcionadas por el usuario: una versión ampliada 4× y una versión PNG con transparencia. Se guardaron como salidas locales de Codex y **no aparecen integradas en `public/`** en el estado del repositorio revisado. El frontend actual utiliza el logotipo SVG de `components/brand/OriviaLogo.tsx`.
 
@@ -123,8 +140,10 @@ La interfaz incluye interacciones, pero varias no representan todavía una integ
 - **Gráficas:** rendimiento y kilos por semana usan arreglos definidos en `AnalyticsSection.tsx`; no son métricas de campo.
 - **Asistente IA:** el botón presenta una respuesta predefinida para CAC001. El componente menciona Ollama, pero esta sección no realiza una solicitud a Ollama ni a una API.
 - **Blockchain:** el navegador calcula SHA-256 y permite simular que se alteraron datos. El propio modal identifica el anclaje como local simulado; no demuestra publicación en una red blockchain.
-- **Inicio de sesión:** el modal valida usuarios de demostración en el cliente y conserva una sesión de muestra en `localStorage`. No reemplaza autenticación ni autorización del backend.
-- **Registro de lotes y pedidos:** las llamadas a estas acciones abren el modal o navegan por la landing; el registro operativo y la gestión real se deben conectar a rutas/API y permisos del sistema.
+- **Inicio de sesión:** el modal valida usuarios de demostración en el cliente, conserva una sesión de muestra en `localStorage` y redirige al panel del rol. No reemplaza autenticación ni autorización del backend; el login con JWT y refresh tokens ya existe en el backend (`2b126c6`) y queda pendiente conectarlo.
+- **Paneles operativos:** recepción, transformación, inventario, estados, auditoría, costos y CSV funcionan con reglas de negocio reales sobre un almacén local en `localStorage` (`lib/store.ts`). No escriben todavía en PostgreSQL ni en la API.
+- **Conectividad:** el indicador del nodo Raspberry Pi refleja `navigator.onLine`; las transformaciones creadas sin conexión quedan pendientes y se marcan como sincronizadas desde el indicador. Es una simulación del outbox, no una sincronización real.
+- **Asistente IA del administrador:** produce una auditoría determinística calculada con los datos del lote (hechos, severidad, recomendación, incertidumbres) y lo declara en pantalla. No consulta Ollama.
 
 Los datos del reto son simulados. No deben presentarse como mediciones de productores, visitas de campo ni validación agroindustrial real.
 
@@ -137,11 +156,11 @@ El reto exige funcionamiento en móvil y computador, lenguaje claro, ficha públ
 | RF03 Trazabilidad | Selector de lotes y línea de etapas en `TraceSection.tsx`. | Datos locales de demostración; falta acreditar recorrido contra registros persistidos. |
 | RF04 Alertas | Indicador visual de merma calculada y umbral del 15 %. | No cubre alertas reales por datos incompletos, retraso o costo desde backend. |
 | RF05 / RF12 Economía | Costo unitario, margen, fórmulas y supuestos desplegables. | Usa constantes sintéticas; no es un cálculo conectado a costos reales. |
-| RF06 Ficha pública | Tarjetas de producto con origen y estado, sin mostrar costos. | No hay todavía una ficha pública independiente por URL/QR ni consulta autorizada real. |
-| RF01 / RF02 Recepción y transformación | CTA y representación visual del flujo. | La landing no implementa formularios operativos persistentes. |
-| RF07 / RF08 Persistencia e inventario | Hay datos de lote fijos y sesión de demo en `localStorage`. | No demuestra persistencia ni reglas transaccionales de inventario del producto. |
-| RF09 / RF10 Estados y auditoría | Estados se muestran; el demo calcula huellas/hashes en cliente. | No hay bloqueo/liberación administrativa auditados desde esta interfaz demo. |
-| RF11 Exportación | No hay filtro/exportación CSV en la landing. | Pendiente de UI integrada con la API. |
+| RF06 Ficha pública | `/ficha/[lote]` con origen, proceso, estado y QR; oculta costos y márgenes. | Lee el almacén local; falta la consulta pública a la API. |
+| RF01 / RF02 Recepción y transformación | Formularios de `/operador` con validaciones (cantidad > 0, lote único, inventario disponible, justificación si la salida supera la entrada, idempotencia). | Persisten en `localStorage`, no en PostgreSQL. |
+| RF07 / RF08 Persistencia e inventario | Los datos sobreviven a recargas; inventario recibido/consumido/disponible por lote. | Persistencia local del navegador; la transaccional depende del backend. |
+| RF09 / RF10 Estados y auditoría | Bloqueo/liberación en `/admin` con motivo obligatorio para bloquear; auditoría de quién, cuándo, valor anterior y nuevo, sin borrado. | Auditoría local; falta conectarla a las rutas de auditoría del backend. |
+| RF11 Exportación | Filtros por origen, estado y texto; exportación CSV de lotes con cantidades, estados y costos. | Exporta los datos locales. |
 | E03 Diseño | Arquitectura visual por perfiles y secciones, más componentes reutilizables. | Este registro no contiene por sí solo todos los diagramas, modelo de datos y decisiones exigidos en E03. |
 | E06 Usabilidad | Hay navegación adaptable y controles con etiquetas; algunas interacciones admiten teclado. | No se halló registro de las dos tareas observadas, tiempos, éxito, mejora antes/después ni revisión formal de contraste. |
 | E08 IA y fuentes | Este documento registra herramientas y distingue simulaciones. | Falta completar el detalle de sesiones de Claude Code, revisión humana por módulo y licencias/origen de medios. |

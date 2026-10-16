@@ -94,7 +94,7 @@ function LoginDialog({ initialRole = "operador", onClose, onSuccess }: Omit<Prop
             <div className="relative hidden overflow-hidden md:block">
               <div
                 className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: "url(/media/paisaje-derecha.jpg)" }}
+                style={{ backgroundImage: "url(/media/cosecha-mano.jpg)" }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-bosque-950 via-bosque-950/55 to-bosque-950/10" />
               <div className="relative flex h-full flex-col justify-between p-8 text-crema">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { HeroScrollWorld } from "./HeroScrollWorld";
 import { Navbar } from "./Navbar";
@@ -11,21 +12,15 @@ import { StoryBanner } from "./StoryBanner";
 import { BlockchainSection } from "./BlockchainSection";
 import { SiteFooter } from "./SiteFooter";
 import { ScrollCompanion } from "./ScrollCompanion";
-import { CoffeeBranch } from "./Botanica";
+import { CacaoBranch, useWind } from "./Botanica";
+import { PodSection } from "./PodSection";
 import { LoginModal } from "@/components/auth/LoginModal";
-import {
-  ROLES,
-  getSessionSnapshot,
-  subscribeSession,
-  writeSession,
-  type Role,
-  type Session,
-} from "@/components/auth/roles";
+import { ROLES, ROLE_HOME, useSession, writeSession, type Role, type Session } from "@/components/auth/roles";
 import { Toaster, useToast } from "@/components/ui/Toaster";
 
 export function LandingPage() {
   return (
-    <div data-tema="claro" className="bg-surface text-ink">
+    <div data-tema="claro" className="overflow-x-clip bg-surface text-ink">
       <Toaster>
         <Landing />
       </Toaster>
@@ -36,18 +31,19 @@ export function LandingPage() {
 function Landing() {
   const { notify } = useToast();
   const mainRef = useRef<HTMLElement>(null);
-  const session = useSyncExternalStore(subscribeSession, getSessionSnapshot, () => null);
+  const session = useSession();
+  const router = useRouter();
   const [login, setLogin] = useState<{ open: boolean; role: Role }>({ open: false, role: "operador" });
 
   const openLogin = useCallback(
     (role?: Role) => {
       if (session) {
-        notify("info", `Sesión activa como ${ROLES[session.role].label}`, "Cierra sesión para cambiar de rol.");
+        router.push(ROLE_HOME[session.role]);
         return;
       }
       setLogin({ open: true, role: role ?? "operador" });
     },
-    [session, notify],
+    [session, router],
   );
 
   const closeLogin = useCallback(() => setLogin((l) => ({ ...l, open: false })), []);
@@ -55,7 +51,8 @@ function Landing() {
   const onSuccess = (s: Session) => {
     writeSession(s);
     closeLogin();
-    notify("exito", `Bienvenido, ${ROLES[s.role].label}`, `Sesión iniciada como ${s.email}. ${ROLES[s.role].tema}.`);
+    notify("exito", `Bienvenido, ${ROLES[s.role].label}`, `Abriendo ${ROLES[s.role].tema.toLowerCase()}…`);
+    router.push(ROLE_HOME[s.role]);
   };
 
   const logout = () => {
@@ -67,6 +64,7 @@ function Landing() {
   const { scrollYProgress } = useScroll({ target: mainRef, offset: ["start end", "start start"] });
   const branchY = useTransform(scrollYProgress, [0, 1], [80, -40]);
   const branchRotate = useTransform(scrollYProgress, [0, 1], [-6, 2]);
+  const wind = useWind(1.3);
 
   return (
     <>
@@ -80,12 +78,13 @@ function Landing() {
         <motion.div
           aria-hidden="true"
           style={{ y: branchY, rotate: branchRotate }}
-          className="pointer-events-none absolute -top-20 -left-8 z-20 w-[min(78vw,500px)] blur-[0.6px] drop-shadow-[0_24px_30px_rgba(0,0,0,0.35)] sm:-top-24 sm:-left-12"
+          className="pointer-events-none absolute -top-20 -left-8 z-20 w-[min(86vw,560px)] drop-shadow-[0_24px_30px_rgba(0,0,0,0.35)] sm:-top-24 sm:-left-12"
         >
-          <CoffeeBranch className="w-full" />
+          <CacaoBranch className="w-full" wind={wind} />
         </motion.div>
 
         <OriginSection />
+        <PodSection />
         <TraceSection onLogin={openLogin} />
         <AnalyticsSection />
         <StoryBanner />

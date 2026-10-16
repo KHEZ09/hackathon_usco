@@ -8,29 +8,39 @@ import {
   useScroll,
   useSpring,
   useTransform,
+  type MotionValue,
 } from "framer-motion";
-import { Hummingbird } from "./Hummingbird";
-import { CoffeeLeaf } from "./Botanica";
+import { Dragonfly } from "./Dragonfly";
+import { CacaoBean, CacaoLeaf, CacaoPod, useWind } from "./Botanica";
 
-// Ruta del colibrí por la página (porcentajes del viewport), sección a sección.
-const PATH_P = [0, 0.14, 0.3, 0.46, 0.62, 0.8, 1];
-const PATH_X = ["94vw", "95vw", "4.5vw", "95vw", "4.5vw", "95vw", "50vw"];
-const PATH_Y = ["72vh", "22vh", "34vh", "18vh", "46vh", "26vh", "30vh"];
+// Ruta de la libélula: se detiene en los márgenes y cruza rápido entre secciones.
+const PATH_P = [0, 0.12, 0.2, 0.32, 0.4, 0.52, 0.6, 0.74, 0.82, 1];
+const PATH_X = ["92vw", "93vw", "7vw", "6vw", "93vw", "94vw", "7vw", "6vw", "92vw", "50vw"];
+const PATH_Y = ["70vh", "26vh", "38vh", "30vh", "22vh", "48vh", "28vh", "40vh", "24vh", "30vh"];
+
+// Granos de cacao flotando en tres profundidades.
+const BEANS = Array.from({ length: 14 }, (_, i) => ({
+  left: i % 2 ? 2 + ((i * 7) % 9) : 89 + ((i * 5) % 9),
+  top: (i * 71) % 100,
+  depth: (i % 3) + 1,
+  size: 14 + (i % 3) * 10,
+  delay: -(i * 1.7),
+}));
 
 /**
- * Capa "scroll world" de la página principal: un colibrí que acompaña el recorrido
- * y hojas de café desenfocadas en los bordes que se mueven en parallax.
+ * Capa "scroll world" de la página principal: libélula que acompaña el recorrido,
+ * ramas de cacao a los costados que se mecen con el viento y granos flotando en parallax.
  */
 export function ScrollCompanion({ targetRef }: { targetRef: RefObject<HTMLElement | null> }) {
   const reduce = useReducedMotion();
+  const wind = useWind(1.4);
   const { scrollYProgress } = useScroll({ target: targetRef, offset: ["start 60%", "end end"] });
-  const smooth = useSpring(scrollYProgress, { stiffness: 60, damping: 18, mass: 0.6 });
+  const smooth = useSpring(scrollYProgress, { stiffness: 90, damping: 20, mass: 0.5 });
 
   const x = useTransform(smooth, PATH_P, PATH_X);
   const y = useTransform(smooth, PATH_P, PATH_Y);
   const visible = useTransform(scrollYProgress, [0, 0.03, 0.97, 1], [0, 1, 1, 0.9]);
 
-  // El colibrí mira hacia donde vuela.
   const [facingLeft, setFacingLeft] = useState(true);
   const lastX = useRef<number | null>(null);
   useMotionValueEvent(x, "change", (v) => {
@@ -39,31 +49,74 @@ export function ScrollCompanion({ targetRef }: { targetRef: RefObject<HTMLElemen
     lastX.current = px;
   });
 
-  const leavesLeftY = useTransform(scrollYProgress, [0, 1], ["10vh", "-60vh"]);
-  const leavesRightY = useTransform(scrollYProgress, [0, 1], ["30vh", "-90vh"]);
+  const leftY = useTransform(scrollYProgress, [0, 1], ["5vh", "-70vh"]);
+  const rightY = useTransform(scrollYProgress, [0, 1], ["35vh", "-95vh"]);
 
   if (reduce) return null;
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-30 hidden overflow-hidden xl:block">
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-30 overflow-hidden">
       <motion.div style={{ opacity: visible }} className="absolute inset-0">
-        <motion.div style={{ y: leavesLeftY }} className="absolute top-[18%] -left-36 hidden w-80 rotate-[28deg] opacity-80 blur-[6px] xl:block">
-          <CoffeeLeaf tone="profundo" className="w-full" />
-          <CoffeeLeaf tone="medio" className="-mt-6 ml-10 w-4/5 -rotate-12" />
+        {BEANS.map((b, i) => (
+          <Bean key={i} bean={b} progress={scrollYProgress} />
+        ))}
+
+        <motion.div style={{ y: leftY }} className="absolute top-[14%] -left-28 hidden w-72 xl:block">
+          <SideCluster wind={wind} />
         </motion.div>
-        <motion.div style={{ y: leavesRightY }} className="absolute top-[45%] -right-40 hidden w-96 -scale-x-100 rotate-[-20deg] opacity-80 blur-[7px] xl:block">
-          <CoffeeLeaf tone="medio" className="w-full" />
-          <CoffeeLeaf tone="profundo" className="-mt-8 ml-16 w-3/4 rotate-12" />
+        <motion.div style={{ y: rightY }} className="absolute top-[42%] -right-28 hidden w-80 -scale-x-100 xl:block">
+          <SideCluster wind={wind} conMazorca />
         </motion.div>
 
         <motion.div style={{ x, y }} className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2">
           <div className="animate-hover">
-            <div className="transition-transform duration-500" style={{ transform: facingLeft ? "scaleX(-1)" : "none" }}>
-              <Hummingbird className="w-20 drop-shadow-[0_10px_14px_rgba(12,29,21,0.35)]" />
+            <div className="transition-transform duration-300" style={{ transform: facingLeft ? "scaleX(-1)" : "none" }}>
+              <Dragonfly className="w-16 drop-shadow-[0_10px_14px_rgba(12,29,21,0.3)] sm:w-24" />
             </div>
           </div>
         </motion.div>
       </motion.div>
+    </div>
+  );
+}
+
+function Bean({ bean, progress }: { bean: (typeof BEANS)[number]; progress: MotionValue<number> }) {
+  const y = useTransform(progress, [0, 1], ["0vh", `${-60 * bean.depth}vh`]);
+  return (
+    <motion.div
+      style={{ y, left: `${bean.left}%`, top: `${bean.top}%`, width: bean.size }}
+      className="absolute hidden md:block"
+    >
+      <div className="animate-drift" style={{ animationDelay: `${bean.delay}s`, filter: `blur(${(3 - bean.depth) * 1.2}px)`, opacity: 0.35 + bean.depth * 0.18 }}>
+        <CacaoBean className="w-full" />
+      </div>
+    </motion.div>
+  );
+}
+
+function SideCluster({ wind, conMazorca }: { wind?: MotionValue<number>; conMazorca?: boolean }) {
+  const fallback = useSpring(0);
+  const w = wind ?? fallback;
+  const hojas = useTransform(w, (v) => v * 1.2);
+  const mazorca = useTransform(w, (v) => -v * 2);
+  return (
+    <div className="relative blur-[3px]">
+      <motion.div style={{ rotate: hojas }} className="origin-left">
+        <div className="origin-left animate-sway rotate-[24deg]">
+          <CacaoLeaf tone="profundo" className="w-full" />
+        </div>
+        <div className="-mt-10 ml-12 w-4/5 origin-left animate-sway [animation-delay:-1.2s] rotate-[-10deg]">
+          <CacaoLeaf tone="medio" className="w-full" />
+        </div>
+        <div className="-mt-6 ml-4 w-3/5 origin-left animate-sway [animation-delay:-2.4s] rotate-[40deg]">
+          <CacaoLeaf tone="brote" className="w-full" />
+        </div>
+      </motion.div>
+      {conMazorca && (
+        <motion.div style={{ rotate: mazorca }} className="absolute top-8 left-[46%] w-16 origin-top">
+          <CacaoPod tone="amarilla" className="w-full drop-shadow-[0_16px_16px_rgba(0,0,0,0.35)]" />
+        </motion.div>
+      )}
     </div>
   );
 }
