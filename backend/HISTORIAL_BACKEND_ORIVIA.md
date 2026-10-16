@@ -12,7 +12,7 @@ Historial técnico y operativo del desarrollo del backend de ORIVIA dentro del r
 - **Ruta del backend:** `backend/`.
 - **Modelo utilizado por Sebas y Kevin durante el acompañamiento técnico:** **GPT 5.6 Luna**.
 - **Servidor de staging/pruebas:** instancia AWS Lightsail `orivia` con Debian 13.
-- **Última verificación técnica registrada:** `433c0c0`.
+- **Última verificación técnica registrada:** `4653273`.
 
 ## 1. Objetivo del backend
 
@@ -244,10 +244,9 @@ La operación normal del equipo es:
 - Prueba de anclaje idempotente.
 - Prueba de fallback de IA y contrato Ollama.
 - Prueba de migraciones y datos sintéticos.
-- Resultado de referencia anterior: `35 passed in 0.97s`.
-- Verificación nueva de autenticación: `8 passed`.
-- Verificación local sin PostgreSQL: `34 passed, 4 deselected`; readiness y
-  migraciones deben repetirse dentro de Docker o en `orivia`.
+- Validación local del núcleo: `45 passed` con PostgreSQL aislado por timeout.
+- Ruff y compilación Python sin errores.
+- Suite Docker oficial posterior a la integración del equipo: `55 passed`.
 
 ### Validación en `orivia`
 
@@ -258,7 +257,8 @@ La operación normal del equipo es:
   - health `200`;
   - readiness `200` con PostgreSQL `ok`;
   - petición no autenticada a pedidos rechazada con `401`.
-- El servidor quedó sincronizado con `433c0c0`; el stack oficial fue reconstruido y validado después de los cambios.
+- El servidor quedó sincronizado con `4653273`; el stack oficial fue reconstruido y
+  validado después de los cambios.
 
 ## 8. Estado actual
 
@@ -275,6 +275,7 @@ La operación normal del equipo es:
 - IA local/fallback y frontera opcional con Ollama.
 - Docker Compose para API y PostgreSQL.
 - Scripts de prueba, despliegue, healthcheck y smoke test.
+- CORS explícito, errores JSON, no-cache de autenticación y limitador de login.
 - Módulos empresariales iniciales de Kevin.
 - Integración de readiness con PostgreSQL.
 - Documentación de responsabilidades y operación.
@@ -284,7 +285,7 @@ La operación normal del equipo es:
 - Definir el esquema final compartido entre pedidos, usuarios, inventario y contabilidad.
 - Elegir el proveedor blockchain público definitivo, si la evaluación lo exige; el anclaje local ya funciona como respaldo durable.
 - Instalar/configurar el modelo Ollama real `gpt-oss:120b` solo si la capacidad del servidor y el costo lo permiten.
-- Reforzar observabilidad, rotación de secretos, backups probados y recuperación ante fallos antes de producción.
+- Completar observabilidad de producción, rotación de secretos, backups probados y recuperación ante fallos antes de producción.
 
 ## 9. Límites actuales y decisiones de seguridad
 
@@ -321,14 +322,18 @@ El entorno de producción selecciona automáticamente PostgreSQL cuando
 7. Recrear la aplicación y comprobar que el pedido y el anclaje siguen disponibles.
 8. Limpiar únicamente los datos sintéticos de la prueba.
 
-Resultado: `40 passed`, health correcto, readiness con PostgreSQL `ok`, smoke
-test correcto y verificación de persistencia correcta.
+Resultado anterior: `40 passed`, health correcto, readiness con PostgreSQL `ok`,
+smoke test correcto y verificación de persistencia correcta.
 
 También se provisionaron las tres cuentas sintéticas con bcrypt directamente
 en el servidor. Las contraseñas no se guardaron en GitHub.
 
 La prueba de autenticación real confirmó login, `/auth/me`, rotación del refresh
 token y rechazo del refresh token anterior.
+
+Después del endurecimiento autónomo, el servidor volvió a validarse con la
+suite Docker completa (`55 passed`), despliegue sin migraciones pendientes,
+health/readiness, smoke test, persistencia y autenticación real correctos.
 
 ## 12. Endurecimiento autónomo de Sebas — 2026-10-16
 

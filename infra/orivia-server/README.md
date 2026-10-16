@@ -13,7 +13,8 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
 ## Estado
 
 - El backend está en `../../backend/`.
-- Este paquete todavía no afirma que el despliegue haya sido ejecutado en el servidor.
+- El checkout oficial está desplegado y validado en `4653273`; repetir el flujo
+  después de cada cambio publicado.
 - Los secretos y el `.env` real nunca se suben a GitHub.
 - El acceso previsto es `ssh admin@orivia` por Tailscale.
 - CORS se configura con `ORIVIA_CORS_ORIGINS` usando orígenes explícitos; no se permite `*`.

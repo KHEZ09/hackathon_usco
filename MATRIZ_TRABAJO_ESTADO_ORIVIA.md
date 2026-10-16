@@ -155,8 +155,8 @@ Antes de borrar cualquier cosa se debe confirmar con Kevin si necesita conservar
 | Auditoría | Sebas + Kevin | Rutas y tablas | Registros persistidos en `audit_log` | Completo backend | Sí para consulta |
 | Blockchain | Sebas | Adaptador local durable | Anclaje PostgreSQL idempotente y verificable | Completo MVP; proveedor público pendiente | Sí para evidencia |
 | IA y Ollama | Sebas | Fallback local y rutas opcionales | Integración real opcional | MVP listo | Sí para mostrar resultados |
-| Pruebas y smoke tests | Sebas + Kevin | Suites y verificadores | `40 passed`, persistencia y auth real correctas | Completo | No |
-| CORS, errores y anti-abuso de login | Sebas | `backend/app/__init__.py`, `security/rate_limit.py` y pruebas | Listo para redeploy | Completo backend | Solo configurar el origen real |
+| Pruebas y smoke tests | Sebas + Kevin | Suites y verificadores | `55 passed`, persistencia y auth real correctas | Completo | No |
+| CORS, errores y anti-abuso de login | Sebas | `backend/app/__init__.py`, `security/rate_limit.py` y pruebas | Activo en `4653273` | Completo backend | Solo configurar el origen real |
 | Frontend y UX | Ángel + Daniel | Estructura y avances documentados | No aplica todavía | En curso | Sí |
 
 ## Trabajo realizado
