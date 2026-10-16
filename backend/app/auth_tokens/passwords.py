@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import bcrypt
 
-
 # Used only to keep login timing similar when the email does not exist.
 # It contains no user credential and is never persisted.
 DUMMY_PASSWORD_HASH = bcrypt.hashpw(

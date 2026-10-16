@@ -3,8 +3,8 @@ from uuid import UUID
 
 from flask import Blueprint, jsonify, request
 
-from ..security.permissions import require_permissions
 from ..security.middleware import require_access_token
+from ..security.permissions import require_permissions
 from .service import accounting_repo
 
 accounting_bp = Blueprint("accounting", __name__)

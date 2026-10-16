@@ -49,7 +49,7 @@ def create_user():
         return jsonify(error="FORBIDDEN", message="Se requiere rol ADMIN"), 403
     try:
         data = validate_user_payload(request.get_json(silent=True) or {})
-    except ValueError as exc:
+    except (TypeError, ValueError) as exc:
         return jsonify(error="VALIDATION_ERROR", message=str(exc)), 400
     try:
         return jsonify(data=public_user(repo.create(data, data["roles"]))), 201

@@ -3,7 +3,7 @@ import re
 
 def validate_user_payload(data: dict, *, require_password_hash: bool = True) -> dict:
     if not isinstance(data, dict):
-        raise ValueError("El cuerpo debe ser un objeto JSON")
+        raise TypeError("El cuerpo debe ser un objeto JSON")
     required = ("full_name", "email") + (
         ("password_hash",) if require_password_hash else ()
     )

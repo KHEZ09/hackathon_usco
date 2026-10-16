@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 
-from ..security.permissions import require_permissions
 from ..security.middleware import require_access_token
+from ..security.permissions import require_permissions
 from .queries import report_repo
 
 reports_bp = Blueprint("reports", __name__)
