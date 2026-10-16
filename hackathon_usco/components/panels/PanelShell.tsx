@@ -8,7 +8,7 @@ import { OriviaLogo } from "@/components/brand/OriviaLogo";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { ROLES, useHydrated, useSession, writeSession, type Role } from "@/components/auth/roles";
 import { Toaster, useToast } from "@/components/ui/Toaster";
-import { cn } from "@/lib/cn";
+import { clearAuthTokens } from "@/lib/orivia-api";
 
 type Props = { rol: Role; tema: "claro" | "oscuro"; titulo: string; subtitulo: string; children: ReactNode };
 
@@ -29,6 +29,7 @@ function Shell({ rol, tema, titulo, subtitulo, children }: Props) {
   const { notify } = useToast();
 
   const salir = () => {
+    clearAuthTokens();
     writeSession(null);
     notify("info", "Sesión cerrada");
     router.push("/");

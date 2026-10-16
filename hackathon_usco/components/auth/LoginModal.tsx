@@ -6,6 +6,7 @@ import { ArrowRight, Check, Eye, EyeOff, Loader2, X } from "lucide-react";
 import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
 import { ROLES, type Role, type Session } from "./roles";
 import { cn } from "@/lib/cn";
+import { clearAuthTokens, login as loginApi, OriviaApiError } from "@/lib/orivia-api";
 
 type Props = {
   open: boolean;
@@ -52,9 +53,44 @@ function LoginDialog({ initialRole = "operador", onClose, onSuccess }: Omit<Prop
     setError(null);
   };
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     const normalized = email.trim().toLowerCase();
+    if (process.env.NEXT_PUBLIC_ORIVIA_DEMO_MODE !== "true") {
+      if (!normalized || !password) return setError("Completa el correo y la contraseña.");
+      if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
+      setError(null);
+      setStatus("loading");
+      try {
+        const response = await loginApi(normalized, password);
+        const backendRoles = (response.user.roles ?? []).map((value) => value.toUpperCase());
+        const backendRole = backendRoles[0] ?? "";
+        const expected = role === "administrador" ? ["ADMIN", "ACCOUNTING"] : role === "operador" ? ["OPERATOR"] : ["BUYER", "VIEWER"];
+        if (!expected.some((candidate) => backendRoles.includes(candidate))) {
+          clearAuthTokens();
+          throw new OriviaApiError(`La cuenta no tiene el rol ${ROLES[role].label}.`, 403, "ROLE_MISMATCH");
+        }
+        setStatus("ok");
+        setTimeout(() => onSuccess({
+          role,
+          email: response.user.email,
+          startedAt: new Date().toISOString(),
+          userId: response.user.user_id,
+          backendRole,
+        }), 450);
+      } catch (cause) {
+        clearAuthTokens();
+        setStatus("idle");
+        if (cause instanceof OriviaApiError && cause.status === 429) {
+          setError(`Demasiados intentos. Espera ${cause.retryAfterSeconds ?? 900} segundos.`);
+        } else if (cause instanceof OriviaApiError && cause.status === 401) {
+          setError("Credenciales inválidas. Verifica el usuario persistido.");
+        } else {
+          setError(cause instanceof Error ? cause.message : "No se pudo iniciar sesión.");
+        }
+      }
+      return;
+    }
     if (!normalized || !password) return setError("Completa el correo y la contraseña.");
     const match = ROLE_ORDER.find((r) => ROLES[r].email === normalized);
     if (!match) return setError("Ese correo no pertenece a un usuario de demostración.");

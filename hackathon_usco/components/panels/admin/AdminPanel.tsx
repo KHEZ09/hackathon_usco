@@ -12,7 +12,9 @@ import {
   ExternalLink,
   Lock,
   Network,
+  RefreshCw,
   RotateCcw,
+  Server,
   ScrollText,
   Search,
   ShieldCheck,
@@ -45,6 +47,7 @@ import { cn } from "@/lib/cn";
 import { PanelTabs } from "../PanelTabs";
 import { ClusterView } from "../cluster/ClusterView";
 import { ASOCIACION_ID, useCluster } from "@/lib/cluster";
+import { syncIntegration, useKevinOverview } from "@/lib/orivia-api";
 
 type Dialogo = { tipo: "bloquear" | "liberar"; lote: Lote } | { tipo: "reset" } | null;
 
@@ -60,8 +63,22 @@ function OperacionAdmin() {
   const { notify } = useToast();
   const [sel, setSel] = useState("CAC001");
   const [dialogo, setDialogo] = useState<Dialogo>(null);
-  const actor = { email: session?.email ?? "admin@orivia.co", role: session?.role ?? "administrador" };
+  const actor = { email: session?.email ?? "admin@orivia.test", role: session?.role ?? "administrador" };
   const lista = alertas(datos);
+  const backend = useKevinOverview(Boolean(session));
+  const [syncing, setSyncing] = useState(false);
+
+  const sincronizarProveedor = async () => {
+    setSyncing(true);
+    try {
+      const result = await syncIntegration("orivia-demo");
+      notify("exito", "Integración sincronizada", typeof result.message === "string" ? result.message : "El adaptador respondió correctamente.");
+    } catch (error) {
+      notify("error", "No se pudo sincronizar", error instanceof Error ? error.message : "El backend rechazó la operación.");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const kpis = useMemo(() => {
     const inv = datos.lotes.map((l) => inventario(datos, l.id));
@@ -115,6 +132,36 @@ function OperacionAdmin() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Card className="border-bosque-500/25 bg-bosque-500/[0.04]">
+        <CardTitle
+          icon={<Server className="size-4" />}
+          title="Datos persistidos de Kevin"
+          hint="Reportes, inventario y márgenes leídos desde PostgreSQL; los valores locales siguen disponibles como respaldo visual."
+          action={
+            <Button variant="secundario" onClick={sincronizarProveedor} disabled={syncing}>
+              <RefreshCw className={cn("size-3.5", syncing && "animate-spin")} />
+              {syncing ? "Sincronizando" : "Probar integración"}
+            </Button>
+          }
+        />
+        {backend.loading ? (
+          <div className="grid gap-3 sm:grid-cols-3">
+            {Array.from({ length: 3 }, (_, i) => <div key={i} className="h-16 animate-pulse rounded-2xl bg-surface-2" />)}
+          </div>
+        ) : backend.error ? (
+          <p className="rounded-2xl bg-ambar/10 px-4 py-3 text-xs text-ink-soft">
+            El backend no respondió: {backend.error} Configura <code>NEXT_PUBLIC_ORIVIA_API_URL</code> y vuelve a iniciar sesión.
+          </p>
+        ) : backend.data ? (
+          <div className="grid gap-3 sm:grid-cols-4">
+            <div className="rounded-2xl bg-surface-2 p-4"><p className="text-[0.68rem] text-ink-soft">Inventarios</p><p className="mt-1 text-xl font-semibold">{backend.data.inventory.length}</p><p className="text-[0.65rem] text-ink-soft">filas desde PostgreSQL</p></div>
+            <div className="rounded-2xl bg-surface-2 p-4"><p className="text-[0.68rem] text-ink-soft">Alertas abiertas</p><p className="mt-1 text-xl font-semibold text-ambar">{backend.data.alerts.length}</p><p className="text-[0.65rem] text-ink-soft">reglas económicas</p></div>
+            <div className="rounded-2xl bg-surface-2 p-4"><p className="text-[0.68rem] text-ink-soft">Pedidos</p><p className="mt-1 text-xl font-semibold">{backend.data.orders?.order_count ?? 0}</p><p className="text-[0.65rem] text-ink-soft">resumen persistido</p></div>
+            <div className="rounded-2xl bg-surface-2 p-4"><p className="text-[0.68rem] text-ink-soft">Márgenes</p><p className="mt-1 text-xl font-semibold text-bosque-500">{backend.margins.length}</p><p className="text-[0.65rem] text-ink-soft">cálculos disponibles</p></div>
+          </div>
+        ) : null}
+      </Card>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Yield de operación" value={`${kpis.yield}`} unit="%" hint="kg producidos / kg consumidos" tone="bien" />

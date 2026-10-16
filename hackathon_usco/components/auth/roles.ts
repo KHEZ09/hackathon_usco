@@ -3,26 +3,33 @@ import { ClipboardList, QrCode, ShieldCheck, type LucideIcon } from "lucide-reac
 
 export type Role = "operador" | "administrador" | "comprador";
 
-export type Session = { role: Role; email: string; startedAt: string };
+export type Session = {
+  role: Role;
+  email: string;
+  startedAt: string;
+  userId?: string;
+  backendRole?: string;
+  permissions?: string[];
+};
 
 export const ROLES: Record<Role, { label: string; email: string; description: string; tema: string; icon: LucideIcon }> = {
   operador: {
     label: "Operador",
-    email: "operador@orivia.co",
+    email: "operador@orivia.test",
     description: "Recepción de lotes, transformaciones e incidencias.",
     tema: "Panel claro · crema",
     icon: ClipboardList,
   },
   administrador: {
     label: "Administrador",
-    email: "admin@orivia.co",
+    email: "admin@orivia.test",
     description: "Inventario, costos, alertas, bloqueos y auditoría.",
     tema: "Panel oscuro · carbón",
     icon: ShieldCheck,
   },
   comprador: {
     label: "Comprador",
-    email: "comprador@orivia.co",
+    email: "comprador@orivia.test",
     description: "Ficha pública del producto, origen y verificación.",
     tema: "Ficha móvil · QR",
     icon: QrCode,
