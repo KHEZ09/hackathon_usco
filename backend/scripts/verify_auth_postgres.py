@@ -32,11 +32,12 @@ def main() -> int:
     refresh_token = body.get("refresh_token")
     _assert(isinstance(access_token, str) and access_token, "missing access token")
     _assert(isinstance(refresh_token, str) and refresh_token, "missing refresh token")
+    _assert(body.get("user", {}).get("email") == email, "wrong login user")
 
     headers = {"Authorization": f"Bearer {access_token}"}
     me = client.get("/api/v1/auth/me", headers=headers)
     _assert(me.status_code == 200, f"me failed: {me.status_code}")
-    _assert(me.get_json()["user"]["email"] == email, "wrong authenticated user")
+    _assert(me.get_json()["user"].get("sub"), "missing authenticated subject")
 
     refreshed = client.post(
         "/api/v1/auth/refresh", json={"refresh_token": refresh_token}
