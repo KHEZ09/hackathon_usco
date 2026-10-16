@@ -1,7 +1,6 @@
 // Contenido editable de la sección "Del grano al producto".
-// Textos, insignias, botones, métricas y efectos de cada etapa viven aquí. Las ilustraciones se
-// dibujan en código (components/landing/proceso/arte); imagePath/fallbackImage son la referencia
-// fotográfica de cada etapa para documentación y tarjetas.
+// Textos, insignias, botones, métricas, assets y efectos de cada etapa viven aquí; los
+// componentes de components/landing/proceso solo los presentan y animan con el scroll.
 
 export interface ProcessStage {
   id: "cosecha" | "fermentacion" | "secado" | "empaque" | "verificacion";
@@ -22,8 +21,25 @@ export interface ProcessStage {
     imagePath: string;
     fallbackImage: string;
     particleEffect?: "sparks" | "steam" | "humidity-meter" | "orbital-ring";
+    /**
+     * Solo para 'canvas-sequence': tramo [inicio, fin] de cuadros de PROCESS_SEQUENCE que recorre
+     * esta etapa mientras se hace scroll. Los tramos consecutivos se encadenan sin cortes.
+     */
+    sequenceRange?: [number, number];
   };
 }
+
+/**
+ * Recorrido visual continuo (mazorca → apertura → cajón → bandeja → saco): 152 cuadros WebP
+ * a 20 fps extraídos del video de referencia, sin la interfaz impresa.
+ */
+export const PROCESS_SEQUENCE = {
+  pattern: "/media/proceso/viaje/v{n}.webp",
+  frames: 152,
+  pad: 3,
+  /** Punto del cuadro que se mantiene centrado al recortar (0→1). */
+  focus: { x: 0.5, y: 0.5 },
+};
 
 export const CACAO_STAGES: ProcessStage[] = [
   {
@@ -36,10 +52,11 @@ export const CACAO_STAGES: ProcessStage[] = [
     badgeText: "RIVERA, HUILA · LOTE CAC001",
     actionButton: { label: "Ver trazabilidad", url: "/ficha/CAC001", actionType: "navigate" },
     visualAsset: {
-      type: "layered-vector",
-      imagePath: "/media/proceso/cosecha.jpg",
+      type: "canvas-sequence",
+      imagePath: "/media/proceso/viaje/v000.webp",
       fallbackImage: "/media/proceso/cosecha.jpg",
       particleEffect: "sparks",
+      sequenceRange: [0, 36],
     },
   },
   {
@@ -51,10 +68,11 @@ export const CACAO_STAGES: ProcessStage[] = [
     badgeText: "BENEFICIO · 6 DÍAS",
     actionButton: { label: "Registrar una etapa", actionType: "modal" },
     visualAsset: {
-      type: "layered-vector",
-      imagePath: "/media/proceso/fermentacion.jpg",
+      type: "canvas-sequence",
+      imagePath: "/media/proceso/viaje/v036.webp",
       fallbackImage: "/media/proceso/fermentacion.jpg",
       particleEffect: "steam",
+      sequenceRange: [36, 78],
     },
   },
   {
@@ -67,10 +85,11 @@ export const CACAO_STAGES: ProcessStage[] = [
     metrics: [{ label: "HUMEDAD", value: "Del 55% al 7%" }],
     actionButton: { label: "Ver alertas", actionType: "modal" },
     visualAsset: {
-      type: "layered-vector",
-      imagePath: "/media/proceso/secado.jpg",
+      type: "canvas-sequence",
+      imagePath: "/media/proceso/viaje/v078.webp",
       fallbackImage: "/media/proceso/secado.jpg",
       particleEffect: "humidity-meter",
+      sequenceRange: [78, 116],
     },
   },
   {
@@ -82,10 +101,11 @@ export const CACAO_STAGES: ProcessStage[] = [
     badgeText: "SELLADO DIGITAL",
     actionButton: { label: "Verificar un producto", actionType: "modal" },
     visualAsset: {
-      type: "layered-vector",
-      imagePath: "/media/proceso/empaque.jpg",
+      type: "canvas-sequence",
+      imagePath: "/media/proceso/viaje/v116.webp",
       fallbackImage: "/media/proceso/empaque.jpg",
       particleEffect: "sparks",
+      sequenceRange: [116, 151],
     },
   },
   {
@@ -106,3 +126,25 @@ export const CACAO_STAGES: ProcessStage[] = [
 
 /** Rango de scroll (0→1) que ocupa cada etapa dentro de la sección. */
 export const STAGE_RANGES: Array<[number, number]> = CACAO_STAGES.map((_, i, all) => [i / all.length, (i + 1) / all.length]);
+
+/** Cuadro de la secuencia (fraccional) para un progreso de scroll dado. */
+export function frameForProgress(p: number) {
+  let last = 0;
+  for (let i = 0; i < CACAO_STAGES.length; i++) {
+    const r = CACAO_STAGES[i].visualAsset.sequenceRange;
+    const [a, b] = STAGE_RANGES[i];
+    if (!r) continue;
+    last = r[1];
+    if (p < b) {
+      const t = Math.min(1, Math.max(0, (p - a) / (b - a)));
+      return r[0] + (r[1] - r[0]) * t;
+    }
+  }
+  return last;
+}
+
+/** Extrae los valores numéricos de una métrica como "Del 55% al 7%" → [55, 7]. */
+export function metricRange(value: string): [number, number] | null {
+  const n = value.match(/\d+(?:[.,]\d+)?/g);
+  return n && n.length >= 2 ? [parseFloat(n[0].replace(",", ".")), parseFloat(n[1].replace(",", "."))] : null;
+}

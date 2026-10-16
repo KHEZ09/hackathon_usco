@@ -4,11 +4,8 @@ import { useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { Check, ChevronLeft, ChevronRight, Droplets, Leaf, Package, QrCode as QrIcon, Share2, Sun, type LucideIcon } from "lucide-react";
 import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
-import { CACAO_STAGES, STAGE_RANGES, type ProcessStage } from "@/data/cacaoProcessData";
-import { ProcesoDefs } from "./proceso/arte/Defs";
-import { EscenaBeneficio } from "./proceso/arte/Beneficio";
-import { EscenaSecado } from "./proceso/arte/Secado";
-import { EscenaEmpaque } from "./proceso/arte/Empaque";
+import { CACAO_STAGES, PROCESS_SEQUENCE, STAGE_RANGES, frameForProgress, type ProcessStage } from "@/data/cacaoProcessData";
+import { ProcessSequence } from "./proceso/ProcessSequence";
 import { EscenaQr } from "./proceso/EscenaQr";
 import { Caligrafia } from "./proceso/Caligrafia";
 import { AccionEtapa } from "./proceso/AccionEtapa";
@@ -31,15 +28,15 @@ const MOTAS = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 /**
- * "Del grano al producto": ilustraciones creadas en código (SVG con texturas procedurales y luz)
- * que recrean el recorrido del video — mazorca en la rama que se abre, granos que caen al cajón,
- * bandeja de secado y saco ORIVIA — animadas por el scroll y suavizadas con un resorte.
+ * "Del grano al producto": el recorrido del video como una sola secuencia continua en Canvas
+ * (mazorca → apertura → cajón → bandeja → saco) guiada por el scroll y suavizada con un resorte.
  * Encima va la interfaz real: stepper, textos y botones de data/cacaoProcessData.ts y el QR verificable.
  */
 export function PodSection() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const suave = useSpring(p, { stiffness: 110, damping: 26, mass: 0.35 });
+  const frame = useTransform(suave, (v) => frameForProgress(v));
   const [activa, setActiva] = useState(0);
 
   useMotionValueEvent(p, "change", (v) => {
@@ -66,14 +63,8 @@ export function PodSection() {
     <section ref={ref} id="proceso" aria-label="Del grano al producto" className="relative h-[620svh] px-3 sm:px-6">
       <div className="sticky top-3 h-[calc(100svh-1.5rem)] overflow-hidden rounded-[2.5rem] bg-[#121211] text-crema">
         {/* Recorrido continuo */}
-        <ProcesoDefs />
         <motion.div style={{ filter: desenfoque, scale: entrada }} className="absolute inset-x-0 top-0 bottom-[34%] lg:bottom-0">
-          <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(ellipse_at_55%_45%,rgba(201,138,43,0.14),transparent_62%)]" />
-          <EscenaBeneficio p={suave} />
-          <EscenaSecado p={suave} />
-          <div className="absolute inset-x-0 top-20 bottom-0 lg:inset-y-[6%] lg:left-[24%] lg:right-[26%]">
-            <EscenaEmpaque p={suave} />
-          </div>
+          <ProcessSequence sequence={PROCESS_SEQUENCE} frame={frame} fallback={CACAO_STAGES[0].visualAsset.fallbackImage} />
           {/* Integración: viñetas y degradados donde vive la interfaz */}
           <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,transparent_55%,rgba(18,18,17,0.65))]" />
           <div aria-hidden="true" className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#121211] to-transparent" />
