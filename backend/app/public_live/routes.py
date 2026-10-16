@@ -103,7 +103,7 @@ SELECT o.order_id::text AS order_id, o.status::text AS status,
            json_agg(
                json_build_object(
                    'event_hash', e.event_hash,
-                   'previous_event_hash', e.previous_event_hash,
+                   'previous_event_hash', e.previous_hash,
                    'event_type', e.event_type,
                    'occurred_at', e.occurred_at
                ) ORDER BY e.occurred_at
