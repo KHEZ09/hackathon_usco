@@ -36,4 +36,8 @@ class MemoryBlockchainAnchor:
         )
 
     def verify(self, receipt: AnchorReceipt) -> bool:
-        return receipt.status == "ANCHORED" and receipt.event_hash in self._anchored_hashes
+        return (
+            receipt.status == "ANCHORED"
+            and receipt.reference == f"memory://{receipt.event_hash}"
+            and receipt.event_hash in self._anchored_hashes
+        )

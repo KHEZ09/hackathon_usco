@@ -71,4 +71,5 @@ pytest
 - Implementar `POST /api/v1/auth/login` usando ese repositorio.
 - Implementar refresh token persistido y revocable.
 - Añadir modelos y migraciones del módulo de usuarios.
-- Añadir pedidos, auditoría, blockchain y Ollama sobre esta base.
+- Conectar los fundamentos de pedidos, auditoría, blockchain e IA a rutas Flask y persistencia.
+- Añadir pruebas integrales del flujo pedido → trazabilidad → verificación → resumen.

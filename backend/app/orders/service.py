@@ -25,6 +25,8 @@ def create_transition(
     Persistence belongs to Kevin's database/repository module. Sebas owns the
     state rule and the event contract that will be persisted later.
     """
+    if not order_id.strip() or not actor_id.strip():
+        raise ValueError("order_id and actor_id are required")
     validated_state = transition_order(current_state, next_state)
     occurred_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
     return OrderTransition(

@@ -31,6 +31,11 @@ class TokenService:
     ) -> str:
         if not subject or not role:
             raise TokenError("subject and role are required")
+        if permissions is not None and any(
+            not isinstance(permission, str) or not permission
+            for permission in permissions
+        ):
+            raise TokenError("permissions must contain non-empty strings")
 
         now = datetime.now(UTC)
         payload: dict[str, Any] = {
@@ -55,11 +60,32 @@ class TokenService:
                 self._secret_key,
                 algorithms=["HS256"],
                 issuer=self._issuer,
-                options={"require": ["sub", "role", "iat", "exp", "iss", "jti"]},
+                options={
+                    "require": [
+                        "sub",
+                        "role",
+                        "permissions",
+                        "iat",
+                        "exp",
+                        "iss",
+                        "jti",
+                        "type",
+                    ]
+                },
             )
         except jwt.PyJWTError as exc:
             raise TokenError("invalid or expired access token") from exc
 
         if payload.get("type") != "access":
             raise TokenError("token type is not allowed")
+        if not isinstance(payload.get("sub"), str) or not payload["sub"]:
+            raise TokenError("token subject must be a non-empty string")
+        if not isinstance(payload.get("role"), str) or not payload["role"]:
+            raise TokenError("token role must be a non-empty string")
+        permissions = payload.get("permissions")
+        if not isinstance(permissions, list) or any(
+            not isinstance(permission, str) or not permission
+            for permission in permissions
+        ):
+            raise TokenError("token permissions must be a list of non-empty strings")
         return payload

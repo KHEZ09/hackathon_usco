@@ -45,6 +45,13 @@ def test_memory_anchor_verifies_hash_without_business_persistence():
 
     assert anchor.verify(receipt) is True
 
+    tampered_receipt = receipt.__class__(
+        event_hash=receipt.event_hash,
+        status=receipt.status,
+        reference="memory://tampered",
+    )
+    assert anchor.verify(tampered_receipt) is False
+
 
 def test_audit_record_requires_actor_and_explains_ai_boundary():
     record = create_audit_record(

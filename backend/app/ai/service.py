@@ -46,8 +46,13 @@ class OllamaClient:
         )
         with request.urlopen(req, timeout=self._timeout_seconds) as response:
             result = json.loads(response.read().decode("utf-8"))
+        if not isinstance(result, dict) or not isinstance(result.get("response"), str):
+            raise TypeError("Ollama returned an invalid response")
+        text = result["response"].strip()
+        if not text:
+            raise ValueError("Ollama returned an empty response")
         return AiInsight(
             kind="summary",
-            text=str(result.get("response", "")).strip(),
+            text=text,
             source=f"ollama:{self._model}",
         )
