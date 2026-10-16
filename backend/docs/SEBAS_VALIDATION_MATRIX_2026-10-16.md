@@ -15,18 +15,19 @@ rectificar, analizar errores, complementar, auditar y comprobar nuevamente.
 | RF08–RF09 | Estado de lote y disponibilidad pública/privada | CAC001 cambia a `BLOCKED` y no queda disponible | Cubierto | Frontend para visualización |
 | RF10 | Auditoría de cambio de estado y verificación de cadena | Auditoría y `history_verified` | Cubierto en adaptador | PostgreSQL para durable |
 | RF11–RF12 | Exportación y balance existentes permanecen en módulos de Kevin | No se modifican ni se rompen; suite completa pasa | Sin regresión detectada | Kevin / frontend según ruta |
-| Persistencia | `OrderRepository`, clúster y lotes usan PostgreSQL en producción; readiness tiene timeout de 2 s | 80 pruebas locales; servidor con PostgreSQL saludable y prueba de persistencia remota aprobada | Listo en `orivia` | Ninguna del backend aislado |
+| Persistencia | `OrderRepository`, clúster y lotes usan PostgreSQL en producción; readiness tiene timeout de 2 s | 86 pruebas Docker; servidor con PostgreSQL saludable y prueba de persistencia remota aprobada | Listo en `orivia` | Ninguna del backend aislado |
 | Auditoría | Reutilización de `AuditRecord` inmutable | Prueba de auditoría de CAC001 | Listo | Ninguna |
 | Blockchain | Hash-chain de lotes, anclaje PostgreSQL y adaptador EVM real | Polygon Amoy, contrato desplegado, pedido sintético anclado, reintento idempotente y `verified=true` contra contrato | Listo en staging | Producción requiere política de custodia, red y rotación aprobada |
 | IA | Fallback local read-only y cliente Ollama Cloud autenticado | Pedido sintético analizado por `gpt-oss:120b`; respuesta `source=ollama:gpt-oss:120b`; fallback conservado | Listo en staging | Frontend consume el contrato; producción requiere límites/costos del proveedor |
 | Docker | Compose y scripts cargan configuración de API/PostgreSQL más blockchain/Ollama | Local: 80 tests, compileall y Ruff; remoto: health, ready, smoke, persistencia, EVM y Ollama pasan | Listo en `orivia` | Repetir después de cada push |
+| Correlación de backend | Se identificó el stack canónico y se comparó con el legado | Redes, archivos, procesos y PostgreSQL separados; se detuvo el legado sin borrar su volumen; 8001 dejó de escuchar y 8000 siguió saludable | Corregido | No reiniciar `/home/admin/backend` sin coordinación |
 | Handoff frontend | Contrato de rutas, sesión, permisos, visibilidad y errores | Revisión cruzada contra `API_CONTRACT_ORIVIA.md` y pruebas de autorización | Listo en `FRONTEND_HANDOFF_ORIVIA.md` | Ángel y Daniel deben conectar pantallas |
 | Blockchain EVM público | Script de despliegue, artefacto Solidity y adaptador EVM preparados | EVM local: contrato en bloque 1, anclaje en bloque 2, `isAnchored=true`; servidor no tiene RPC, wallet ni contrato | Código validado, red pública pendiente | Requiere RPC, wallet dedicada y fondos de testnet |
 
 ## Evidencia local
 
 ```text
-backend: 80 passed in 4.36s
+backend: 86 passed in Docker
 ruff (app, tests y scripts): All checks passed
 compileall app tests: OK
 orivia Docker: servicio API y PostgreSQL saludables

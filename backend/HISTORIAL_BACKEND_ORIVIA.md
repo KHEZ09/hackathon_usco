@@ -418,6 +418,27 @@ Resultado: blockchain EVM y análisis Ollama quedan funcionales en staging. Lo
 pendiente para integración es que frontend consuma los contratos y que Kevin
 termine sus validaciones de usuarios, roles persistidos y módulos empresariales.
 
+## 16. Prueba de fuego de correlación del backend — 2026-10-16
+
+Se comparó el backend canónico de `/opt/orivia/repo` contra el checkout legado
+de `/home/admin/backend`:
+
+- No compartían código actualizado, red Docker, contenedor PostgreSQL ni
+  volumen. Ambos podían responder `/health`, pero representaban instalaciones
+  distintas y podían producir datos divergentes.
+- El backend canónico mantiene ORIVIA completo: usuarios, roles, pedidos,
+  PostgreSQL, trazabilidad, auditoría, EVM, Ollama, clúster y módulos de Kevin.
+- El stack legado se detuvo sin `down -v`, por lo que su volumen quedó
+  conservado para recuperación explícita. Se cerró su puerto público `8001`.
+- ORIVIA continuó en `127.0.0.1:8000`; health, readiness y PostgreSQL siguieron
+  correctos después de la corrección.
+- La suite Docker final quedó en `86 passed`, migraciones `001`–`009` aplicadas,
+  repositorio limpio y `main` sincronizado con el VPS.
+
+Decisión operativa: `/opt/orivia/repo` es la única fuente ejecutable de ORIVIA.
+El directorio legado no se debe levantar como segundo backend ni conectar a la
+base canónica sin una migración aprobada.
+
 ## 16. Cierre de módulos de Kevin y roles persistidos — 2026-10-16
 
 Se ejecutó `git pull --ff-only origin main` en staging antes de validar. Se

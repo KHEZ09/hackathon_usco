@@ -23,6 +23,13 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
   ambos archivos si el segundo existe; ninguno se versiona.
 - El login tiene límite local por IP/identificador: 5 fallos en 10 minutos y bloqueo de 15 minutos.
 - La API registra método, ruta, código y `X-Request-ID`, sin registrar tokens ni cuerpos de solicitud.
+- El stack canónico es únicamente `/opt/orivia/repo` (`orivia-server`), con API
+  local en `127.0.0.1:8000` y PostgreSQL privado en Docker.
+- El stack legado `/home/admin/backend` estaba aislado en otra red, con otra
+  base de datos y publicaba `8001`. Fue detenido durante la auditoría de
+  correlación del 2026-10-16; su volumen `backend_orivia_postgres_data` se
+  conserva sin borrar para una recuperación explícita. No debe reiniciarse ni
+  usarse como segundo backend de ORIVIA.
 - El clúster usa las migraciones y repositorios PostgreSQL compartidos de Kevin
   cuando el servidor corre con `ORIVIA_ORDER_REPOSITORY=postgres`; los lotes
   usan la migración propia `007_lot_traceability.sql`. La persistencia
