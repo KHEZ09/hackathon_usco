@@ -20,6 +20,10 @@ def list_users():
     if not _admin_only():
         return jsonify(error="FORBIDDEN", message="Se requiere rol ADMIN"), 403
     status = request.args.get("status")
+    if status is not None:
+        status = status.upper()
+        if status not in {"ACTIVE", "BLOCKED", "SUSPENDED"}:
+            return jsonify(error="VALIDATION_ERROR", message="Estado inválido"), 400
     return jsonify({"data": [public_user(row) for row in repo.list(status)]})
 
 

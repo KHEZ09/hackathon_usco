@@ -47,4 +47,7 @@ def set_cost(lot_id: UUID):
             error="VALIDATION_ERROR",
             message="total_cost y cost_per_kg deben ser números no negativos",
         ), 400
-    return jsonify(data=accounting_repo.set_lot_cost(lot_id, total_cost, cost_per_kg))
+    result = accounting_repo.set_lot_cost(lot_id, total_cost, cost_per_kg)
+    if result is None:
+        return jsonify(error="NOT_FOUND", message="Lote no encontrado"), 404
+    return jsonify(data=result)

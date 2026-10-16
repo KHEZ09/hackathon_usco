@@ -12,6 +12,7 @@ Esta carpeta documenta los módulos de datos e integraciones implementados para 
 - [Integraciones externas](integrations/README.md)
 - [Migraciones](migrations/README.md)
 - [Operación y despliegue](operations/README.md)
+- [Casos manuales de validación](manual-test-cases.md)
 
 ## Alcance
 
@@ -26,6 +27,9 @@ Los módulos de esta carpeta administran datos persistentes, consultas y conecto
 - Respuestas exitosas: objeto con propiedad `data`.
 - Errores de validación: `error=VALIDATION_ERROR` y HTTP 400.
 - No se documentan secretos ni credenciales reales.
+
+El contrato general de Flask, autenticación, pedidos, trazabilidad, auditoría
+e IA está en [`backend/API_CONTRACT_ORIVIA.md`](../../API_CONTRACT_ORIVIA.md).
 
 ## Pendientes de integración
 

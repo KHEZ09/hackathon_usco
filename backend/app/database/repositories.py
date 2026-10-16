@@ -181,6 +181,11 @@ class AccountingRepository:
         self, lot_id: UUID | str, total_cost: Any, cost_per_kg: Any
     ) -> dict[str, Any] | None:
         with transaction() as connection:
+            lot = connection.execute(
+                "SELECT lot_id FROM orivia.lot WHERE lot_id=%s", (lot_id,)
+            ).fetchone()
+            if lot is None:
+                return None
             return connection.execute(
                 """INSERT INTO orivia.lot_cost(lot_id,total_cost,cost_per_kg)
                 VALUES(%s,%s,%s) ON CONFLICT(lot_id) DO UPDATE SET total_cost=EXCLUDED.total_cost,

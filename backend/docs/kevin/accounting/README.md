@@ -25,6 +25,9 @@ Payload:
 
 Ambos valores deben ser numéricos no negativos. Las validaciones de inventario y consistencia se refuerzan en PostgreSQL mediante restricciones y triggers.
 
+Si el UUID del lote no existe, la API responde HTTP 404 con `error=NOT_FOUND`;
+no expone la excepción de clave foránea de PostgreSQL.
+
 ## Datos de demostración
 
 La migración `003_seed_inventory.sql` crea un lote sintético de 100 kg y su costo inicial.

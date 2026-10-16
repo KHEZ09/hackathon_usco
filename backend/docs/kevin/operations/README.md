@@ -15,9 +15,14 @@ El archivo `.env` existe únicamente en el servidor. Debe contener como mínimo 
 
 ## Despliegue actual de staging
 
-Servidor: `admin@100.104.169.58`, directorio `/home/admin/backend`.
+El entorno oficial documentado es `admin@orivia`, directorio
+`/opt/orivia/repo`. Existe además una copia adicional histórica en
+`/home/admin/backend`; no debe borrarse ni detenerse sin confirmar su
+propietario y propósito.
 
-La instancia de Orivia usa el puerto `8001` porque el puerto `8000` ya estaba ocupado por otro servicio existente. No se detuvo ni se modificó ese servicio.
+El entorno adicional de `/home/admin/backend` usa el puerto `8001` porque el
+puerto `8000` estaba ocupado por el servicio oficial. El servicio oficial usa
+`127.0.0.1:8000` según `infra/orivia-server/docker-compose.yml`.
 
 Comprobaciones:
 
@@ -29,11 +34,12 @@ curl http://127.0.0.1:8001/ready
 
 ## Estado validado
 
-- Contenedor de API activo.
-- Contenedor PostgreSQL saludable.
-- `/ready` confirma `database: ok`.
-- Migraciones 001, 002 y 003 aplicadas.
-- Backup PostgreSQL probado.
+- El procedimiento esperado valida contenedor de API activo.
+- El procedimiento esperado valida PostgreSQL saludable.
+- `/ready` debe confirmar `database: ok`.
+- Las migraciones 001, 002, 003 y 004 deben aparecer aplicadas o como `SKIP`.
+- El backup debe restaurarse sobre una base temporal antes de considerarse
+  comprobado.
 
 ## Límites
 
