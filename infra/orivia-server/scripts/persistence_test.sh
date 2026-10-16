@@ -15,4 +15,7 @@ if [[ -f "$ROOT_ENV_FILE" ]]; then
 fi
 
 docker compose "${COMPOSE_ENV_FILES[@]}" -f "$COMPOSE_FILE" exec -T api \
+  env ORIVIA_BLOCKCHAIN_BACKEND=postgres python scripts/verify_lot_postgres_persistence.py
+
+docker compose "${COMPOSE_ENV_FILES[@]}" -f "$COMPOSE_FILE" exec -T api \
   python scripts/verify_postgres_persistence.py
