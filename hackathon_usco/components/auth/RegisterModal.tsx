@@ -27,7 +27,6 @@ const REGISTRO_ROLES: Array<{
   { id: "operador",      backendRole: "OPERATOR", label: "Operador",       icon: ROLES.operador.icon },
   { id: "administrador", backendRole: "ADMIN",    label: "Administrador",  icon: ROLES.administrador.icon },
   { id: "comprador",     backendRole: "BUYER",    label: "Comprador",      icon: ROLES.comprador.icon },
-  { id: "consulta",      backendRole: "VIEWER",   label: "Consulta",       icon: ROLES.comprador.icon },
 ];
 
 const CAMPO_DEL_ERROR: Record<string, RegistroCampo> = {
@@ -80,12 +79,6 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
         if (!vivo) return;
         setRoles(lista);
         setRolesError(false);
-        setDatos((actual) => {
-          const seleccionado = REGISTRO_ROLES.find((r) => r.id === actual.rol || r.backendRole === actual.rol);
-          if (seleccionado && lista.some((r) => r.role === seleccionado.backendRole)) return actual;
-          const primero = REGISTRO_ROLES.find((r) => lista.some((permitido) => permitido.role === r.backendRole));
-          return { ...actual, rol: primero?.id ?? "" };
-        });
       })
       .catch(() => vivo && setRolesError(true));
     return () => {
@@ -219,7 +212,7 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
-                  {REGISTRO_ROLES.filter((r) => !roles || roles.some((permitido) => permitido.role === r.backendRole)).map((r) => {
+                  {REGISTRO_ROLES.map((r) => {
                     const selected = datos.rol === r.id || datos.rol === r.backendRole;
                     const Icon = r.icon;
                     return (
