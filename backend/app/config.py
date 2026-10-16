@@ -28,6 +28,7 @@ class Settings:
     blockchain_tx_timeout_seconds: int
     blockchain_gas_limit: int
     ollama_base_url: str | None
+    ollama_api_key: str | None
     ollama_model: str
     cors_origins: tuple[str, ...]
     login_rate_limit_enabled: bool
@@ -92,6 +93,7 @@ class Settings:
                 os.getenv("ORIVIA_BLOCKCHAIN_GAS_LIMIT", "180000")
             ),
             ollama_base_url=os.getenv("OLLAMA_BASE_URL") or None,
+            ollama_api_key=os.getenv("OLLAMA_API_KEY") or None,
             ollama_model=os.getenv("OLLAMA_MODEL", "gpt-oss:120b"),
             cors_origins=cors_origins,
             login_rate_limit_enabled=os.getenv(

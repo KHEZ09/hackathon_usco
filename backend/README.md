@@ -46,8 +46,10 @@ se versiona.
 
 Los endpoints de IA funcionan sin servicios externos mediante un resumen local
 determinista. Ollama es opcional: al configurar `OLLAMA_BASE_URL`, se utiliza
-el modelo indicado en `OLLAMA_MODEL` y, si no responde, se conserva el fallback
-local de solo lectura. La IA no modifica estados ni escribe en blockchain.
+el modelo indicado en `OLLAMA_MODEL`; `OLLAMA_API_KEY` permite autenticarse
+contra un proveedor remoto y nunca se devuelve al cliente. Si Ollama no
+responde, se conserva el fallback local de solo lectura. La IA no modifica
+estados ni escribe en blockchain.
 
 El clúster usa el adaptador de memoria en desarrollo y el repositorio PostgreSQL
 de Kevin cuando `ORIVIA_ORDER_REPOSITORY=postgres`; el contrato HTTP y los
@@ -107,6 +109,9 @@ Los documentos generales del proyecto están en la raíz del repositorio: `PLAN_
 El contrato operativo de nuestras rutas está en `API_CONTRACT_ORIVIA.md`.
 
 ## Pruebas
+
+Ejecuta los comandos desde `backend/`, no desde la raíz del repositorio, para
+que Python resuelva el paquete `app` y no recoja copias de trabajo anidadas.
 
 ```powershell
 pytest

@@ -366,3 +366,24 @@ dominio/HTTPS, proveedor blockchain público, despliegue real de Ollama 120B,
 retención de backups, rotación operativa de secretos y reconciliación del stack
 independiente `/home/admin/backend`.
 
+## 14. Validación de integración y preparación externa — 2026-10-16
+
+Se repitió el ciclo de validación después del último `pull`/`push`:
+
+- `80 passed` desde `backend/`.
+- Ruff y `compileall` sin errores.
+- En `orivia`, Docker y PostgreSQL quedaron saludables.
+- `/health`, `/ready`, la frontera `401`, smoke test y persistencia remota
+  pasaron correctamente.
+- Se confirmó que producción usa `ORIVIA_ORDER_REPOSITORY=postgres` y que el
+  anclaje activo del servidor continúa en `ORIVIA_BLOCKCHAIN_BACKEND=postgres`.
+- Se añadió soporte opcional para `OLLAMA_API_KEY` sin registrar ni devolver la
+  credencial; el fallback local permanece operativo.
+- Se entregó el contrato de integración para frontend en
+  `backend/docs/FRONTEND_HANDOFF_ORIVIA.md`.
+
+La activación de blockchain EVM público queda preparada en código, pero no se
+ejecuta sin RPC, wallet dedicada financiada, contrato y `chain_id`. Ollama real
+tampoco se instala en la instancia de 1.9 GiB RAM para `gpt-oss:120b`; requiere
+un proveedor remoto o una máquina con capacidad suficiente.
+

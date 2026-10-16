@@ -128,6 +128,8 @@ def test_ai_falls_back_to_local_rules_when_ollama_is_unavailable(monkeypatch):
 
 
 def test_ollama_preserves_analysis_kind(monkeypatch):
+    captured = {}
+
     class FakeResponse:
         def __enter__(self):
             return self
@@ -140,6 +142,7 @@ def test_ollama_preserves_analysis_kind(monkeypatch):
 
     class FakeOpener:
         def open(self, *_args, **_kwargs):
+            captured["authorization"] = _args[0].get_header("Authorization")
             return FakeResponse()
 
     monkeypatch.setattr(
@@ -150,7 +153,9 @@ def test_ollama_preserves_analysis_kind(monkeypatch):
     insight = OllamaClient(
         base_url="http://ollama.test",
         model="gpt-oss:120b",
+        api_key="demo-secret",
     ).summarize({"order_id": "order-1"}, kind="audit")
 
     assert insight.kind == "audit"
     assert insight.source == "ollama:gpt-oss:120b"
+    assert captured["authorization"] == "Bearer demo-secret"

@@ -45,6 +45,7 @@ def create_app(settings: Settings | None = None) -> Flask:
         BLOCKCHAIN_TX_TIMEOUT_SECONDS=settings.blockchain_tx_timeout_seconds,
         BLOCKCHAIN_GAS_LIMIT=settings.blockchain_gas_limit,
         OLLAMA_BASE_URL=settings.ollama_base_url,
+        OLLAMA_API_KEY=settings.ollama_api_key,
         OLLAMA_MODEL=settings.ollama_model,
         CORS_ORIGINS=settings.cors_origins,
         LOGIN_RATE_LIMIT_ENABLED=settings.login_rate_limit_enabled,

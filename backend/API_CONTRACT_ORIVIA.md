@@ -102,7 +102,9 @@ POST /api/v1/ai/analytics
 ```
 
 La IA solo recibe hechos filtrados y es de lectura. Sin Ollama usa reglas locales;
-si Ollama falla, conserva ese fallback. Los eventos se anclan automáticamente
+si Ollama falla, conserva ese fallback. Un proveedor Ollama remoto puede usar
+`OLLAMA_API_KEY` en el entorno privado del servidor; nunca se envía esa clave al
+frontend ni se registra en logs. Los eventos se anclan automáticamente
 cuando se crea o cambia un pedido o un lote. Repetir el anclaje del último
 evento devuelve `200` con `idempotent=true`.
 

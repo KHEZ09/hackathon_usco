@@ -52,7 +52,13 @@ def build_read_only_prompt(facts: dict[str, Any]) -> str:
 class OllamaClient:
     """Minimal read-only client; it never writes business data."""
 
-    def __init__(self, base_url: str, model: str, timeout_seconds: float = 10.0) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        model: str,
+        api_key: str | None = None,
+        timeout_seconds: float = 10.0,
+    ) -> None:
         parsed = urlsplit(base_url)
         if (
             parsed.scheme not in {"http", "https"}
@@ -67,6 +73,7 @@ class OllamaClient:
             raise ValueError("timeout_seconds must be between 0 and 30")
         self._base_url = base_url.rstrip("/")
         self._model = model
+        self._api_key = api_key.strip() if api_key and api_key.strip() else None
         self._timeout_seconds = timeout_seconds
 
     def summarize(self, facts: dict[str, Any], *, kind: str = "summary") -> AiInsight:
@@ -79,10 +86,13 @@ class OllamaClient:
                 "stream": False,
             }
         ).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if self._api_key:
+            headers["Authorization"] = f"Bearer {self._api_key}"
         req = request.Request(
             f"{self._base_url}/api/generate",
             data=payload,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
             method="POST",
         )
         opener = request.build_opener(_NoRedirectHandler())

@@ -15,25 +15,32 @@ rectificar, analizar errores, complementar, auditar y comprobar nuevamente.
 | RF08–RF09 | Estado de lote y disponibilidad pública/privada | CAC001 cambia a `BLOCKED` y no queda disponible | Cubierto | Frontend para visualización |
 | RF10 | Auditoría de cambio de estado y verificación de cadena | Auditoría y `history_verified` | Cubierto en adaptador | PostgreSQL para durable |
 | RF11–RF12 | Exportación y balance existentes permanecen en módulos de Kevin | No se modifican ni se rompen; suite completa pasa | Sin regresión detectada | Kevin / frontend según ruta |
-| Persistencia | `OrderRepository`, clúster y lotes usan PostgreSQL en producción; readiness tiene timeout de 2 s | 71 pruebas pasan; migración `007` ordenada y CAC001 se valida después de reiniciar API | Pedidos, clúster y lotes listos | Ninguna del backend aislado |
+| Persistencia | `OrderRepository`, clúster y lotes usan PostgreSQL en producción; readiness tiene timeout de 2 s | 80 pruebas locales; servidor con PostgreSQL saludable y prueba de persistencia remota aprobada | Listo en `orivia` | Ninguna del backend aislado |
 | Auditoría | Reutilización de `AuditRecord` inmutable | Prueba de auditoría de CAC001 | Listo | Ninguna |
 | Blockchain | Hash-chain de lotes y anclaje existente de pedidos | Verificación de eventos y pruebas de anclaje existentes | Listo para evidencia local | Proveedor público es decisión posterior |
-| IA | No se altera el límite read-only ni el fallback local | Suite IA existente pasa | Sin regresión | Ollama es opcional |
-| Docker | Contratos y scripts de prueba documentados para `orivia` | Local: pytest, compileall y Ruff pasan | Código listo para prueba Docker remota | Requiere ejecutar en `orivia` tras push |
+| IA | Fallback local read-only, cliente Ollama y credencial opcional para proveedor remoto | 80 pruebas pasan; servidor confirma Ollama no configurado, sin instalar el modelo pesado | Código listo; runtime externo pendiente | Requiere URL/modelo/credencial y capacidad suficiente |
+| Docker | Contratos y scripts de prueba documentados para `orivia` | Local: 80 tests, compileall y Ruff; remoto: health, ready, smoke y persistencia pasan | Listo en `orivia` con `b3bd044` | Repetir después de cada push |
 
 ## Evidencia local
 
 ```text
-backend: 71 passed in 6.99s
-ruff (app/cluster, app/lots y pruebas nuevas): All checks passed
+backend: 80 passed in 4.36s
+ruff (app, tests y scripts): All checks passed
 compileall app tests: OK
-orivia Docker: 71 passed; `007_lot_traceability.sql` applied
-orivia post-restart: CAC001 `BLOCKED`, 2 events, audit count 1, history verified, affected 80 kg
+orivia Docker: servicio API y PostgreSQL saludables
+orivia smoke: `/health`, `/ready` y frontera 401 aprobados
+orivia persistence: pedido, evento, anclaje y recreación de aplicación aprobados
+orivia runtime: `ORIVIA_ORDER_REPOSITORY=postgres`, `ORIVIA_BLOCKCHAIN_BACKEND=postgres`
+orivia runtime: Ollama no instalado/configurado; UFW activo y SSH limitado a `tailscale0`
 ```
 
 ## Faltantes reales, separados del bloque de Sebas
 
 1. Frontend debe construir directorio, necesidades, conexión, confianza y
    timeline del lote.
-2. El equipo debe hacer prueba Docker y smoke test en `orivia` después del push.
-3. La selección de blockchain público y HTTPS quedan fuera de esta entrega.
+2. Activar blockchain público requiere RPC, wallet dedicada financiada, contrato y
+   `chain_id`; no se puede completar sin esas credenciales externas.
+3. Activar Ollama real requiere un proveedor/modelo accesible; `gpt-oss:120b`
+   no es viable para esta instancia de 1.9 GiB RAM sin un endpoint remoto.
+4. Frontend debe consumir el contrato de `backend/API_CONTRACT_ORIVIA.md` y
+   configurar su origen explícito en `ORIVIA_CORS_ORIGINS`.
