@@ -59,7 +59,30 @@ nano infra/orivia-server/.env
 openssl rand -hex 32
 ```
 
-Desplegar:
+## Flujo obligatorio de cambios
+
+Cada cambio del backend sigue esta secuencia:
+
+1. Hacer commit y `push` al repositorio.
+2. Entrar por `ssh admin@orivia` y hacer `git pull --ff-only origin main`.
+3. Ejecutar la prueba aislada dentro de Docker:
+
+```bash
+cd /opt/orivia/repo
+bash infra/orivia-server/scripts/test.sh
+```
+
+4. Si las pruebas pasan, ejecutar el despliegue real:
+
+```bash
+cd /opt/orivia/repo
+bash infra/orivia-server/scripts/deploy.sh
+bash infra/orivia-server/scripts/healthcheck.sh
+```
+
+No se debe desplegar un cambio que no haya pasado `test.sh`.
+
+## Despliegue inicial
 
 ```bash
 bash infra/orivia-server/scripts/deploy.sh
