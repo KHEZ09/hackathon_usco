@@ -47,7 +47,37 @@ Además de los documentos generales, trabaja bajo:
 - `hackathon_usco/design/README.md` — tokens y referencias visuales.
 - `PLAN_HACKATON_ORIVIA.md` — flujo de demo y criterios de experiencia.
 
-`ARQUITECTURA_DESARROLLO_APP_CACAO.md` es histórico: ninguna persona ni IA debe usarlo como plan vigente.
+## Flujo Git obligatorio del equipo
+
+### Al comenzar el trabajo
+
+Con el árbol de trabajo limpio, cada persona debe sincronizar `main`:
+
+```bash
+git pull --ff-only origin main
+```
+
+Después debe trabajar únicamente en sus carpetas asignadas y evitar `git add .` sin revisar qué archivos entran.
+
+### Al terminar el trabajo
+
+1. Ejecutar las pruebas correspondientes.
+2. Revisar `git status` y `git diff`.
+3. Crear un commit pequeño y descriptivo.
+4. Volver a sincronizar antes de subir:
+
+```bash
+git pull --rebase origin main
+git push origin main
+```
+
+Si aparece un conflicto, se detiene el push y se resuelve manualmente; no se usa `--force`, `reset --hard` ni se sobrescribe el trabajo de otra persona.
+
+### Después del push
+
+En `orivia`, el flujo de despliegue es ejecutar `git pull --ff-only origin main`, luego `bash infra/orivia-server/scripts/test.sh` y, si pasa, `bash infra/orivia-server/scripts/deploy.sh`.
+
+Trabajar en carpetas distintas evita la mayoría de conflictos, pero no protege los archivos compartidos ni reemplaza la sincronización antes del push.
 
 ## Sebas — plataforma y seguridad
 
