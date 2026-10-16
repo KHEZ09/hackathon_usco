@@ -222,7 +222,7 @@ function AiCard() {
             </motion.p>
             <AnimatePresence>
               {visible >= 1 && (
-                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+                <motion.div key="hechos" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
                   <p className="text-[0.62rem] font-semibold tracking-[0.2em] text-crema/55 uppercase">Hechos</p>
                   <ul className="mt-2 grid grid-cols-2 gap-1.5">
                     {IA.hechos.map((h) => (
@@ -234,18 +234,18 @@ function AiCard() {
                 </motion.div>
               )}
               {visible >= 2 && (
-                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2">
+                <motion.div key="severidad" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2">
                   <span className="rounded-full bg-cereza px-2.5 py-0.5 text-[0.62rem] font-bold tracking-wider">SEVERIDAD ALTA</span>
                 </motion.div>
               )}
               {visible >= 3 && (
-                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+                <motion.div key="recomendacion" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
                   <p className="text-[0.62rem] font-semibold tracking-[0.2em] text-crema/55 uppercase">Recomendación</p>
                   <p className="mt-1 text-xs leading-relaxed text-crema/85">{IA.recomendacion}</p>
                 </motion.div>
               )}
               {visible >= 4 && (
-                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+                <motion.div key="incertidumbre" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
                   <p className="text-[0.62rem] font-semibold tracking-[0.2em] text-crema/55 uppercase">Incertidumbre</p>
                   <p className="mt-1 text-xs leading-relaxed text-crema/70">{IA.incertidumbres[0]}</p>
                 </motion.div>
