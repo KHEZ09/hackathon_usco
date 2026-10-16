@@ -24,6 +24,8 @@ Este backend pertenece al repositorio de la hackatón USCO y se prepara para des
 La ruta de pedidos actualmente usa un repositorio en memoria para permitir el
 trabajo independiente de Sebas y las pruebas del MVP. No es persistencia de
 producción: Kevin lo reemplazará por PostgreSQL mediante el mismo contrato.
+Los registros de auditoría y comprobantes blockchain de esta fase también son
+temporales y se pierden al reiniciar el proceso.
 
 Kevin integrará el módulo de usuarios y las migraciones. Este backend no crea una segunda base de usuarios.
 

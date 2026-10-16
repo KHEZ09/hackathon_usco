@@ -24,6 +24,7 @@ class OrderRecord:
     created_at: str
     events: list[TraceEvent] = field(default_factory=list)
     audits: list[AuditRecord] = field(default_factory=list)
+    payloads: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 class InMemoryOrderRepository:
@@ -96,6 +97,7 @@ class InMemoryOrderRepository:
                     changes={"status": "CREATED"},
                 )
             ],
+            payloads={event.event_id: payload},
         )
         with self._lock:
             self._orders[order_id] = order
@@ -136,8 +138,13 @@ class InMemoryOrderRepository:
                 previous_event_hash=order.events[-1].event_hash,
                 occurred_at=transition.occurred_at,
             )
+            payload = {
+                "from": transition.previous_state,
+                "to": transition.next_state,
+            }
             order.status = transition.next_state
             order.events.append(event)
+            order.payloads[event.event_id] = payload
             order.audits.append(
                 create_audit_record(
                     actor_id=actor_id,
@@ -157,6 +164,29 @@ class InMemoryOrderRepository:
         if order is None:
             raise KeyError(order_id)
         return list(order.events)
+
+    def audits(self, order_id: str) -> list[AuditRecord]:
+        order = self.get(order_id)
+        if order is None:
+            raise KeyError(order_id)
+        return list(order.audits)
+
+    def verify_timeline(self, order_id: str) -> bool:
+        order = self.get(order_id)
+        if order is None:
+            raise KeyError(order_id)
+
+        previous_event_hash: str | None = None
+        for event in order.events:
+            payload = order.payloads.get(event.event_id)
+            if (
+                payload is None
+                or event.previous_event_hash != previous_event_hash
+                or not event.verify(payload)
+            ):
+                return False
+            previous_event_hash = event.event_hash
+        return True
 
 
 def order_to_dict(order: OrderRecord) -> dict[str, Any]:
@@ -184,4 +214,15 @@ def event_to_dict(event: TraceEvent) -> dict[str, Any]:
         "payload_hash": event.payload_hash,
         "previous_event_hash": event.previous_event_hash,
         "event_hash": event.event_hash,
+    }
+
+
+def audit_to_dict(audit: AuditRecord) -> dict[str, Any]:
+    return {
+        "id": audit.audit_id,
+        "actor_id": audit.actor_id,
+        "action": audit.action,
+        "entity_type": audit.entity_type,
+        "entity_id": audit.entity_id,
+        "changes": audit.changes,
     }

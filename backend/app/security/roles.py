@@ -10,9 +10,17 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
             "tracking:write",
         }
     ),
-    "accounting": frozenset({"orders:read", "accounting:read", "reports:read"}),
+    "accounting": frozenset(
+        {
+            "orders:read",
+            "accounting:read",
+            "reports:read",
+            "audit:read",
+            "blockchain:read",
+        }
+    ),
     "admin": frozenset({"*"}),
-    "viewer": frozenset({"orders:read", "tracking:read"}),
+    "viewer": frozenset({"orders:read", "tracking:read", "blockchain:read"}),
 }
 
 
