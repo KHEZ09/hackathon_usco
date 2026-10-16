@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from ..security.middleware import require_access_token
+from ..security.permissions import require_permissions
 from .service import catalog_repo
 
 catalog_bp = Blueprint("catalog", __name__)
