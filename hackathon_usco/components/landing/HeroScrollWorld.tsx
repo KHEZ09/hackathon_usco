@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { motion, useAnimationFrame, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
 import { CacaoLeaf, CacaoPod, useWind } from "./Botanica";
 import { RealisticDragonfly } from "./RealisticDragonfly";
+import { HeroManipulacion } from "./HeroManipulacion";
 import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
 
 const MOTES = Array.from({ length: 24 }, (_, i) => ({
@@ -59,7 +60,10 @@ export function HeroScrollWorld() {
             aria-label="Cacaotal en el Huila, agricultor sosteniendo un fruto de cacao rojo maduro"
             className="absolute inset-0 size-full bg-cover bg-center animate-[ken-burns_22s_ease-in-out_infinite_alternate]"
             style={{ backgroundImage: "url(/media/hero-clean.jpg)" }}
-          />
+          >
+            {/* El agricultor manipula la mazorca: deformación local animada sobre la misma foto */}
+            <HeroManipulacion className="absolute inset-0 size-full" />
+          </div>
           {/* Haz de luz solar 1: barre de izquierda a derecha como sol entre hojas */}
           <div
             aria-hidden="true"
