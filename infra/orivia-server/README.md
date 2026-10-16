@@ -24,9 +24,11 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
 - El login tiene límite local por IP/identificador: 5 fallos en 10 minutos y bloqueo de 15 minutos.
 - La API registra método, ruta, código y `X-Request-ID`, sin registrar tokens ni cuerpos de solicitud.
 - El frontend se aloja separadamente en Hostinger mediante
-  `orivia.tobaru.xyz`. El servicio `web` de AWS publica únicamente el tablero
-  agregado de salud en `oriviahealth.tobaru.xyz` y la API oficial por
-  `oriviaurlapi.tobaru.xyz`; el tablero solo expone métricas y eventos sin PII.
+  `orivia.tobaru.xyz`. El servicio `web` de AWS publica el tablero de salud en
+  `oriviahealth.tobaru.xyz` y la API oficial por `oriviaurlapi.tobaru.xyz`.
+  En la demo de hackatón `ORIVIA_PUBLIC_LIVE_INCLUDE_DEMO_DATA=true` agrega
+  perfiles sintéticos, cadenas de eventos y certificados blockchain; nunca
+  publica contraseñas, tokens, API keys, DSN ni payloads privados.
   PostgreSQL continúa privado dentro de Docker.
 - El stack canónico es únicamente `/opt/orivia/repo` (`orivia-server`), con API
   local en `127.0.0.1:8000` y PostgreSQL privado en Docker.

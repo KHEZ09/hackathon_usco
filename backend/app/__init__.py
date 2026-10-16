@@ -1,3 +1,4 @@
+import os
 from uuid import uuid4
 
 from flask import Flask, g, jsonify, request
@@ -54,6 +55,8 @@ def create_app(settings: Settings | None = None) -> Flask:
         LOGIN_RATE_LIMIT_WINDOW_SECONDS=settings.login_rate_limit_window_seconds,
         LOGIN_RATE_LIMIT_BLOCK_SECONDS=settings.login_rate_limit_block_seconds,
         MAX_CONTENT_LENGTH=1 * 1024 * 1024,
+        PUBLIC_LIVE_INCLUDE_DEMO_DATA=os.getenv("ORIVIA_PUBLIC_LIVE_INCLUDE_DEMO_DATA", "false").lower()
+        in {"1", "true", "yes", "on"},
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SECURE=settings.environment.lower() == "production",
         SESSION_COOKIE_SAMESITE="Lax",

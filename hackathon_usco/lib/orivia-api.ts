@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 
 /** Cliente tipado para el contrato HTTP del backend ORIVIA. */
-const API_BASE_URL = (process.env.NEXT_PUBLIC_ORIVIA_API_URL ?? "http://localhost:8000/api/v1").replace(/\/+$/, "");
+const DEFAULT_API_BASE_URL = process.env.NODE_ENV === "production"
+  ? "https://oriviaurlapi.tobaru.xyz/api/v1"
+  : "http://localhost:8000/api/v1";
+const API_BASE_URL = (process.env.NEXT_PUBLIC_ORIVIA_API_URL ?? DEFAULT_API_BASE_URL).replace(/\/+$/, "");
 const ACCESS_TOKEN_KEY = "orivia.access_token.v1";
 const REFRESH_TOKEN_KEY = "orivia.refresh_token.v1";
 

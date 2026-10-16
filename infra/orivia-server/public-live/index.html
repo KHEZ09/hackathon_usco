@@ -57,6 +57,16 @@
       .integration pre { overflow: auto; margin: 12px 0 0; padding: 14px; border: 1px solid #ffffff12; border-radius: 12px; color: #d7e3d6; background: #07130e; font-size: .73rem; line-height: 1.55; }
       .checklist { margin: 12px 0 0; padding-left: 18px; color: #b8cabb; font-size: .78rem; line-height: 1.65; }
       .checklist li::marker { color: #7ce3aa; }
+      .wide { margin-top: 12px; }
+      .wide .table-wrap { overflow-x: auto; }
+      .wide table { min-width: 720px; }
+      .hash { color: #7ce3aa; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .68rem; }
+      .ok { color: #7ce3aa; font-weight: 700; }
+      .pending { color: #e5bb69; font-weight: 700; }
+      .bad { color: #ef8377; font-weight: 700; }
+      .event-list { margin: 0; padding-left: 18px; color: #91aa99; font-size: .68rem; line-height: 1.7; }
+      .event-list code { color: #d7e3d6; }
+      .small { color: #91aa99; font-size: .72rem; }
       @media (max-width: 760px) { header { flex-direction: column; } .cards, .grid { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } }
       @media (max-width: 760px) { .endpoint-groups, .integration { grid-template-columns: 1fr; } .api-docs-header { flex-direction: column; } .api-base { white-space: normal; overflow-wrap: anywhere; } }
       @media (max-width: 460px) { main { width: min(100% - 22px, 1120px); padding-top: 24px; } .cards { grid-template-columns: 1fr 1fr; } .card { padding: 15px; } .value { font-size: 1.55rem; } }
@@ -68,7 +78,7 @@
         <div>
           <p class="eyebrow">ORIVIA · API control · observabilidad pública</p>
           <h1>Salud de la red</h1>
-          <p class="intro">Estado agregado de trazabilidad, pedidos, clúster y anclajes, junto con el mapa operativo de la API. Se actualiza automáticamente sin publicar datos personales, payloads privados ni credenciales.</p>
+          <p class="intro">Health operativo de la demo: usuarios sintéticos, pedidos, cadenas de eventos, certificados blockchain, clúster e IA. Se actualiza automáticamente y nunca publica contraseñas, tokens, claves ni DSN.</p>
         </div>
         <div class="live" aria-live="polite"><span id="dot" class="dot"></span><span id="connection">Conectando…</span></div>
       </header>
@@ -78,6 +88,15 @@
         <section class="panel"><h2>Estados actuales</h2><div id="states" class="muted">Cargando…</div></section>
         <section class="panel"><h2>Últimos cambios observados</h2><table><thead><tr><th>Origen</th><th>Evento</th><th>Hora</th></tr></thead><tbody id="changes"><tr><td colspan="3" class="muted">Cargando…</td></tr></tbody></table></section>
       </div>
+
+      <section class="panel wide"><h2>Usuarios registrados en la demo</h2><p class="small">Perfiles sintéticos para la presentación. No se muestran contraseñas, hashes ni tokens.</p><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Registro</th></tr></thead><tbody id="users"><tr><td colspan="5" class="muted">Cargando…</td></tr></tbody></table></div></section>
+
+      <section class="panel wide"><h2>Cadenas de datos verificadas</h2><p class="small">Cada pedido conserva el hash del evento y el hash anterior. El health consulta la verificación del backend.</p><div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Estado</th><th>Eventos</th><th>Integridad</th><th>Último evento / cadena</th></tr></thead><tbody id="chains"><tr><td colspan="5" class="muted">Cargando…</td></tr></tbody></table></div></section>
+
+      <section class="grid">
+        <section class="panel"><h2>Certificados blockchain</h2><div class="table-wrap"><table><thead><tr><th>Hash</th><th>Red</th><th>Estado</th><th>Transacción</th></tr></thead><tbody id="certificates"><tr><td colspan="4" class="muted">Cargando…</td></tr></tbody></table></div></section>
+        <section class="panel"><h2>Capacidades conectadas</h2><div id="capabilities" class="muted">Cargando…</div></section>
+      </section>
 
       <section class="panel api-docs" aria-labelledby="api-docs-title">
         <div class="api-docs-header">
@@ -142,11 +161,16 @@ Content-Type: application/json</pre></article>
       <div id="notice" class="notice" role="status">La vista se refresca cada 5 segundos. Última revisión: —</div>
     </main>
     <script>
-      const labels = { lots: "Lotes", trace_events: "Eventos de trazabilidad", orders: "Pedidos", order_events: "Eventos de pedidos", blockchain_anchors: "Anclajes blockchain", cluster_actors: "Actores del clúster", cluster_needs: "Necesidades", cluster_connections: "Conexiones" };
+      const labels = { lots: "Lotes", trace_events: "Eventos de trazabilidad", orders: "Pedidos", order_events: "Eventos de pedidos", blockchain_anchors: "Anclajes blockchain", cluster_actors: "Actores del clúster", cluster_needs: "Necesidades", cluster_connections: "Conexiones", users: "Usuarios registrados" };
       let lastRevision = null;
       const esc = (value) => String(value ?? "—").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
       const when = (value) => value ? new Date(value).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "medium" }) : "—";
+      const shortHash = (value) => value ? `${String(value).slice(0, 12)}…${String(value).slice(-8)}` : "—";
       const renderStates = (states) => Object.entries(states).map(([group, values]) => `<div class="state"><span>${esc(group)}</span><strong>${Object.entries(values).map(([name, count]) => `${esc(name)}: ${count}`).join(" · ") || "—"}</strong></div>`).join("");
+      const renderUsers = (users) => Array.isArray(users) && users.length ? users.map((user) => `<tr><td>${esc(user.full_name)}</td><td>${esc(user.email)}</td><td>${esc((user.roles || []).join(", "))}</td><td class="${user.account_status === "ACTIVE" ? "ok" : "bad"}">${esc(user.account_status)}</td><td>${esc(when(user.created_at))}</td></tr>`).join("") : `<tr><td colspan="5" class="muted">El modo agregado está activo o no hay usuarios registrados.</td></tr>`;
+      const renderChains = (chains) => Array.isArray(chains) && chains.length ? chains.map((chain) => `<tr><td class="hash">${esc(shortHash(chain.order_id))}</td><td>${esc(chain.status)}</td><td>${esc(chain.event_count)}</td><td class="${chain.verified ? "ok" : "bad"}">${chain.verified ? "Íntegra" : "Revisar"}</td><td><span class="hash">${esc(shortHash((chain.events || []).at(-1)?.event_hash))}</span><details><summary class="small">Ver eventos</summary><ol class="event-list">${(chain.events || []).map((event) => `<li>${esc(event.event_type)} · <code>${esc(shortHash(event.event_hash))}</code> · ${esc(when(event.occurred_at))}</li>`).join("")}</ol></details></td></tr>`).join("") : `<tr><td colspan="5" class="muted">No hay cadenas de pedidos para mostrar.</td></tr>`;
+      const renderCertificates = (certificates) => Array.isArray(certificates) && certificates.length ? certificates.map((certificate) => `<tr><td class="hash">${esc(shortHash(certificate.event_hash))}</td><td>${esc(certificate.network)}</td><td class="${certificate.status === "ANCHORED" ? "ok" : "pending"}">${esc(certificate.status)}</td><td class="hash">${esc(shortHash(certificate.transaction_id))}</td></tr>`).join("") : `<tr><td colspan="4" class="muted">No hay certificados blockchain todavía.</td></tr>`;
+      const renderCapabilities = (capabilities) => capabilities ? `<div class="state"><span>Blockchain</span><strong>${esc(capabilities.blockchain?.backend)} · chain ${esc(capabilities.blockchain?.chain_id || "local")}</strong></div><div class="state"><span>IA</span><strong>${esc(capabilities.ai?.provider)} · ${esc(capabilities.ai?.model)}</strong></div>` : `<div class="muted">Sin información de capacidades.</div>`;
       async function refresh() {
         try {
           const response = await fetch("/api/v1/public/live", { cache: "no-store" });
@@ -159,6 +183,10 @@ Content-Type: application/json</pre></article>
           document.getElementById("cards").innerHTML = Object.entries(data.metrics).map(([key, value]) => `<article class="card"><span class="label">${esc(labels[key] || key)}</span><strong class="value">${esc(value)}</strong></article>`).join("");
           document.getElementById("states").innerHTML = renderStates(data.states);
           document.getElementById("changes").innerHTML = data.recent_changes.length ? data.recent_changes.map((item) => `<tr><td>${esc(item.source)}</td><td>${esc(item.event_type)}</td><td>${esc(when(item.occurred_at))}</td></tr>`).join("") : `<tr><td colspan="3" class="muted">Sin eventos recientes</td></tr>`;
+          document.getElementById("users").innerHTML = renderUsers(data.users);
+          document.getElementById("chains").innerHTML = renderChains(data.chains);
+          document.getElementById("certificates").innerHTML = renderCertificates(data.blockchain_certificates);
+          document.getElementById("capabilities").innerHTML = renderCapabilities(data.capabilities);
           document.getElementById("notice").innerHTML = `Revisión: <code>${esc(when(data.generated_at))}</code> · Último cambio: <code>${esc(when(data.last_change_at))}</code> · Revisión <code>${esc(data.revision)}</code>`;
         } catch (_) {
           document.getElementById("dot").classList.add("off");

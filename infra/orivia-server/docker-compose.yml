@@ -18,6 +18,9 @@ services:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
       OLLAMA_API_KEY: ${OLLAMA_API_KEY:-}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-gpt-oss:120b}
+      # Este stack es el staging de la hackatón; solo publica perfiles sintéticos
+      # y evidencia técnica, nunca secretos, hashes de contraseña o tokens.
+      ORIVIA_PUBLIC_LIVE_INCLUDE_DEMO_DATA: ${ORIVIA_PUBLIC_LIVE_INCLUDE_DEMO_DATA:-true}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
