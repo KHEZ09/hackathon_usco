@@ -76,7 +76,7 @@ function LoginDialog({ initialEmail, onRegister, onClose, onSuccess }: Omit<Prop
         if (cause instanceof OriviaApiError && cause.status === 429) {
           setError(`Demasiados intentos. Espera ${cause.retryAfterSeconds ?? 900} segundos.`);
         } else if (cause instanceof OriviaApiError && cause.status === 401) {
-          setError("Credenciales inválidas. Verifica tu correo y contraseña.");
+          setError("Credenciales inválidas. Verifica tu correo y contraseña. Si creaste una cuenta de Operador o Administrador, debe aprobarla un administrador antes de entrar.");
         } else {
           setError(cause instanceof Error ? cause.message : "No se pudo iniciar sesión.");
         }

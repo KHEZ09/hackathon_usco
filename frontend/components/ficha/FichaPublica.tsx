@@ -10,6 +10,7 @@ import { Toaster, useToast } from "@/components/ui/Toaster";
 import { QrCode } from "./QrCode";
 import { fmtFecha, historia, inventario, useDatos, type Estado } from "@/lib/store";
 import { cn } from "@/lib/cn";
+import { rutaFicha, urlFicha } from "@/lib/enlaces";
 import { getPublicLive, getPublicLot, type ApiPublicLive, type ApiPublicLot } from "@/lib/orivia-api";
 
 const ESTADO_PUBLICO: Record<Estado, { label: string; texto: string; clase: string }> = {
@@ -38,7 +39,8 @@ function Ficha({ loteId }: { loteId: string }) {
   const [liveRemote, setLiveRemote] = useState<ApiPublicLive | null>(null);
   const [remoteLoading, setRemoteLoading] = useState(true);
   const cerrar = useCallback(() => setVerificar(false), []);
-  const url = useSyncExternalStore(noop, () => window.location.href, () => "");
+  // El QR y el enlace compartido siempre apuntan a la ficha pública de este lote (nunca a localhost).
+  const url = useSyncExternalStore(noop, () => urlFicha(loteId), () => "");
   const localLote = datos.lotes.find((l) => l.id === loteId);
 
   useEffect(() => {
@@ -86,7 +88,7 @@ function Ficha({ loteId }: { loteId: string }) {
         <p className="mt-2 text-sm text-ink-soft">Revisa el código impreso en el empaque o prueba con una ficha de ejemplo.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           {datos.lotes.map((l) => (
-            <Link key={l.id} href={`/ficha/${l.id}`} className="rounded-full border border-line px-4 py-2 font-mono text-xs font-semibold text-ink hover:bg-surface-2">
+            <Link key={l.id} href={rutaFicha(l.id)} className="rounded-full border border-line px-4 py-2 font-mono text-xs font-semibold text-ink hover:bg-surface-2">
               {l.id}
             </Link>
           ))}
@@ -108,13 +110,22 @@ function Ficha({ loteId }: { loteId: string }) {
   const displayOrigin = publicRemote?.origin ?? lote.origen;
   const displayProducer = publicRemote?.producer ?? lote.productor;
   const pasos = publicRemote?.timeline?.length
-    ? publicRemote.timeline.map((event, index) => ({
-        key: event.id ?? `${displayId}-${index}`,
-        etapa: event.type === "LOT_STATUS_CHANGED" ? `Estado · ${event.to ?? estadoKey}` : "Cosecha y recepción",
-        fecha: event.occurred_at ?? new Date().toISOString(),
-        kg: index === 0 ? (publicRemote.received_kg ?? 0) : (publicRemote.available_kg ?? 0),
-        responsable: index === 0 ? displayProducer : "ORIVIA · API",
-      }))
+    ? publicRemote.timeline.map((event, index) => {
+        const t = event.transformation;
+        const estadoTexto = ESTADO_PUBLICO[(event.to === "BLOCKED" ? "BLOQUEADO" : event.to === "PENDING" ? "PENDIENTE" : "LIBERADO") as Estado].label;
+        return {
+          key: event.id ?? `${displayId}-${index}`,
+          etapa:
+            event.type === "LOT_TRANSFORMED" && t
+              ? `${t.stage ?? "Transformación"} · ${t.input_kg} → ${t.output_kg} kg`
+              : event.type === "LOT_STATUS_CHANGED"
+              ? `Estado · ${estadoTexto}`
+              : "Cosecha y recepción",
+          fecha: event.occurred_at ?? new Date().toISOString(),
+          kg: event.type === "LOT_TRANSFORMED" && t ? (t.output_kg ?? 0) : index === 0 ? (publicRemote.received_kg ?? 0) : (publicRemote.available_kg ?? 0),
+          responsable: index === 0 ? displayProducer : event.type === "LOT_TRANSFORMED" ? "Beneficio de la asociación" : "Control de calidad",
+        };
+      })
     : historia(datos, lote.id);
   const producido = publicRemote ? Math.max(0, publicRemote.received_kg - publicRemote.available_kg) : inventario(datos, lote.id).producido;
   const recibido = publicRemote?.received_kg ?? inventario(datos, lote.id).recibido;

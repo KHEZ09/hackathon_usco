@@ -74,13 +74,9 @@ function Landing() {
   const onSuccess = (s: Session) => {
     writeSession(s);
     closeLogin();
-    if (s.role === "comprador") {
-      // Los compradores se quedan en la landing page
-      notify("exito", `Bienvenido, ${ROLES[s.role].label}`, "Explora el origen y trazabilidad del cacao.");
-    } else {
-      notify("exito", `Bienvenido, ${ROLES[s.role].label}`, `Abriendo ${ROLES[s.role].tema.toLowerCase()}…`);
-      router.push(ROLE_HOME[s.role]);
-    }
+    // Cada perfil entra a su panel: operador, administrador o comprador.
+    notify("exito", `Bienvenido, ${ROLES[s.role].label}`, `Abriendo ${ROLES[s.role].tema.toLowerCase()}…`);
+    router.push(ROLE_HOME[s.role]);
   };
 
   const logout = () => {

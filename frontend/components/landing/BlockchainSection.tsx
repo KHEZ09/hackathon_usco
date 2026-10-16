@@ -7,6 +7,7 @@ import { Leaf, MapPin, QrCode, Route, Sun, Timer } from "lucide-react";
 import { Eyebrow, Reveal } from "./Reveal";
 import { TiltCard } from "./TiltCard";
 import { LOTES, type DemoLot } from "@/lib/demo-data";
+import { rutaFicha } from "@/lib/enlaces";
 import { EvidenceDialog } from "@/components/evidence/EvidenceDialog";
 import { cn } from "@/lib/cn";
 
@@ -109,7 +110,7 @@ export function BlockchainSection() {
                           <Route className="size-4" /> Ver recorrido
                         </button>
                         <Link
-                          href={`/ficha/${lot.id}`}
+                          href={rutaFicha(lot.id)}
                           className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-3 py-2.5 text-xs font-semibold text-ink transition hover:border-bosque-300"
                         >
                           <QrCode className="size-4" /> Ficha QR

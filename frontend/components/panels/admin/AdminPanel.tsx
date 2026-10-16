@@ -24,6 +24,8 @@ import {
 import { useSession } from "@/components/auth/roles";
 import { useToast } from "@/components/ui/Toaster";
 import { cop } from "@/lib/demo-data";
+import { rutaFicha } from "@/lib/enlaces";
+import { EtiquetaQr } from "../EtiquetaQr";
 import {
   MERMA_UMBRAL,
   ORIGENES,
@@ -483,9 +485,12 @@ function LotesCard({ onAccion, onSelect }: { onAccion: (d: Dialogo) => void; onS
                       <Lock className="size-4" />
                     </button>
                   )}
-                  <Link href={`/ficha/${l.id}`} className="rounded-full p-1.5 text-ink-soft hover:bg-surface-2 hover:text-ink" aria-label={`Ficha pública de ${l.id}`} title="Ficha pública">
+                  <Link href={rutaFicha(l.id)} className="rounded-full p-1.5 text-ink-soft hover:bg-surface-2 hover:text-ink" aria-label={`Ficha pública de ${l.id}`} title="Ficha pública">
                     <ExternalLink className="size-4" />
                   </Link>
+                  <span className="px-1.5">
+                    <EtiquetaQr loteId={l.id} />
+                  </span>
                 </div>
               </Td>
             </tr>

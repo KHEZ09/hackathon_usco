@@ -81,6 +81,7 @@ export type ApiPublicLotEvent = {
   previous_event_hash?: string | null;
   event_hash?: string;
   blockchain?: ApiBlockchainReceipt | null;
+  transformation?: { stage?: string; input_kg?: number; output_kg?: number; merma_pct?: number; incident?: string } | null;
 };
 export type ApiPublicLot = {
   id: string;

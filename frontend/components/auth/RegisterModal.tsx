@@ -72,7 +72,8 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
     };
   }, [onClose]);
 
-  // Si el backend expone roles dinámicos, los cargamos como complemento
+  const [intento, setIntento] = useState(0);
+  // Perfiles que el backend permite registrar (y cuáles requieren aprobación).
   useEffect(() => {
     let vivo = true;
     getRegistrationRoles()
@@ -85,7 +86,7 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
     return () => {
       vivo = false;
     };
-  }, []);
+  }, [intento]);
 
   const cambiar = (campo: RegistroCampo, valor: string) => {
     setDatos((d) => ({ ...d, [campo]: valor }));
@@ -102,7 +103,9 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
       encontrados.rol = "Por favor selecciona el tipo de cuenta que deseas crear.";
     }
     if (rolesError) {
-      encontrados.rol = "No se pudieron consultar los perfiles disponibles. Intenta de nuevo.";
+      encontrados.rol = "No se pudo conectar con ORIVIA para consultar los perfiles. Revisa tu conexión y vuelve a intentarlo.";
+    } else if (rolConfig && roles && !roles.some((r) => r.role === rolConfig.backendRole)) {
+      encontrados.rol = `El servidor aún no habilita el registro de ${rolConfig.label}. Un administrador puede crear tu cuenta desde su panel.`;
     }
     setErrores(encontrados);
     if (Object.keys(encontrados).length) return;
@@ -253,6 +256,19 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
                 {errores.rol && (
                   <p role="alert" className="mt-1 rounded-xl bg-cereza/10 px-3 py-1.5 text-xs font-medium text-cereza dark:text-[#f08a8c]">
                     {errores.rol}
+                    {rolesError && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRolesError(false);
+                          setErrores((e) => ({ ...e, rol: undefined }));
+                          setIntento((n) => n + 1);
+                        }}
+                        className="ml-2 font-semibold underline"
+                      >
+                        Reintentar
+                      </button>
+                    )}
                   </p>
                 )}
                 {(() => {

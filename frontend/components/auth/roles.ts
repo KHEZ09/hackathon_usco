@@ -33,8 +33,8 @@ export const ROLES: Record<Role, { label: string; email: string; description: st
   comprador: {
     label: "Comprador",
     email: "comprador@orivia.test",
-    description: "Ficha pública del producto, origen y verificación.",
-    tema: "Ficha móvil · QR",
+    description: "Catálogo verificable, QR de cada lote y pedidos.",
+    tema: "Panel de compras · QR",
     icon: QrCode,
   },
 };
@@ -102,7 +102,7 @@ export function useHydrated() {
 export const ROLE_HOME: Record<Role, string> = {
   operador: "/operador",
   administrador: "/admin",
-  comprador: "/",
+  comprador: "/comprador",
 };
 
 /**

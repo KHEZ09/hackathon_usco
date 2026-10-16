@@ -9,6 +9,7 @@ import { TrustPanel } from "./TrustPanel";
 import { useSession } from "@/components/auth/roles";
 import { useToast } from "@/components/ui/Toaster";
 import { useDatos } from "@/lib/store";
+import { rutaFicha } from "@/lib/enlaces";
 import {
   ASOCIACION_ID,
   CATEGORIA_NECESIDAD,
@@ -74,7 +75,7 @@ export function ActorSheet({ actorId, rol, onClose }: { actorId: string | null; 
                   {actor.lotes.map((l) => {
                     const lote = datos.lotes.find((x) => x.id === l);
                     return (
-                      <Link key={l} href={`/ficha/${l}`} className="rounded-lg bg-surface-2 px-2.5 py-1 font-mono text-[0.7rem] font-semibold hover:underline">
+                      <Link key={l} href={rutaFicha(l)} className="rounded-lg bg-surface-2 px-2.5 py-1 font-mono text-[0.7rem] font-semibold hover:underline">
                         {l} · {lote?.estado ?? "—"}
                       </Link>
                     );

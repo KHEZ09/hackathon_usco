@@ -5,13 +5,14 @@ import { motion, useSpring, useTransform, type MotionValue } from "framer-motion
 import { BadgeCheck } from "lucide-react";
 import { QrCode } from "@/components/ficha/QrCode";
 import { useLocal } from "./utils";
+import { urlFicha } from "@/lib/enlaces";
 
 /* ── 5. QR verificable: la tarjeta gira y aparece el sello ── */
 const noop = () => () => {};
 
 export function EscenaQr({ p }: { p: MotionValue<number> }) {
   const local = useLocal(p, 4);
-  const origin = useSyncExternalStore(noop, () => window.location.origin, () => "");
+  const url = useSyncExternalStore(noop, () => urlFicha("CAC001"), () => "");
   const opacity = useTransform(p, [0.79, 0.85], [0, 1]);
   const rotateY = useSpring(useTransform(local, [0, 0.35], [75, -4]), { stiffness: 120, damping: 18 });
   const y = useTransform(local, [0, 0.35], [60, 0]);
@@ -29,10 +30,10 @@ export function EscenaQr({ p }: { p: MotionValue<number> }) {
           <div className="bg-[#3fae6a] py-3 pl-14 text-sm font-bold tracking-[0.18em] text-white">VERIFICADO</div>
           <div className="p-6 text-center text-bosque">
             <div className="mx-auto w-fit rounded-2xl bg-[#fffcf7] p-3 shadow-inner">
-              {origin ? <QrCode value={`${origin}/ficha/CAC001`} label="QR de la ficha del lote CAC001" className="size-28 lg:size-40" /> : <div className="size-28 lg:size-40" />}
+              {url ? <QrCode value={url} label="QR de la ficha del lote CAC001" className="size-28 lg:size-40" /> : <div className="size-28 lg:size-40" />}
             </div>
             <p className="mt-4 text-sm font-semibold">Hash verificado en la cadena</p>
-            <p className="mt-1 font-mono text-[0.7rem] text-bosque/70 underline">{origin ? `${origin.replace(/^https?:\/\//, "")}/ficha/CAC001` : "/ficha/CAC001"}</p>
+            <p className="mt-1 font-mono text-[0.7rem] text-bosque/70 underline">{url ? url.replace(/^https?:\/\//, "") : "/ficha/?lote=CAC001"}</p>
           </div>
         </div>
       </motion.div>

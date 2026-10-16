@@ -26,6 +26,7 @@ import { AdminNetwork } from "./AdminNetwork";
 import { useSession } from "@/components/auth/roles";
 import { useToast } from "@/components/ui/Toaster";
 import { useDatos } from "@/lib/store";
+import { rutaFicha } from "@/lib/enlaces";
 import {
   ASOCIACION_ID,
   CATEGORIA_NECESIDAD,
@@ -265,7 +266,7 @@ function Explorer({ rol, onActor }: { rol: Rol; onActor: (id: string) => void })
                 </span>
                 {o.loteId ? (
                   <Link
-                    href={`/ficha/${o.loteId}`}
+                    href={rutaFicha(o.loteId)}
                     onClick={(e) => e.stopPropagation()}
                     className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line px-2.5 py-1 text-[0.65rem] font-semibold hover:border-bosque-300"
                   >

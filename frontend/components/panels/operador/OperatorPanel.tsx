@@ -25,6 +25,8 @@ import { Button, Card, CardTitle, EstadoBadge, Field, Input, Kpi, Select, Table,
 import { PanelTabs } from "../PanelTabs";
 import { ClusterView } from "../cluster/ClusterView";
 import { cn } from "@/lib/cn";
+import { rutaFicha } from "@/lib/enlaces";
+import { EtiquetaQr } from "../EtiquetaQr";
 import { ApiOrder, createLot, createOrder, hasApiSession, listLots, listOrders, transformLot, transitionOrder } from "@/lib/orivia-api";
 import { sincronizarConBackend, useSincronizacionBackend } from "@/lib/backend-sync";
 import { mensajeError } from "@/lib/errores-api";
@@ -581,9 +583,12 @@ function InventarioCard() {
                 <EstadoBadge estado={l.estado} />
               </Td>
               <Td>
-                <Link href={`/ficha/${l.id}`} className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-bosque-500 hover:underline">
-                  Ficha <ExternalLink className="size-3" />
-                </Link>
+                <span className="flex items-center gap-3">
+                  <Link href={rutaFicha(l.id)} className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-bosque-500 hover:underline">
+                    Ficha <ExternalLink className="size-3" />
+                  </Link>
+                  <EtiquetaQr loteId={l.id} />
+                </span>
               </Td>
             </tr>
           );
