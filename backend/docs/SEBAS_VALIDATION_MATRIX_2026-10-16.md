@@ -20,6 +20,8 @@ rectificar, analizar errores, complementar, auditar y comprobar nuevamente.
 | Blockchain | Hash-chain de lotes y anclaje existente de pedidos | Verificación de eventos y pruebas de anclaje existentes | Listo para evidencia local | Proveedor público es decisión posterior |
 | IA | Fallback local read-only, cliente Ollama y credencial opcional para proveedor remoto | 80 pruebas pasan; servidor confirma Ollama no configurado, sin instalar el modelo pesado | Código listo; runtime externo pendiente | Requiere URL/modelo/credencial y capacidad suficiente |
 | Docker | Contratos y scripts de prueba documentados para `orivia` | Local: 80 tests, compileall y Ruff; remoto: health, ready, smoke y persistencia pasan | Listo en `orivia` con `b3bd044` | Repetir después de cada push |
+| Handoff frontend | Contrato de rutas, sesión, permisos, visibilidad y errores | Revisión cruzada contra `API_CONTRACT_ORIVIA.md` y pruebas de autorización | Listo en `FRONTEND_HANDOFF_ORIVIA.md` | Ángel y Daniel deben conectar pantallas |
+| Blockchain EVM público | Script de despliegue, artefacto Solidity y adaptador EVM preparados | Pruebas de contrato/artifact pasan; servidor no tiene RPC, wallet ni contrato | Preparado, no activado | Requiere credenciales y fondos de testnet |
 
 ## Evidencia local
 
@@ -32,6 +34,7 @@ orivia smoke: `/health`, `/ready` y frontera 401 aprobados
 orivia persistence: pedido, evento, anclaje y recreación de aplicación aprobados
 orivia runtime: `ORIVIA_ORDER_REPOSITORY=postgres`, `ORIVIA_BLOCKCHAIN_BACKEND=postgres`
 orivia runtime: Ollama no instalado/configurado; UFW activo y SSH limitado a `tailscale0`
+orivia deploy: commit `f5b8f72`, migraciones sin pendientes
 ```
 
 ## Faltantes reales, separados del bloque de Sebas
