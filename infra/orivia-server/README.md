@@ -4,7 +4,7 @@ Configuración versionada para desplegar el backend de ORIVIA en la instancia Li
 
 ## Responsables dentro del servidor
 
-- **Sebas:** mantiene `backend/app/security/`, `auth_tokens/`, `orders/`, `tracking/`, `audit/`, `blockchain/` y `ai/`.
+- **Sebas:** mantiene `backend/app/security/`, `auth_tokens/`, `orders/`, `tracking/`, `audit/`, `blockchain/`, `ai/`, `cluster/` y `lots/`.
 - **Kevin:** mantiene `backend/app/users/`, `database/`, `catalog/`, `accounting/`, `reports/`, `integrations/` y `backend/migrations/`.
 - **Ángel y Daniel:** mantienen la referencia visual y el frontend en `hackathon_usco/design/`, `components/`, `styles/` y `docs/ux/`.
 
@@ -20,6 +20,11 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
 - CORS se configura con `ORIVIA_CORS_ORIGINS` usando orígenes explícitos; no se permite `*`.
 - El login tiene límite local por IP/identificador: 5 fallos en 10 minutos y bloqueo de 15 minutos.
 - La API registra método, ruta, código y `X-Request-ID`, sin registrar tokens ni cuerpos de solicitud.
+- El clúster usa las migraciones y repositorios PostgreSQL compartidos de Kevin
+  cuando el servidor corre con `ORIVIA_ORDER_REPOSITORY=postgres`; los lotes
+  siguen en memoria hasta que exista su migración. No se presenta la memoria
+  como persistencia de producción. La persistencia PostgreSQL de pedidos,
+  eventos, auditorías y anclajes continúa siendo la prueba obligatoria.
 
 ## Servidor objetivo
 
@@ -108,6 +113,14 @@ Después de un despliegue, ejecutar también el smoke test, que no crea datos:
 
 ```bash
 bash infra/orivia-server/scripts/smoke_test.sh
+```
+
+Para validar específicamente el clúster y la regresión de `CAC001` dentro del
+contenedor:
+
+```bash
+docker compose --env-file infra/orivia-server/.env -f infra/orivia-server/docker-compose.yml \
+  exec -T api python -m pytest tests/test_cluster.py tests/test_hour12_incident.py -q
 ```
 
 `deploy.sh` aplica automáticamente las migraciones pendientes antes de validar

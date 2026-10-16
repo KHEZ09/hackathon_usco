@@ -22,6 +22,12 @@ Este backend pertenece al repositorio de la hackatón USCO y se prepara para des
 - Ejecución local con Flask.
 - Ejecución de producción con Gunicorn.
 - Docker Compose con PostgreSQL para desarrollo.
+- Directorio de actores, necesidades y conexiones del clúster con permisos
+  explícitos y proyecciones pública, compartida y privada.
+- Confianza `trust-v1` explicable, basada en señales verificables y no en una
+  puntuación opaca.
+- Estados de lote `PENDING`, `LIBERATED` y `BLOCKED`, con cadena hash,
+  auditoría e incidencia de regresión para `CAC001`.
 
 La ruta de pedidos usa memoria en desarrollo y PostgreSQL en producción mediante
 el mismo contrato `OrderRepository`. En producción se conservan los pedidos,
@@ -32,6 +38,11 @@ Los endpoints de IA funcionan sin servicios externos mediante un resumen local
 determinista. Ollama es opcional: al configurar `OLLAMA_BASE_URL`, se utiliza
 el modelo indicado en `OLLAMA_MODEL` y, si no responde, se conserva el fallback
 local de solo lectura.
+
+El clúster usa el adaptador de memoria en desarrollo y el repositorio PostgreSQL
+de Kevin cuando `ORIVIA_ORDER_REPOSITORY=postgres`; el contrato HTTP y los
+serializadores son la frontera común. Los lotes usan por ahora un adaptador
+determinista en memoria porque todavía no existe una migración de lotes.
 
 La API permite CORS únicamente para los orígenes definidos en
 `ORIVIA_CORS_ORIGINS`, separados por coma. En desarrollo se habilitan por
@@ -88,6 +99,12 @@ El contrato operativo de nuestras rutas está en `API_CONTRACT_ORIVIA.md`.
 
 ```powershell
 pytest
+```
+
+La suite incluye la regresión de la hora 12:
+
+```powershell
+pytest tests/test_cluster.py tests/test_hour12_incident.py -q
 ```
 
 ## Datos, migraciones y respaldo

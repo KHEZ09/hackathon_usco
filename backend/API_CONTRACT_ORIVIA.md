@@ -122,3 +122,76 @@ El anclaje PostgreSQL se identifica como `postgres://orivia/blockchain_anchor/<i
 Es evidencia durable local para la hackatón; no se presenta como una transacción
 de una red blockchain pública. La interfaz `BlockchainAnchor` permite conectar
 posteriormente un proveedor real sin modificar las rutas del frontend.
+
+## Clúster de actores y necesidades
+
+El clúster permite descubrir actores del ecosistema cacaotero, publicar
+necesidades y solicitar conexiones. En desarrollo usa datos sintéticos en
+memoria; con `ORIVIA_ORDER_REPOSITORY=postgres` utiliza las tablas y repositorios
+compartidos de Kevin. En ambos casos debe conservarse este contrato.
+
+| Método | Ruta | Permiso | Uso |
+| --- | --- | --- | --- |
+| GET | `/api/v1/public/cluster/actors` | No | Directorio público de productores, asociaciones y compradores |
+| GET | `/api/v1/public/cluster/actors/{id}` | No | Perfil público de un actor |
+| GET | `/api/v1/public/cluster/needs` | No | Necesidades publicadas por el clúster |
+| GET | `/api/v1/cluster/actors` | `cluster:read` | Directorio autenticado con contacto compartido |
+| GET | `/api/v1/cluster/actors/{id}` | `cluster:read` | Detalle compartido; `private` solo aparece para `*` |
+| GET | `/api/v1/cluster/actors/{id}/trust` | `trust:read` | Confianza explicable y sus señales |
+| GET | `/api/v1/cluster/needs` | `cluster:read` | Necesidades con propietario y fecha |
+| POST | `/api/v1/cluster/needs` | `needs:create` | Crea una necesidad usando el `sub` del token |
+| POST | `/api/v1/cluster/connections` | `connections:create` | Solicita contacto con otro actor |
+
+Crear una necesidad:
+
+```json
+{
+  "title": "Transporte de cacao",
+  "description": "Necesitamos transporte para el lote de la semana.",
+  "category": "logistica",
+  "quantity": 2,
+  "unit": "viajes"
+}
+```
+
+El backend ignora cualquier `actor_id` enviado por el cliente y usa el sujeto
+del JWT. Una conexión recibe `target_actor_id`, un `need_id` opcional y un
+`message`; no se permiten conexiones duplicadas pendientes.
+
+### Confianza explicable
+
+`GET /api/v1/cluster/actors/{id}/trust` devuelve `score` de 0 a 100,
+`level` (`BAJA`, `MEDIA`, `ALTA`), la versión de fórmula, señales y una lista
+de explicaciones. La fórmula `trust-v1` suma perfil (20), evidencias (20),
+eventos verificados (20), consistencia (25) e incidencias resueltas (15), y
+resta hasta 50 puntos por incidencias abiertas. Es una señal orientativa, no
+una prueba legal, financiera ni de identidad.
+
+## Lotes, trazabilidad y hora 12
+
+| Método | Ruta | Permiso | Uso |
+| --- | --- | --- | --- |
+| GET | `/api/v1/public/lots/{lot_id}` | No | Estado público y disponibilidad del lote |
+| GET | `/api/v1/lots/{lot_id}` | `lots:read` | Lote, cantidades, auditorías e integridad |
+| GET | `/api/v1/lots/{lot_id}/timeline` | `lots:read` | Cadena de eventos y auditorías |
+| PATCH | `/api/v1/lots/{lot_id}/status` | `lots:status` | Cambiar estado con razón obligatoria |
+
+Estados permitidos: `PENDING`, `LIBERATED` y `BLOCKED`. La transición no borra
+eventos; cada cambio agrega un `TraceEvent` con `payload_hash`,
+`previous_event_hash` y `event_hash`, además de una `AuditRecord`. La respuesta
+privada incluye `history_verified` y `affected_quantities`; la respuesta
+pública no expone razón, auditorías ni actores internos.
+
+Regresión de la incidencia anunciada para la hora 12:
+
+```http
+PATCH /api/v1/lots/CAC001/status
+Authorization: Bearer <admin-access-token>
+Content-Type: application/json
+
+{"status":"BLOCKED","reason":"Incidencia informada durante la hora 12."}
+```
+
+El resultado esperado es `BLOCKED`, `available_kg: 0`, la cantidad afectada
+igual a la disponibilidad anterior y `history_verified: true`. El lote sigue
+consultable y la ruta pública informa `available_for_order: false`.

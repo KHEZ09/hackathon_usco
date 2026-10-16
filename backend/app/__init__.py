@@ -8,8 +8,13 @@ from .auth_tokens.routes import auth_bp
 from .blockchain.adapter import MemoryBlockchainAnchor
 from .blockchain.postgres_anchor import PostgresBlockchainAnchor
 from .blockchain.routes import blockchain_bp
+from .cluster.postgres_repository import PostgresClusterRepository
+from .cluster.repository import InMemoryClusterRepository
+from .cluster.routes import cluster_bp, public_cluster_bp
 from .config import Settings
 from .database.registration import register_kevin_modules
+from .lots.repository import InMemoryLotRepository
+from .lots.routes import lots_bp, public_lots_bp
 from .orders.postgres_repository import PostgresOrderRepository
 from .orders.repository import InMemoryOrderRepository
 from .orders.routes import orders_bp
@@ -130,6 +135,10 @@ def create_app(settings: Settings | None = None) -> Flask:
     app.register_blueprint(audit_bp, url_prefix="/api/v1/audit")
     app.register_blueprint(blockchain_bp, url_prefix="/api/v1/blockchain")
     app.register_blueprint(ai_bp, url_prefix="/api/v1/ai")
+    app.register_blueprint(cluster_bp, url_prefix="/api/v1/cluster")
+    app.register_blueprint(public_cluster_bp, url_prefix="/api/v1/public/cluster")
+    app.register_blueprint(lots_bp, url_prefix="/api/v1/lots")
+    app.register_blueprint(public_lots_bp, url_prefix="/api/v1/public/lots")
     register_kevin_modules(app)
 
     if settings.order_repository_backend == "postgres":
@@ -139,5 +148,12 @@ def create_app(settings: Settings | None = None) -> Flask:
         app.extensions["orivia_order_repository"] = InMemoryOrderRepository()
         app.extensions["orivia_blockchain_anchor"] = MemoryBlockchainAnchor()
     app.extensions["orivia_anchor_receipts"] = {}
+    if settings.order_repository_backend == "postgres":
+        app.extensions["orivia_cluster_repository"] = PostgresClusterRepository(
+            app.extensions["orivia_cluster_repositories"]
+        )
+    else:
+        app.extensions["orivia_cluster_repository"] = InMemoryClusterRepository()
+    app.extensions["orivia_lot_repository"] = InMemoryLotRepository()
 
     return app

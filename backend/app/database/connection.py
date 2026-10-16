@@ -39,6 +39,9 @@ def fetch_all(query: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
 
 def database_is_ready() -> bool:
     try:
-        return fetch_one("SELECT 1 AS ok") is not None
+        # Readiness must fail fast when PostgreSQL is down; a health probe must
+        # never hang the whole test runner or the reverse proxy.
+        with connect(_dsn, row_factory=dict_row, connect_timeout=2) as connection:
+            return connection.execute("SELECT 1 AS ok").fetchone() is not None
     except Error:
         return False
