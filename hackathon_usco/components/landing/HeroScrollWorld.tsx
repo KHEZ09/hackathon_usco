@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { motion, useAnimationFrame, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
 import { CacaoLeaf, CacaoPod, useWind } from "./Botanica";
 import { RealisticDragonfly } from "./RealisticDragonfly";
@@ -20,7 +20,6 @@ const MOTES = Array.from({ length: 24 }, (_, i) => ({
  */
 export function HeroScrollWorld() {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
   const wind = useWind(1.2);
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ["start start", "end end"] });
 

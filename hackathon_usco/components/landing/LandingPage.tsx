@@ -17,6 +17,7 @@ import { PodSection } from "./PodSection";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { ROLES, ROLE_HOME, useSession, writeSession, type Role, type Session } from "@/components/auth/roles";
 import { Toaster, useToast } from "@/components/ui/Toaster";
+import { clearAuthTokens } from "@/lib/orivia-api";
 
 export function LandingPage() {
   return (
@@ -56,6 +57,7 @@ function Landing() {
   };
 
   const logout = () => {
+    clearAuthTokens();
     writeSession(null);
     notify("info", "Sesión cerrada", "Puedes ingresar con otro rol cuando quieras.");
   };

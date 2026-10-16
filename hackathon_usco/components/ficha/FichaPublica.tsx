@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, EyeOff, Fingerprint, Leaf, MapPin, Mountain, PackageCheck, Share2, ShoppingBag, Sprout } from "lucide-react";
@@ -10,6 +10,7 @@ import { Toaster, useToast } from "@/components/ui/Toaster";
 import { QrCode } from "./QrCode";
 import { fmtFecha, historia, inventario, useDatos, type Estado } from "@/lib/store";
 import { cn } from "@/lib/cn";
+import { getPublicTraceability, type InventoryRow } from "@/lib/orivia-api";
 
 const ESTADO_PUBLICO: Record<Estado, { label: string; texto: string; clase: string }> = {
   LIBERADO: { label: "Disponible", texto: "Lote liberado por control de calidad.", clase: "bg-bosque-500 text-crema" },
@@ -33,9 +34,24 @@ function Ficha({ loteId }: { loteId: string }) {
   const datos = useDatos();
   const { notify } = useToast();
   const [verificar, setVerificar] = useState(false);
+  const [publicRemote, setPublicRemote] = useState<InventoryRow | null>(null);
   const cerrar = useCallback(() => setVerificar(false), []);
   const url = useSyncExternalStore(noop, () => window.location.href, () => "");
   const lote = datos.lotes.find((l) => l.id === loteId);
+
+  useEffect(() => {
+    let active = true;
+    getPublicTraceability(loteId)
+      .then((rows) => {
+        if (active) setPublicRemote(rows[0] ?? null);
+      })
+      .catch(() => {
+        if (active) setPublicRemote(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [loteId]);
 
   if (!lote) {
     return (
@@ -126,6 +142,19 @@ function Ficha({ loteId }: { loteId: string }) {
               ))}
             </div>
           </div>
+
+          {publicRemote && (
+            <section className="mt-4 rounded-[1.5rem] border border-bosque-500/20 bg-bosque-500/[0.05] p-4">
+              <p className="text-[0.65rem] font-semibold tracking-[0.2em] text-bosque-500 uppercase">Catálogo público verificado</p>
+              <p className="mt-2 text-xs leading-relaxed text-ink-soft">Esta ficha también coincide con la vista pública persistida del backend.</p>
+              <dl className="mt-3 grid grid-cols-2 gap-2 text-[0.7rem]">
+                <div><dt className="text-ink-soft">Código</dt><dd className="font-mono font-semibold text-ink">{String(publicRemote.lot_code ?? lote.id)}</dd></div>
+                <div><dt className="text-ink-soft">Producto</dt><dd className="font-semibold text-ink">{String(publicRemote.product_name ?? lote.producto)}</dd></div>
+                <div><dt className="text-ink-soft">Proveedor</dt><dd className="font-semibold text-ink">{String(publicRemote.supplier_name ?? "No publicado")}</dd></div>
+                <div><dt className="text-ink-soft">Municipio</dt><dd className="font-semibold text-ink">{String(publicRemote.municipality ?? "Huila")}</dd></div>
+              </dl>
+            </section>
+          )}
 
           <p className="mt-8 text-center font-script text-4xl text-bosque">Cada grano tiene una historia</p>
 
