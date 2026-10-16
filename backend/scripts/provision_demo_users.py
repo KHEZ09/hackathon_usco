@@ -14,7 +14,8 @@ import bcrypt
 # Allow direct execution from /app/scripts in the production image.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.database.connection import transaction
+from app.config import Settings
+from app.database.connection import init_pool, transaction
 
 
 USERS = {
@@ -31,6 +32,7 @@ def main() -> None:
             "Faltan variables de contraseña demo: " + ", ".join(missing)
         )
 
+    init_pool(Settings.from_env().database_url)
     with transaction() as connection:
         for email, variable in USERS.items():
             password = os.environ[variable]
