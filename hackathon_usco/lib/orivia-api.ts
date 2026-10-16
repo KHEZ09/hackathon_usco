@@ -34,6 +34,11 @@ export type ReportOverview = {
   orders: { order_count: number; revenue: number | string } | null;
 };
 
+export type ApiOrder = Record<string, unknown> & { order_id?: string; status?: string };
+export type ApiClusterActor = Record<string, unknown> & { id?: string; name?: string; type?: string };
+export type ApiClusterNeed = Record<string, unknown> & { need_id?: string; title?: string };
+export type ApiAiResult = Record<string, unknown>;
+
 export class OriviaApiError extends Error {
   readonly status: number;
   readonly code?: string;
@@ -167,6 +172,108 @@ export async function login(email: string, password: string) {
   }
   writeTokens(response);
   return response;
+}
+
+export async function getCurrentUser() {
+  return request<{ user: ApiUser }>("/auth/me");
+}
+
+export async function listOrders() {
+  const response = await request<{ data: ApiOrder[] } | ApiOrder[]>("/orders");
+  return Array.isArray(response) ? response : response.data;
+}
+
+export async function getOrder(orderId: string) {
+  return request<ApiOrder>(`/orders/${encodeURIComponent(orderId)}`);
+}
+
+export async function createOrder(payload: { product: string; quantity: number; origin: string; destination: string }) {
+  return request<ApiOrder>("/orders", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export async function transitionOrder(orderId: string, status: string) {
+  return request<ApiOrder>(`/orders/${encodeURIComponent(orderId)}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function getOrderTimeline(orderId: string) {
+  return request<Record<string, unknown>>(`/orders/${encodeURIComponent(orderId)}/timeline`);
+}
+
+export async function getOrderAudit(orderId: string, verify = false) {
+  return request<Record<string, unknown>>(`/audit/orders/${encodeURIComponent(orderId)}${verify ? "/verify" : ""}`);
+}
+
+export async function getPublicLot(lotId: string) {
+  return request<Record<string, unknown>>(`/public/lots/${encodeURIComponent(lotId)}`);
+}
+
+export async function getLot(lotId: string) {
+  return request<Record<string, unknown>>(`/lots/${encodeURIComponent(lotId)}`);
+}
+
+export async function getLotTimeline(lotId: string) {
+  return request<Record<string, unknown>>(`/lots/${encodeURIComponent(lotId)}/timeline`);
+}
+
+export async function updateLotStatus(lotId: string, status: "PENDING" | "LIBERATED" | "BLOCKED", reason: string) {
+  return request<Record<string, unknown>>(`/lots/${encodeURIComponent(lotId)}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, reason }),
+  });
+}
+
+export async function getPublicClusterActors() {
+  const response = await request<{ actors: ApiClusterActor[] }>("/public/cluster/actors");
+  return response.actors;
+}
+
+export async function getClusterActors() {
+  const response = await request<{ actors: ApiClusterActor[] }>("/cluster/actors");
+  return response.actors;
+}
+
+export async function getClusterActor(actorId: string, publicOnly = false) {
+  return request<ApiClusterActor>(`${publicOnly ? "/public" : ""}/cluster/actors/${encodeURIComponent(actorId)}`);
+}
+
+export async function getClusterNeeds(publicOnly = false) {
+  const response = await request<{ needs: ApiClusterNeed[] }>(`${publicOnly ? "/public" : ""}/cluster/needs`);
+  return response.needs;
+}
+
+export async function getActorTrust(actorId: string) {
+  return request<Record<string, unknown>>(`/cluster/actors/${encodeURIComponent(actorId)}/trust`);
+}
+
+export async function createClusterNeed(payload: { title: string; description: string; category: string; quantity: number; unit: string }) {
+  return request<ApiClusterNeed>("/cluster/needs", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export async function createClusterConnection(payload: { target_actor_id: string; need_id?: string; message: string }) {
+  return request<Record<string, unknown>>("/cluster/connections", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export async function getOrderAiSummary(orderId: string) {
+  return request<ApiAiResult>(`/ai/orders/${encodeURIComponent(orderId)}/summary`, { method: "POST", body: JSON.stringify({}) });
+}
+
+export async function getOrderAiAudit(orderId: string) {
+  return request<ApiAiResult>(`/ai/orders/${encodeURIComponent(orderId)}/audit`, { method: "POST", body: JSON.stringify({}) });
+}
+
+export async function getAiAnalytics(payload: Record<string, unknown> = {}) {
+  return request<ApiAiResult>("/ai/analytics", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export async function getBlockchainAnchor(eventHash: string) {
+  return request<Record<string, unknown>>(`/blockchain/anchors/${encodeURIComponent(eventHash)}`);
+}
+
+export async function createBlockchainAnchor(payload: { event_hash: string }) {
+  return request<Record<string, unknown>>("/blockchain/anchors", { method: "POST", body: JSON.stringify(payload) });
 }
 
 export type RegistrationRole = { role: string; label: string };
