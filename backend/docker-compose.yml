@@ -4,9 +4,9 @@ services:
     env_file:
       - .env
     environment:
-      ORIVIA_DATABASE_URL: postgresql://orivia:orivia_dev_password@postgres:5432/orivia
+      ORIVIA_DATABASE_URL: ${ORIVIA_DATABASE_URL:?set ORIVIA_DATABASE_URL in backend/.env}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -18,7 +18,7 @@ services:
     environment:
       POSTGRES_DB: orivia
       POSTGRES_USER: orivia
-      POSTGRES_PASSWORD: orivia_dev_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in backend/.env}
     volumes:
       - orivia_postgres_data:/var/lib/postgresql/data
     healthcheck:

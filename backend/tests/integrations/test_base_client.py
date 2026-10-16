@@ -14,3 +14,12 @@ def test_invalid_external_supplier_is_rejected():
         assert "nombre" in str(error)
     else:
         raise AssertionError("Debió rechazar proveedor sin nombre")
+
+
+def test_integration_client_rejects_unsafe_origin():
+    for url in ("file:///tmp/secrets", "https://user:password@example.test"):
+        try:
+            IntegrationClient(url)
+        except ValueError:
+            continue
+        raise AssertionError("Debió rechazar un origen externo inseguro")

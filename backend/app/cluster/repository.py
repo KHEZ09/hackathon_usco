@@ -187,7 +187,7 @@ class InMemoryClusterRepository:
             raise ClusterValidationError("requester and target must be different")
         if not message.strip():
             raise ClusterValidationError("message is required")
-        if target_actor_id not in self._actors:
+        if self.get_public_actor(target_actor_id) is None:
             raise KeyError(target_actor_id)
         if need_id is not None and need_id not in self._needs:
             raise KeyError(need_id)
@@ -213,8 +213,14 @@ class InMemoryClusterRepository:
             self._connections[connection.connection_id] = connection
         return connection
 
-    def trust_for_actor(self, actor_id: str) -> TrustAssessment:
-        actor = self.get_actor(actor_id)
+    def trust_for_actor(
+        self, actor_id: str, *, public_only: bool = True
+    ) -> TrustAssessment:
+        actor = (
+            self.get_public_actor(actor_id)
+            if public_only
+            else self.get_actor(actor_id)
+        )
         if actor is None:
             raise KeyError(actor_id)
         return calculate_trust(actor.trust_signals)

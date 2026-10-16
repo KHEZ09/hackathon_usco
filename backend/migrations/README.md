@@ -44,7 +44,7 @@ evento de registro de cada lote de forma idempotente al consultarlo.
 ## Aplicar migraciones
 
 ```bash
-export ORIVIA_DATABASE_URL='postgresql://usuario:password@host:5432/orivia'
+export ORIVIA_DATABASE_URL='postgresql://usuario:replace-with-db-password@host:5432/orivia'
 python scripts/migrate.py
 ```
 

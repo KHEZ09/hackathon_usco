@@ -70,11 +70,16 @@ def list_actors():
 @require_access_token
 @require_permissions("cluster:read")
 def get_actor(actor_id: str):
-    actor = _repository().get_actor(actor_id)
+    is_admin = "*" in set(g.current_principal.get("permissions", []))
+    actor = (
+        _repository().get_actor(actor_id)
+        if is_admin
+        else _repository().get_public_actor(actor_id)
+    )
     if actor is None:
         return jsonify({"error": "ACTOR_NOT_FOUND"}), 404
     response = {"actor": actor_shared(actor)}
-    if "*" in set(g.current_principal.get("permissions", [])):
+    if is_admin:
         response["private"] = actor_private(actor)
     return jsonify(response)
 
@@ -138,8 +143,18 @@ def create_connection():
 @require_access_token
 @require_permissions("trust:read")
 def actor_trust(actor_id: str):
+    is_admin = "*" in set(g.current_principal.get("permissions", []))
     try:
-        assessment = _repository().trust_for_actor(actor_id)
+        actor = (
+            _repository().get_actor(actor_id)
+            if is_admin
+            else _repository().get_public_actor(actor_id)
+        )
+        if actor is None:
+            raise KeyError(actor_id)
+        assessment = _repository().trust_for_actor(
+            actor_id, public_only=not is_admin
+        )
     except KeyError:
         return jsonify({"error": "ACTOR_NOT_FOUND"}), 404
     return jsonify({"actor_id": actor_id, "trust": assessment.to_dict()})

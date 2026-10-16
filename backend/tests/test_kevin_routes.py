@@ -66,6 +66,16 @@ def test_protected_accounting_rejects_missing_token():
     assert response.get_json()["error"] == "AUTHENTICATION_REQUIRED"
 
 
+def test_accounting_data_requires_accounting_permission():
+    app = create_app()
+    headers = {"Authorization": f"Bearer {_token(app, role='buyer', permissions=['orders:read'])}"}
+
+    response = app.test_client().get("/api/v1/accounting/costs", headers=headers)
+
+    assert response.status_code == 403
+    assert response.get_json()["error"] == "FORBIDDEN"
+
+
 def test_accounting_cost_validates_non_negative_values(monkeypatch):
     app = create_app()
     headers = {"Authorization": f"Bearer {_token(app)}"}
@@ -145,6 +155,15 @@ def test_report_overview_is_protected_and_returns_repository_data(monkeypatch):
 
     assert response.status_code == 200
     assert response.get_json() == {"data": expected}
+
+
+def test_report_overview_requires_reports_permission():
+    app = create_app()
+    headers = {"Authorization": f"Bearer {_token(app, role='buyer', permissions=['orders:read'])}"}
+
+    response = app.test_client().get("/api/v1/reports/overview", headers=headers)
+
+    assert response.status_code == 403
 
 
 def test_integration_provider_is_validated_before_sync(monkeypatch):

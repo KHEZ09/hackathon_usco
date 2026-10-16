@@ -1,5 +1,6 @@
 import pytest
 
+from app.auth_tokens.passwords import hash_password
 from app.users.schemas import validate_user_payload
 
 
@@ -8,7 +9,7 @@ def test_user_payload_normalizes_roles():
         {
             "full_name": "Demo",
             "email": "demo@test.co",
-            "password_hash": "x" * 60,
+            "password_hash": hash_password("correct-password"),
             "roles": ["admin"],
         }
     )
@@ -18,5 +19,9 @@ def test_user_payload_normalizes_roles():
 def test_user_payload_rejects_invalid_email():
     with pytest.raises(ValueError, match="Email"):
         validate_user_payload(
-            {"full_name": "Demo", "email": "invalid", "password_hash": "x" * 60}
+            {
+                "full_name": "Demo",
+                "email": "invalid",
+                "password_hash": hash_password("correct-password"),
+            }
         )

@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 from urllib import request
+from urllib.parse import urlsplit
 
 
 @dataclass(frozen=True)
@@ -11,6 +12,11 @@ class AiInsight:
     kind: str
     text: str
     source: str
+
+
+class _NoRedirectHandler(request.HTTPRedirectHandler):
+    def redirect_request(self, *args: object, **kwargs: object):
+        return None
 
 
 def build_local_insight(facts: dict[str, Any], kind: str) -> AiInsight:
@@ -47,6 +53,18 @@ class OllamaClient:
     """Minimal read-only client; it never writes business data."""
 
     def __init__(self, base_url: str, model: str, timeout_seconds: float = 10.0) -> None:
+        parsed = urlsplit(base_url)
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ValueError("OLLAMA_BASE_URL must be an explicit HTTP(S) origin")
+        if not 0 < timeout_seconds <= 30:
+            raise ValueError("timeout_seconds must be between 0 and 30")
         self._base_url = base_url.rstrip("/")
         self._model = model
         self._timeout_seconds = timeout_seconds
@@ -67,8 +85,12 @@ class OllamaClient:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with request.urlopen(req, timeout=self._timeout_seconds) as response:
-            result = json.loads(response.read().decode("utf-8"))
+        opener = request.build_opener(_NoRedirectHandler())
+        with opener.open(req, timeout=self._timeout_seconds) as response:
+            raw = response.read(1_048_577)
+            if len(raw) > 1_048_576:
+                raise ValueError("Ollama response is too large")
+            result = json.loads(raw.decode("utf-8"))
         if not isinstance(result, dict) or not isinstance(result.get("response"), str):
             raise TypeError("Ollama returned an invalid response")
         text = result["response"].strip()

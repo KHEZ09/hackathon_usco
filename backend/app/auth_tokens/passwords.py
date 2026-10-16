@@ -3,6 +3,13 @@ from __future__ import annotations
 import bcrypt
 
 
+# Used only to keep login timing similar when the email does not exist.
+# It contains no user credential and is never persisted.
+DUMMY_PASSWORD_HASH = bcrypt.hashpw(
+    b"orivia-invalid-login-password", bcrypt.gensalt()
+).decode("ascii")
+
+
 def hash_password(password: str) -> str:
     """Create a bcrypt hash for a user password."""
     if not isinstance(password, str) or not password:

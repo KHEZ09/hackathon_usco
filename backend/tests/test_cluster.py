@@ -74,6 +74,21 @@ def test_authenticated_cluster_lists_shared_data_but_not_private_notes():
     assert "private" not in detail.get_json()
 
 
+def test_authenticated_cluster_cannot_resolve_private_actor_by_id(monkeypatch):
+    app = create_app()
+    repository = app.extensions["orivia_cluster_repository"]
+    actor = repository.get_actor("actor-prod-001")
+    monkeypatch.setattr(repository, "get_actor", lambda _actor_id: actor)
+    monkeypatch.setattr(repository, "get_public_actor", lambda _actor_id: None)
+
+    response = app.test_client().get(
+        "/api/v1/cluster/actors/private-id",
+        headers=_headers(app, ["cluster:read"]),
+    )
+
+    assert response.status_code == 404
+
+
 def test_operator_can_create_need_using_token_subject():
     app = create_app()
     client = app.test_client()
@@ -131,3 +146,23 @@ def test_trust_route_returns_formula_and_signals():
     trust = response.get_json()["trust"]
     assert trust["formula_version"] == "trust-v1"
     assert trust["signals"]["verified_events"] == 5
+
+
+def test_trust_route_requests_public_signals_for_non_admin(monkeypatch):
+    app = create_app()
+    repository = app.extensions["orivia_cluster_repository"]
+    calls = {}
+    original = repository.trust_for_actor
+
+    def wrapped(actor_id, *, public_only=True):
+        calls["public_only"] = public_only
+        return original(actor_id, public_only=public_only)
+
+    monkeypatch.setattr(repository, "trust_for_actor", wrapped)
+    response = app.test_client().get(
+        "/api/v1/cluster/actors/actor-prod-001/trust",
+        headers=_headers(app, ["trust:read"]),
+    )
+
+    assert response.status_code == 200
+    assert calls["public_only"] is True

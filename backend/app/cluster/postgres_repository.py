@@ -88,9 +88,12 @@ def _offer_from_row(row: dict[str, Any]) -> OfferRecord:
 
 
 def _trust_signals(
-    actor: dict[str, Any], repository: TrustSignalRepository
+    actor: dict[str, Any],
+    repository: TrustSignalRepository,
+    *,
+    public_only: bool = False,
 ) -> TrustSignals:
-    rows = repository.list_for_actor(actor["actor_id"], public_only=False)
+    rows = repository.list_for_actor(actor["actor_id"], public_only=public_only)
     confirmed = [row for row in rows if _text(row.get("status")) == "CONFIRMED"]
     signal_types = {_text(row.get("signal_type")) for row in confirmed}
     return TrustSignals(
@@ -125,13 +128,18 @@ class PostgresClusterRepository:
         self._connections = repositories["actor_connections"]
         self._trust = repositories["trust_signals"]
 
-    def _trust_for_row(self, row: dict[str, Any]) -> TrustSignals:
-        return _trust_signals(row, self._trust)
+    def _trust_for_row(
+        self, row: dict[str, Any], *, public_only: bool = False
+    ) -> TrustSignals:
+        return _trust_signals(row, self._trust, public_only=public_only)
 
     def list_actors(self, query: str = "", actor_type: str = "") -> list[ActorRecord]:
         normalized_type = ACTOR_TYPE_ALIASES.get(actor_type.strip().casefold()) if actor_type else None
         rows = self._actors.list_public(query=query or None, actor_type=normalized_type)
-        return [_actor_from_row(row, self._trust_for_row(row)) for row in rows]
+        return [
+            _actor_from_row(row, self._trust_for_row(row, public_only=True))
+            for row in rows
+        ]
 
     def get_actor(self, actor_id: str) -> ActorRecord | None:
         row = self._actors.get(actor_id)
@@ -147,7 +155,7 @@ class PostgresClusterRepository:
             or _text(row.get("visibility")) != "PUBLIC"
         ):
             return None
-        return _actor_from_row(row, self._trust_for_row(row))
+        return _actor_from_row(row, self._trust_for_row(row, public_only=True))
 
     def list_needs(self, query: str = "", status: str = "") -> list[NeedRecord]:
         rows = self._needs.list_public()
@@ -218,7 +226,7 @@ class PostgresClusterRepository:
         message: str,
     ) -> ConnectionRecord:
         requester_actor_id = self._owned_actor_id(requester_id)
-        if self.get_actor(target_actor_id) is None:
+        if self.get_public_actor(target_actor_id) is None:
             raise KeyError(target_actor_id)
         if need_id is not None and self.get_need(need_id) is None:
             raise KeyError(need_id)
@@ -247,8 +255,12 @@ class PostgresClusterRepository:
             created_at=_text(row.get("created_at")) or utc_now(),
         )
 
-    def trust_for_actor(self, actor_id: str):
-        actor = self.get_actor(actor_id)
+    def trust_for_actor(self, actor_id: str, *, public_only: bool = True):
+        actor = (
+            self.get_public_actor(actor_id)
+            if public_only
+            else self.get_actor(actor_id)
+        )
         if actor is None:
             raise KeyError(actor_id)
         from .trust import calculate_trust

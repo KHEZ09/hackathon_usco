@@ -38,7 +38,6 @@ def require_permissions(*required_permissions: str) -> Callable[[F], F]:
                         {
                             "error": "FORBIDDEN",
                             "message": "El usuario no tiene permisos suficientes.",
-                            "required_permissions": list(required_permissions),
                         }
                     ),
                     403,

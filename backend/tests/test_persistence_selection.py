@@ -18,6 +18,10 @@ def test_production_selects_postgres_adapters(monkeypatch):
     monkeypatch.setenv("ORIVIA_ENV", "production")
     monkeypatch.setenv("ORIVIA_JWT_SECRET_KEY", "x" * 64)
     monkeypatch.setenv("ORIVIA_ORDER_REPOSITORY", "postgres")
+    monkeypatch.setenv(
+        "ORIVIA_DATABASE_URL",
+        "postgresql://orivia:production-only-password@postgres:5432/orivia",
+    )
 
     app = create_app()
 

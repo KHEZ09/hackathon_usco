@@ -3,6 +3,7 @@ from uuid import UUID
 
 from flask import Blueprint, jsonify, request
 
+from ..security.permissions import require_permissions
 from ..security.middleware import require_access_token
 from .service import accounting_repo
 
@@ -11,36 +12,46 @@ accounting_bp = Blueprint("accounting", __name__)
 
 @accounting_bp.get("/accounting/inventory")
 @require_access_token
+@require_permissions("accounting:read")
 def inventory():
     return jsonify(data=accounting_repo.inventory())
 
 
 @accounting_bp.get("/accounting/costs")
 @require_access_token
+@require_permissions("accounting:read")
 def costs():
     return jsonify(data=accounting_repo.costs())
 
 
 @accounting_bp.get("/accounting/alerts")
 @require_access_token
+@require_permissions("accounting:read")
 def alerts():
     return jsonify(data=accounting_repo.open_alerts())
 
 
 @accounting_bp.get("/accounting/margins")
 @require_access_token
+@require_permissions("accounting:read")
 def margins():
     return jsonify(data=accounting_repo.margins())
 
 
 @accounting_bp.post("/accounting/lots/<uuid:lot_id>/cost")
 @require_access_token
+@require_permissions("accounting:write")
 def set_cost(lot_id: UUID):
     data = request.get_json(silent=True) or {}
     try:
         total_cost = Decimal(str(data["total_cost"]))
         cost_per_kg = Decimal(str(data["cost_per_kg"]))
-        if total_cost < 0 or cost_per_kg < 0:
+        if (
+            not total_cost.is_finite()
+            or not cost_per_kg.is_finite()
+            or total_cost < 0
+            or cost_per_kg < 0
+        ):
             raise ValueError
     except (KeyError, InvalidOperation, ValueError):
         return jsonify(

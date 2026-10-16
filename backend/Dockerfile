@@ -19,6 +19,10 @@ COPY wsgi.py ./
 RUN sed -i 's/\r$//' scripts/*.sh scripts/migrate.py \
     && chmod +x scripts/*.sh scripts/migrate.py
 
+RUN addgroup --system orivia \
+    && adduser --system --ingroup orivia orivia
+USER orivia
+
 EXPOSE 8000
 
 CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-2} 'wsgi:create_app()'"]

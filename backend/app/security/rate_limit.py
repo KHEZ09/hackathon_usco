@@ -90,3 +90,8 @@ class LoginRateLimiter:
         ]
         for key in expired:
             self._buckets.pop(key, None)
+        while len(self._buckets) >= self._max_buckets:
+            oldest = next(iter(self._buckets), None)
+            if oldest is None:
+                break
+            self._buckets.pop(oldest, None)

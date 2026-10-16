@@ -45,6 +45,9 @@ def create_app(settings: Settings | None = None) -> Flask:
         LOGIN_RATE_LIMIT_WINDOW_SECONDS=settings.login_rate_limit_window_seconds,
         LOGIN_RATE_LIMIT_BLOCK_SECONDS=settings.login_rate_limit_block_seconds,
         MAX_CONTENT_LENGTH=1 * 1024 * 1024,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SECURE=settings.environment.lower() == "production",
+        SESSION_COOKIE_SAMESITE="Lax",
     )
 
     app.extensions["orivia_login_rate_limiter"] = LoginRateLimiter(
@@ -69,6 +72,12 @@ def create_app(settings: Settings | None = None) -> Flask:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+        )
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=()"
+        )
         origin = request.headers.get("Origin")
         if origin and origin in app.config["CORS_ORIGINS"]:
             response.headers["Access-Control-Allow-Origin"] = origin
@@ -81,7 +90,7 @@ def create_app(settings: Settings | None = None) -> Flask:
             ] = "GET, POST, PATCH, DELETE, OPTIONS"
             response.headers["Access-Control-Max-Age"] = "600"
             response.headers.add("Vary", "Origin")
-        if request.path.startswith("/api/v1/auth/"):
+        if request.path.startswith("/api/v1/auth/") or "Authorization" in request.headers:
             response.headers["Cache-Control"] = "no-store"
         app.logger.info(
             "request method=%s path=%s status=%s request_id=%s",
@@ -129,6 +138,20 @@ def create_app(settings: Settings | None = None) -> Flask:
                 }
             ),
             405,
+        )
+
+    @app.errorhandler(Exception)
+    def internal_server_error(_error):
+        app.logger.exception("unhandled request error")
+        return (
+            jsonify(
+                {
+                    "error": "INTERNAL_SERVER_ERROR",
+                    "message": "Ocurrió un error interno. Intenta nuevamente.",
+                    "request_id": getattr(g, "request_id", None),
+                }
+            ),
+            500,
         )
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")

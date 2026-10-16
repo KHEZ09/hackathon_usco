@@ -64,7 +64,9 @@ def create_user():
 def update_user(user_id: UUID):
     if not _admin_only() and str(user_id) != g.current_principal.get("sub"):
         return jsonify(error="FORBIDDEN", message="No puede editar este usuario"), 403
-    data = request.get_json(silent=True) or {}
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify(error="VALIDATION_ERROR", message="Se requiere un objeto JSON"), 400
     editable_fields = (
         ("full_name", "phone", "municipality")
         if not _admin_only()
@@ -73,6 +75,16 @@ def update_user(user_id: UUID):
     allowed = {key: data[key] for key in editable_fields if key in data}
     if not allowed:
         return jsonify(error="VALIDATION_ERROR", message="No hay campos editables"), 400
+    for field in ("full_name", "phone", "municipality"):
+        value = allowed.get(field)
+        if value is not None and (
+            not isinstance(value, str)
+            or not value.strip()
+            or len(value.strip()) > {"full_name": 120, "phone": 30, "municipality": 80}[field]
+        ):
+            return jsonify(error="VALIDATION_ERROR", message=f"{field} inválido"), 400
+        if isinstance(value, str):
+            allowed[field] = value.strip()
     if "account_status" in allowed and allowed["account_status"] not in (
         "ACTIVE",
         "BLOCKED",

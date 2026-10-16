@@ -8,7 +8,7 @@ from ..database.repositories import AuthRepository, UserRepository
 from ..security.middleware import require_access_token
 from ..users.service import normalized_roles, principal_from_user, public_user
 from .jwt_service import TokenService
-from .passwords import verify_password
+from .passwords import DUMMY_PASSWORD_HASH, verify_password
 from .refresh_tokens import hash_refresh_token, issue_refresh_token
 
 auth_bp = Blueprint("auth", __name__)
@@ -58,9 +58,13 @@ def _credentials() -> tuple[str, str] | None:
         return None
     login = data.get("email") or data.get("login")
     password = data.get("password")
-    if not isinstance(login, str) or not login.strip():
+    if not isinstance(login, str) or not login.strip() or len(login.strip()) > 254:
         return None
-    if not isinstance(password, str) or not password:
+    if (
+        not isinstance(password, str)
+        or not password
+        or len(password.encode("utf-8")) > 72
+    ):
         return None
     return login.strip(), password
 
@@ -123,7 +127,8 @@ def login():
                 return _rate_limit_response(decision.retry_after_seconds)
 
     row = _user_repository().by_login(login_value)
-    if row is None or not verify_password(password, row.get("password_hash", "")):
+    password_hash = row.get("password_hash", "") if row else DUMMY_PASSWORD_HASH
+    if not verify_password(password, password_hash):
         if current_app.config["LOGIN_RATE_LIMIT_ENABLED"]:
             decisions = [limiter.record_failure(key) for key in rate_limit_keys]
             blocked = [

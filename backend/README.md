@@ -113,7 +113,7 @@ pytest tests/test_cluster.py tests/test_hour12_incident.py -q
 Los módulos de datos de Kevin se registran desde `app.database.registration`. Para aplicar migraciones con checksum:
 
 ```bash
-export ORIVIA_DATABASE_URL=postgresql://orivia:orivia_dev_password@localhost:5432/orivia
+export ORIVIA_DATABASE_URL=postgresql://orivia:replace-with-db-password@localhost:5432/orivia
 python scripts/migrate.py
 ```
 

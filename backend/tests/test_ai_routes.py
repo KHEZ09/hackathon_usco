@@ -140,12 +140,16 @@ def test_ollama_preserves_analysis_kind(monkeypatch):
         def __exit__(self, *_args):
             return False
 
-        def read(self):
+        def read(self, _size=-1):
             return b'{"response":"Auditoria lista"}'
 
+    class FakeOpener:
+        def open(self, *_args, **_kwargs):
+            return FakeResponse()
+
     monkeypatch.setattr(
-        "app.ai.service.request.urlopen",
-        lambda *_args, **_kwargs: FakeResponse(),
+        "app.ai.service.request.build_opener",
+        lambda *_args, **_kwargs: FakeOpener(),
     )
 
     insight = OllamaClient(

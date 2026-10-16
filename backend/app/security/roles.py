@@ -12,6 +12,7 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
             "needs:create",
             "trust:read",
             "lots:read",
+            "catalog:read",
         }
     ),
     "accounting": frozenset(
@@ -24,6 +25,9 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
             "cluster:read",
             "trust:read",
             "lots:read",
+            "catalog:read",
+            "accounting:write",
+            "integrations:sync",
         }
     ),
     "admin": frozenset({"*"}),

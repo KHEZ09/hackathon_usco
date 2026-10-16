@@ -22,11 +22,13 @@ def traceability():
 
 @catalog_bp.get("/suppliers")
 @require_access_token
+@require_permissions("catalog:read")
 def suppliers():
     return jsonify(data=catalog_repo.suppliers())
 
 
 @catalog_bp.get("/customers")
 @require_access_token
+@require_permissions("catalog:read")
 def customers():
     return jsonify(data=catalog_repo.customers())

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 
 class ConfigurationError(ValueError):
@@ -117,6 +118,27 @@ class Settings:
             ):
                 raise ConfigurationError(
                     "Production requires a unique ORIVIA_JWT_SECRET_KEY of at least 32 bytes"
+                )
+            if (
+                "orivia_dev_password" in settings.database_url
+                or os.getenv("ORIVIA_DATABASE_URL") is None
+            ):
+                raise ConfigurationError(
+                    "Production requires an explicit non-development ORIVIA_DATABASE_URL"
+                )
+
+        for origin in settings.cors_origins:
+            parsed = urlsplit(origin)
+            if (
+                not parsed.hostname
+                or parsed.username
+                or parsed.password
+                or parsed.path not in {"", "/"}
+                or parsed.query
+                or parsed.fragment
+            ):
+                raise ConfigurationError(
+                    "ORIVIA_CORS_ORIGINS must contain valid origins without paths or credentials"
                 )
 
         return settings
