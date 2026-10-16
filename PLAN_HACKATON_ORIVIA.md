@@ -6,25 +6,171 @@ ORIVIA es una plataforma para registrar pedidos y operaciones agroindustriales, 
 
 El objetivo de la hackatón es entregar un MVP demostrable, intuitivo y verificable. La experiencia visual y la innovación son prioritarias, pero deben apoyarse en un flujo funcional completo.
 
+## 1.1 Nueva propuesta central: clúster digital cacaotero
+
+La propuesta diferencial de ORIVIA es construir una **red digital del ecosistema cacaotero**, no únicamente una aplicación de pedidos ni un marketplace de residuos.
+
+La red conecta productores, asociaciones, transformadores, compradores, agroemprendedores, transportadores, proveedores de servicios e instituciones. Su propósito es que cada sector pueda:
+
+- conocer qué actores existen y qué ofrecen;
+- declarar sus necesidades productivas, comerciales, logísticas o técnicas;
+- encontrar aliados compatibles;
+- registrar operaciones y lotes con evidencias;
+- consultar qué tan confiable es una relación o una cadena de datos;
+- acceder a la información con una interfaz clara, móvil y de bajo consumo.
+
+La frase de producto queda así:
+
+> **ORIVIA conecta a quienes producen, transforman y comercializan cacao, creando una red accesible donde cada necesidad y cada lote pueden ser comprendidos y comprobados.**
+
+### Cómo se diferencia
+
+ORIVIA no califica la verdad de una persona únicamente por una puntuación subjetiva. Construye una señal de confianza explicable a partir de:
+
+```text
+Perfil y organización declarada
+    + eventos de trazabilidad registrados
+    + evidencias y documentos
+    + confirmaciones de otros actores
+    + consistencia de cantidades, fechas y estados
+    + incidencias abiertas o resueltas
+    -> nivel de confianza explicable
+```
+
+Blockchain sirve para demostrar que una evidencia o un evento no fue alterado después de registrarse. No demuestra por sí sola que el dato original sea verdadero; por eso ORIVIA combina registro del responsable, confirmación de contrapartes y auditoría de consistencia.
+
+### Necesidades por sector
+
+| Sector | Necesidades que ORIVIA debe descubrir o atender |
+|---|---|
+| Productor | vender, encontrar compradores, conseguir insumos, asistencia técnica, financiación y logística. |
+| Asociación | consolidar oferta, validar productores, agrupar lotes, coordinar entregas y negociar. |
+| Transformador/agroemprendedor | encontrar materia prima, aliados, proveedores y oportunidades de transformación. |
+| Comprador/empresa | localizar oferta confiable, revisar origen, volumen, disponibilidad y condiciones. |
+| Transportador/proveedor | ofrecer servicios, consultar solicitudes cercanas y demostrar entregas. |
+| Administrador/facilitador | revisar la salud de la red, alertas, verificaciones, indicadores y auditoría. |
+
+El MVP demostrará tres roles operativos ya presentes en el frontend: **operador, administrador y comprador**. Productor, asociación, transformador y proveedor se modelan desde el inicio como tipos de actor y necesidades del clúster, aunque sus paneles completos pueden quedar para la siguiente iteración.
+
 ## 2. Flujo principal de la demo
 
 ```text
-Iniciar sesión
-    -> Registrar pedido u operación
-    -> Asociar origen, producto y responsable
-    -> Cambiar estado
-    -> Registrar evento de trazabilidad
-    -> Calcular alerta, costo o riesgo
-    -> Verificar historial
+Entrar a la red
+    -> Explorar actores y necesidades
+    -> Abrir una ficha de productor, empresa o lote
+    -> Registrar una operación o solicitar una conexión
+    -> Asociar origen, producto, responsable y evidencia
+    -> Cambiar estado y confirmar el evento
+    -> Calcular confianza, alerta, costo o riesgo
     -> Consultar resumen generado por IA
-    -> Mostrar evidencia blockchain
+    -> Verificar el historial y su evidencia blockchain
 ```
 
-La aplicación debe mostrar la información de forma comprensible para tres perfiles:
+La aplicación debe mostrar la información de forma comprensible para tres perfiles del MVP:
 
 - Operador: registra pedidos, eventos y cambios operativos.
-- Administrador/contabilidad: revisa costos, estados, alertas y auditoría.
-- Consulta/comprador: observa una ficha pública limitada y verificable.
+- Administrador: revisa costos, estados, alertas, red y auditoría.
+- Comprador: explora actores, observa una ficha pública limitada y verificable y solicita contacto o pedido.
+
+## 2.1 Requisitos de la landing pública
+
+La landing es la puerta de entrada al clúster. No debe presentar ORIVIA como un dashboard técnico, sino como una red viva, accesible y confiable.
+
+### Secciones mínimas
+
+1. **Hero / propuesta:** “Del origen al mundo” y la idea de conectar el ecosistema cacaotero.
+2. **Cómo funciona la red:** productor, asociación, transformación, comprador y trazabilidad conectados.
+3. **Explorar el clúster:** buscador o tarjetas de actores, necesidades y oportunidades.
+4. **Trazabilidad comprensible:** línea de tiempo de un lote con responsable, fecha, evidencia y estado.
+5. **Confianza explicada:** mostrar por qué un dato, actor o lote tiene un nivel de confianza; evitar una cifra sin explicación.
+6. **Impacto de la red:** conexiones, lotes trazados, oportunidades activas y operaciones verificadas, siempre con datos sintéticos en la demo.
+7. **Ficha pública / QR:** entrada directa desde un código a la historia de un lote sin mostrar costos internos ni información sensible.
+8. **Acceso por rol:** iniciar sesión como operador, administrador o comprador y llegar a su panel correspondiente.
+9. **Cierre / CTA:** “Conoce la red”, “Ver una ficha” o “Únete al clúster”.
+
+### Reglas de experiencia
+
+- La primera pantalla debe explicar el valor en menos de diez segundos.
+- Toda tecnología debe traducirse a un beneficio: blockchain significa “historial que puede verificarse”; IA significa “datos que se entienden y conexiones que se recomiendan”.
+- La landing debe funcionar en móvil y computador, con navegación clara, contraste, teclado y movimiento reducido.
+- La ficha pública nunca expone contraseñas, tokens, costos internos ni datos personales innecesarios.
+- Los datos del reto son sintéticos y deben identificarse como demostración.
+- La red se muestra como una conexión entre personas y organizaciones, no como un mapa decorativo sin acciones.
+
+## 2.2 Pestañas operativas por rol
+
+Estas pestañas definen qué debe tener cada panel. Los nombres pueden cambiar visualmente, pero el alcance funcional debe mantenerse.
+
+### Operador — ejecución diaria
+
+```text
+Inicio / resumen
+Recepción de lote
+Transformación
+Inventario
+Incidencias
+Trazabilidad y sincronización
+```
+
+- Registrar recepción, cantidades, origen, responsable y evidencia.
+- Registrar transformaciones con entrada, salida, etapa e incidencia.
+- Consultar inventario disponible por lote.
+- Ver alertas operativas y operaciones pendientes de sincronizar.
+- No puede modificar costos globales, liberar bloqueos administrativos ni gestionar usuarios.
+
+### Administrador — control y confianza
+
+```text
+Resumen de la red
+Actores y necesidades
+Lotes y estados
+Alertas y riesgos
+Costos y reportes
+Grafo de procedencia
+Auditoría / evidencias
+Configuración de permisos
+```
+
+- Revisar conexiones del clúster y necesidades sin respuesta.
+- Consultar procedencia, eventos, hashes y confirmaciones.
+- Bloquear o liberar operaciones con motivo obligatorio y auditoría.
+- Consultar costos, márgenes, reportes y exportaciones.
+- Revisar alertas de inconsistencias y explicaciones de IA.
+- No puede borrar el historial ni permitir que la IA cambie datos críticos sin confirmación explícita.
+
+### Comprador / visitante registrado — descubrimiento y decisión
+
+```text
+Explorar la red
+Buscar actores y oferta
+Necesidades y oportunidades
+Fichas públicas
+Verificar lote / QR
+Solicitudes y contactos
+```
+
+- Encontrar productores, asociaciones, transformadores y oferta disponible.
+- Filtrar por ubicación aproximada, producto, volumen, estado y necesidades.
+- Consultar una ficha pública con origen, proceso, responsables y estado.
+- Verificar evidencias y solicitar contacto o pedido.
+- No puede consultar costos internos, datos privados ni modificar la trazabilidad.
+
+### Extensión futura de roles del clúster
+
+Cuando el tiempo permita ampliar el MVP, productor, asociación, transformador y proveedor tendrán paneles derivados de estas pestañas: **mi perfil**, **mis necesidades**, **mis ofertas**, **mis operaciones**, **mis conexiones** y **mi reputación verificable**. No se debe duplicar la lógica de seguridad: el backend decidirá permisos por rol y organización.
+
+## 2.3 Ficha de actor y ficha de necesidad
+
+Para que la red personalice necesidades, cada actor debe contar con una ficha mínima:
+
+```text
+Quién soy + qué hago + dónde opero aproximadamente
+Qué ofrezco + qué necesito + capacidad o volumen
+Qué puedo confirmar + qué evidencias tengo
+Con quién me relaciono + estado de cada relación
+```
+
+Una necesidad debe tener categoría, descripción, volumen, fecha límite, ubicación aproximada, estado y responsable. La IA puede recomendar coincidencias, pero la conexión final requiere aceptación humana.
 
 ## 3. Repositorio oficial
 

@@ -24,6 +24,53 @@ API Flask + Gunicorn
         +--> APIs externas mediante conectores
 ```
 
+## Red del clúster y necesidades
+
+El dominio principal ya no es únicamente el pedido: es la relación verificable entre actores, necesidades, ofertas, operaciones y lotes.
+
+```text
+Actor / organización
+    ├── perfil y capacidades
+    ├── necesidades publicadas
+    ├── ofertas y oportunidades
+    ├── conexiones aceptadas
+    └── operaciones y lotes verificables
+            └── eventos + evidencias + confirmaciones
+```
+
+Entidades mínimas del clúster:
+
+- `actors`: persona u organización, tipo de actor, estado y datos públicos.
+- `needs`: necesidad publicada, categoría, volumen, ubicación aproximada, fecha límite y estado.
+- `offers`: producto, servicio, capacidad, condiciones y disponibilidad.
+- `connections`: solicitud, aceptación, rechazo y relación entre actores.
+- `lots`: lote, origen, productor, responsable y estado público.
+- `traceability_events`: evento operacional, actor, fecha, cantidad y evidencia.
+- `evidence`: documento, fotografía o confirmación con hash y visibilidad.
+- `trust_signals`: señales explicables de consistencia, confirmación e incidencias.
+
+La red debe separar tres capas de información:
+
+1. **Pública:** perfil básico, oferta general, origen, estado y ficha QR.
+2. **Compartida:** necesidades, contactos y datos de una operación después de autorización.
+3. **Privada:** costos internos, credenciales, datos personales sensibles y secretos.
+
+El nivel de confianza no es una verdad absoluta ni una calificación social arbitraria. Es un resumen explicable de los datos y confirmaciones disponibles. Blockchain protege la integridad posterior del registro; la veracidad inicial requiere responsables, evidencias y validación entre actores.
+
+## Frontera entre landing, paneles y API
+
+La landing permite descubrir el valor de la red y consultar fichas públicas. Los paneles operativos ejecutan acciones según rol:
+
+| Superficie | Función | Backend requerido |
+|---|---|---|
+| Landing pública | Presentar el clúster, explorar actores, necesidades y métricas sintéticas. | Consultas públicas filtradas y sin datos sensibles. |
+| Ficha pública / QR | Mostrar historia de un lote y verificar evidencias. | Endpoint público de lectura y endpoint de verificación. |
+| Panel operador | Recepción, transformación, inventario, incidencias y sincronización. | Escrituras autenticadas, idempotencia y permisos operativos. |
+| Panel administrador | Red, actores, alertas, costos, auditoría y estados. | Consultas agregadas, acciones críticas auditadas y reportes. |
+| Panel comprador | Buscar oferta, revisar confianza y solicitar conexión o pedido. | Búsqueda autorizada, solicitudes y visibilidad por consentimiento. |
+
+Los contratos de estas superficies deben definir nombres de campos, estados, errores, paginación y visibilidad antes de conectar datos reales al frontend.
+
 ## Despliegue del MVP
 
 ```text
