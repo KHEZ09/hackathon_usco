@@ -4,4 +4,4 @@ Aquí se documentan decisiones de UX, accesibilidad, pruebas de usabilidad y cri
 
 ## Registro del frontend
 
-- [`ESTRUCTURA_FRONTEND_ORIVIA.md`](ESTRUCTURA_FRONTEND_ORIVIA.md): dirección visual, stack, componentes, simulaciones, autoría declarada y relación con el reto oficial.
+- [`ESTRUCTURA_FRONTEND_ORIVIA.md`](../../../ESTRUCTURA_FRONTEND_ORIVIA.md): dirección visual, stack, componentes, simulaciones, autoría declarada y relación con el reto oficial.
