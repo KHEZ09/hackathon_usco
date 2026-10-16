@@ -97,7 +97,7 @@ export function EscenaSecado({ p }: { p: MotionValue<number> }) {
       <div className="absolute inset-0 bg-gradient-to-r from-[#121211] via-[#121211]/55 to-transparent lg:via-[#121211]/30" />
       <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#121211] to-transparent" />
       <div className="absolute inset-y-0 right-0 hidden w-[45%] bg-gradient-to-l from-[#121211]/90 via-[#121211]/50 to-transparent lg:block" />
-      <div className="absolute right-6 bottom-24 flex items-center gap-3 rounded-2xl border border-crema/15 bg-[#121211]/60 px-4 py-3 backdrop-blur-md sm:right-10">
+      <div className="absolute top-36 right-4 flex items-center gap-3 rounded-2xl border border-crema/15 bg-[#121211]/60 px-4 py-3 backdrop-blur-md sm:right-10 lg:top-auto lg:bottom-24">
         <svg viewBox="0 0 44 44" className="size-11 -rotate-90">
           <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(239,227,207,0.15)" strokeWidth="4" />
           <motion.circle cx="22" cy="22" r="18" fill="none" stroke="#c98a2b" strokeWidth="4" strokeLinecap="round" style={{ pathLength: anillo }} />
@@ -162,7 +162,7 @@ export function EscenaQr({ p }: { p: MotionValue<number> }) {
   const sello = useSpring(useTransform(local, [0.3, 0.45], [0, 1]), { stiffness: 260, damping: 14 });
   return (
     <motion.div style={{ opacity }} className="absolute inset-0 grid place-items-center [perspective:1200px]">
-      <motion.div style={{ rotateY, y, rotateZ: -4 }} className="relative w-[min(58vw,300px)] lg:w-[min(72vw,300px)]">
+      <motion.div style={{ rotateY, y, rotateZ: -4 }} className="relative w-[min(58vw,300px)] max-lg:mt-16 lg:w-[min(72vw,300px)]">
         <motion.div
           style={{ scale: sello }}
           className="absolute -top-7 -left-6 z-10 grid size-16 place-items-center rounded-full bg-[#3fae6a] text-white shadow-[0_10px_30px_rgba(63,174,106,0.5)] [clip-path:polygon(50%_0%,61%_10%,75%_7%,80%_20%,93%_25%,90%_39%,100%_50%,90%_61%,93%_75%,80%_80%,75%_93%,61%_90%,50%_100%,39%_90%,25%_93%,20%_80%,7%_75%,10%_61%,0%_50%,10%_39%,7%_25%,20%_20%,25%_7%,39%_10%)]"
