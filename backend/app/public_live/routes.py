@@ -75,8 +75,7 @@ LIMIT 12
 """
 
 _USERS_QUERY = """
-SELECT u.user_id::text AS user_id, u.full_name, u.email,
-       u.account_status::text AS account_status, u.created_at,
+SELECT u.account_status::text AS account_status, u.created_at,
        COALESCE(
            array_agg(ur.role::text ORDER BY ur.role::text)
            FILTER (WHERE ur.role IS NOT NULL),
@@ -138,12 +137,11 @@ def _state_counts(rows: list[dict[str, object]]) -> dict[str, int]:
     return {str(row["status"]): int(row["total"]) for row in rows}
 
 
-def _public_user(row: dict[str, object]) -> dict[str, object]:
-    """Return the demo profile fields without password hashes or tokens."""
+def _public_user(index: int, row: dict[str, object]) -> dict[str, object]:
+    """Perfil anónimo: este endpoint es público, así que nunca expone nombre, correo ni id
+    (además de contraseñas, hashes o tokens). Solo rol, estado y fecha de registro."""
     return {
-        "user_id": str(row["user_id"]),
-        "full_name": str(row["full_name"]),
-        "email": str(row["email"]),
+        "label": f"Perfil {index}",
         "account_status": str(row["account_status"]),
         "roles": [str(role) for role in (row.get("roles") or [])],
         "created_at": _iso(row.get("created_at")),
@@ -266,7 +264,7 @@ def live_snapshot():
         }
         if current_app.config.get("PUBLIC_LIVE_INCLUDE_DEMO_DATA"):
             payload["user_states"] = _state_counts(fetch_all(_USER_STATES_QUERY))
-            payload["users"] = [_public_user(row) for row in fetch_all(_USERS_QUERY)]
+            payload["users"] = [_public_user(i, row) for i, row in enumerate(fetch_all(_USERS_QUERY), start=1)]
             payload["chains"] = [_public_chain(row) for row in fetch_all(_ORDER_CHAINS_QUERY)]
             payload["blockchain_certificates"] = [
                 _public_certificate(row) for row in fetch_all(_BLOCKCHAIN_CERTIFICATES_QUERY)

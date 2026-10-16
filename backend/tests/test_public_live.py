@@ -129,12 +129,20 @@ def test_public_live_demo_mode_includes_sanitized_operational_records():
 
     assert response.status_code == 200
     body = response.get_json()
-    assert body["users"][0]["email"] == "demo@example.test"
+    # Endpoint público: perfiles anónimos, sin nombre, correo ni id del usuario.
+    assert body["users"][0] == {
+        "label": "Perfil 1",
+        "account_status": "ACTIVE",
+        "roles": ["BUYER"],
+        "created_at": "2026-10-16T12:00:00+00:00",
+    }
     assert body["chains"][0]["verified"] is True
     assert body["blockchain_certificates"][0]["network"] == "postgres-local"
     serialized = response.get_data(as_text=True)
     assert "password_hash" not in serialized
     assert "access_token" not in serialized
+    for private in ("demo@example.test", "Demo Productor", "user-1", "email", "full_name"):
+        assert private not in serialized
 
 
 def test_public_live_hides_database_failure_details():

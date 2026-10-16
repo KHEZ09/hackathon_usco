@@ -87,15 +87,7 @@ def create_lot():
     return jsonify({"lot": lot_private(lot, _repository()), "blockchain": receipt_to_dict(receipt)}), 201
 
 
-@lots_bp.get("")
-@require_access_token
-@require_permissions("lots:read")
-def list_lots():
-    status = request.args.get("status")
-    if status and status.strip().upper() not in {"PENDING", "LIBERATED", "BLOCKED"}:
-        return jsonify({"error": "INVALID_STATUS", "message": "status no es válido."}), 400
-    lots = _repository().list(status=status)
-    return jsonify({"data": [lot_private(lot, _repository()) for lot in lots]}), 200
+# GET /lots (lista con filtros, costos y alertas) vive en admin_routes.py.
 
 
 @lots_bp.post("/<lot_id>/transformations")
