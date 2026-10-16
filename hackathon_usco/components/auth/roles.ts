@@ -1,0 +1,78 @@
+import { ClipboardList, QrCode, ShieldCheck, type LucideIcon } from "lucide-react";
+
+export type Role = "operador" | "administrador" | "comprador";
+
+export type Session = { role: Role; email: string; startedAt: string };
+
+export const ROLES: Record<Role, { label: string; email: string; description: string; tema: string; icon: LucideIcon }> = {
+  operador: {
+    label: "Operador",
+    email: "operador@orivia.co",
+    description: "Recepción de lotes, transformaciones e incidencias.",
+    tema: "Panel claro · crema",
+    icon: ClipboardList,
+  },
+  administrador: {
+    label: "Administrador",
+    email: "admin@orivia.co",
+    description: "Inventario, costos, alertas, bloqueos y auditoría.",
+    tema: "Panel oscuro · carbón",
+    icon: ShieldCheck,
+  },
+  comprador: {
+    label: "Comprador",
+    email: "comprador@orivia.co",
+    description: "Ficha pública del producto, origen y verificación.",
+    tema: "Ficha móvil · QR",
+    icon: QrCode,
+  },
+};
+
+export const SESSION_KEY = "orivia.session";
+
+// Sesión de demostración en localStorage, expuesta como store externo para useSyncExternalStore.
+const listeners = new Set<() => void>();
+let memoryRaw: string | null = null;
+let cachedRaw: string | null | undefined;
+let cached: Session | null = null;
+
+function readRaw() {
+  try {
+    return localStorage.getItem(SESSION_KEY);
+  } catch {
+    return memoryRaw;
+  }
+}
+
+export function getSessionSnapshot(): Session | null {
+  const raw = readRaw();
+  if (raw !== cachedRaw) {
+    cachedRaw = raw;
+    try {
+      cached = raw ? (JSON.parse(raw) as Session) : null;
+    } catch {
+      cached = null;
+    }
+  }
+  return cached;
+}
+
+export function subscribeSession(callback: () => void) {
+  listeners.add(callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    listeners.delete(callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
+export function writeSession(session: Session | null) {
+  memoryRaw = session ? JSON.stringify(session) : null;
+  try {
+    if (memoryRaw) localStorage.setItem(SESSION_KEY, memoryRaw);
+    else localStorage.removeItem(SESSION_KEY);
+  } catch {
+    // almacenamiento no disponible: la sesión vive solo en memoria
+  }
+  listeners.forEach((l) => l());
+}

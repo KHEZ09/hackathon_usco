@@ -1,26 +1,119 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Modo oscuro por preferencia del sistema, salvo en zonas marcadas como tema claro
+   (la landing de marca siempre se muestra en crema, como en el manual). */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:not([data-tema="claro"] *) {
+      @slot;
+    }
+  }
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Paleta de marca ORIVIA (manual de identidad) */
+@theme {
+  --color-bosque: #1b3d2e;
+  --color-bosque-950: #0c1d15;
+  --color-bosque-900: #10261c;
+  --color-bosque-700: #24513d;
+  --color-bosque-500: #3f7a5e;
+  --color-bosque-300: #8fb3a0;
+  --color-tierra: #6b3f2a;
+  --color-tierra-300: #b88a6c;
+  --color-arena: #d9c9b1;
+  --color-crema: #f5efe6;
+  --color-carbon: #1a1a1a;
+  --color-cereza: #a3262a;
+  --color-ambar: #c98a2b;
+
+  --animate-glow: glow 4.5s ease-in-out infinite;
+  --animate-mote: mote 14s linear infinite;
+  --animate-mist: mist 38s linear infinite;
+  --animate-hover: hover 2.6s ease-in-out infinite;
+
+  @keyframes glow {
+    0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.96); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+  }
+  @keyframes mote {
+    0% { transform: translate3d(0, 0, 0); opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: 0.9; }
+    100% { transform: translate3d(40px, -160px, 0); opacity: 0; }
+  }
+  @keyframes mist {
+    from { transform: translateX(-30%); }
+    to { transform: translateX(30%); }
+  }
+  @keyframes hover {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+}
+
+/* Superficies semánticas: cambian con la preferencia del sistema */
+:root {
+  --surface: #f5efe6;
+  --surface-2: #ede4d6;
+  --card: #fffcf7;
+  --ink: #1d2b24;
+  --ink-soft: #5b6760;
+  --line: #e3d8c7;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --surface: #161917;
+    --surface-2: #1c201d;
+    --card: #212623;
+    --ink: #efe8dc;
+    --ink-soft: #a7b1aa;
+    --line: #2f3631;
   }
 }
 
+[data-tema="claro"] {
+  --surface: #f5efe6;
+  --surface-2: #ede4d6;
+  --card: #fffcf7;
+  --ink: #1d2b24;
+  --ink-soft: #5b6760;
+  --line: #e3d8c7;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-script: var(--font-allura), cursive;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+::selection {
+  background: #1b3d2e;
+  color: #f5efe6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
