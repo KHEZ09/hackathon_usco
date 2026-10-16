@@ -64,7 +64,14 @@ La ruta principal `app/page.tsx` renderiza `components/landing/LandingPage.tsx`,
 2. **Hero — `HeroScrollWorld.tsx`:** portada de pantalla completa ambientada en un cacaotal, con una secuencia de 73 cuadros (20 fps) dibujada en Canvas: intro, vuelo suspendido de la libélula en reposo y control por scroll. El logotipo antiguo impreso en el video se difumina y se superpone el logotipo nuevo con aura. Incluye neblina, partículas, hojas y una mazorca de cacao en primer plano que se mecen con el viento del scroll.
 3. **Acompañamiento de scroll — `ScrollCompanion.tsx`:** libélula que recorre los márgenes de las secciones, ramas de cacao laterales con viento y granos de cacao flotando en tres profundidades.
 4. **Origen — `OriginSection.tsx`:** carrusel 3D tipo *coverflow* con arrastre, teclado y avance automático.
-5. **Proceso — `PodSection.tsx`:** sección oscura fijada al scroll donde una mazorca real (35 cuadros del video) se abre en capas mientras se encienden las etapas Finca → Fermentación → Secado → Empaque → QR, con un QR funcional hacia la ficha pública.
+5. **Proceso — `PodSection.tsx` y `proceso/`:** recorrido *scroll-world* en cinco etapas, recreado a partir del video de referencia `gemini_generated_video_dc3571d6.mp4` sin incrustarlo:
+   1. Cosecha: la mazorca en la rama se abre.
+   2. Fermentación: los granos frescos caen al cajón con vapor.
+   3. Secado: la cámara recorre la bandeja y un indicador muestra la humedad del 55% al 7%.
+   4. Empaque: saco ORIVIA con SHA-256, granos cayendo, anillo orbital y destellos.
+   5. QR verificable: tarjeta con sello «VERIFICADO», QR real hacia `/ficha/CAC001` y «Cada grano tiene una historia» escrito con el scroll.
+
+   El stepper, los textos, las flechas, la barra de progreso, los granos, el vapor, los destellos, el anillo, el sello, el QR y la caligrafía son componentes animados por el scroll. Las fotos son capas fijas en `public/media/proceso/`.
 6. **Trazabilidad — `TraceSection.tsx`:** selector de CAC001–CAC003, pasos de recepción, fermentación, secado y producto, cantidades, responsables, estados y alerta visual de merma.
 7. **Analítica — `AnalyticsSection.tsx`:** gráficas de muestra, asistente visual para explicar una alerta y tarjeta con costo unitario, margen y supuestos.
 8. **Historia de producto — `StoryBanner.tsx`:** frases de marca rotativas, gráfico de cosecha y bloque de verificación.
@@ -138,7 +145,7 @@ El tema también ofrece superficies, tarjetas, texto y bordes semánticos que se
 En `hackathon_usco/public/media/` se encuentran:
 
 - `hero/f000.jpg`–`hero/f072.jpg`: 73 cuadros (0–3,6 s, 20 fps) del video de referencia del cacaotal con la libélula.
-- `mazorca/p000.jpg`–`mazorca/p034.jpg`: 35 cuadros recortados del mismo video donde la mazorca se abre en capas.
+- `proceso/cosecha.jpg`, `apertura.jpg`, `fermentacion.jpg`, `secado.jpg` y `empaque.jpg`: cinco recortes fijos de `gemini_generated_video_dc3571d6.mp4`, también proporcionado por el equipo. Se limpiaron el cursor y la interfaz impresos en el video; el video no se incluye en el repositorio. Los 35 cuadros anteriores de la mazorca (`mazorca/`) se eliminaron.
 - `hero-poster.jpg`, `cacaotal.jpg`, `cosecha-mano.jpg`, `mazorcas-arbol.jpg`, `paisaje-cacao.jpg` y `mazorca-abierta.jpg`: recortes fijos del mismo video.
 
 Los cuadros y recortes se extrajeron en el navegador con Canvas a partir del archivo `gemini_generated_video_61935365.mp4`, proporcionado por el equipo como referencia visual generada con Google Gemini. El video original no se incluye en el repositorio. Las imágenes de la primera versión (ambientada por error en café) se eliminaron.

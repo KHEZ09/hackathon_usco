@@ -1,224 +1,301 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useMotionValueEvent, useScroll, useTransform, type MotionValue } from "framer-motion";
-import { ArrowUpRight, Leaf, Package, QrCode as QrIcon, Sun, Timer } from "lucide-react";
-import { QrCode } from "@/components/ficha/QrCode";
+import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Droplets, Leaf, Package, QrCode as QrIcon, Share2, Sun } from "lucide-react";
+import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
+import { CacaoLeaf } from "./Botanica";
+import { ETAPAS_RANGO, EscenaCosecha, EscenaEmpaque, EscenaFermentacion, EscenaQr, EscenaSecado, useLocal } from "./proceso/Escenas";
 import { cn } from "@/lib/cn";
 
-// Secuencia del video de referencia: la mazorca se abre en tres capas (35 cuadros).
-const POD_FRAMES = 35;
-const podSrc = (i: number) => `/media/mazorca/p${String(i).padStart(3, "0")}.jpg`;
+const ETAPAS = [
+  {
+    icon: Leaf,
+    paso: "Finca La Esperanza",
+    sub: "(Cosecha)",
+    eyebrow: "Rivera, Huila · lote CAC001",
+    titulo: "Del grano al producto",
+    texto: "Cada mazorca se cosecha madura y se registra con su productor, finca y fecha. Ese es el primer eslabón de su historia.",
+    cta: { label: "Ver trazabilidad", href: "#trazabilidad" },
+  },
+  {
+    icon: Droplets,
+    paso: "Fermentación",
+    eyebrow: "Beneficio · 6 días",
+    titulo: "Fermentación en cajón",
+    texto: "Los granos frescos pasan a cajones de madera. El operador registra entrada, salida e incidencias de cada etapa.",
+    cta: { label: "Registrar una etapa", href: "#trazabilidad" },
+  },
+  {
+    icon: Sun,
+    paso: "Secado",
+    eyebrow: "Secado solar",
+    titulo: "Del 55% al 7% de humedad",
+    texto: "Mientras el grano seca, ORIVIA calcula la merma y alerta si supera el 15%.",
+    cta: { label: "Ver alertas", href: "#analitica" },
+  },
+  {
+    icon: Package,
+    paso: "Empaque",
+    eyebrow: "Sellado",
+    titulo: "Empaque con huella",
+    sub2: "SHA-256 por lote",
+    texto: "El lote se empaca y su historial queda encadenado: cualquier alteración posterior se detecta.",
+    cta: { label: "Verificar un producto", href: "#productos" },
+  },
+  {
+    icon: QrIcon,
+    paso: "QR verificable",
+    eyebrow: "Ficha pública",
+    titulo: "Cada grano tiene una historia",
+    texto: "",
+    cta: { label: "Abrir ficha CAC001", href: "/ficha/CAC001" },
+  },
+] as const;
 
-const PASOS = [
-  { icon: Leaf, titulo: "Finca La Esperanza", detalle: "Cosecha de cacao maduro · Rivera" },
-  { icon: Timer, titulo: "Fermentación", detalle: "6 días en cajones de madera" },
-  { icon: Sun, titulo: "Secado", detalle: "Secado solar hasta 7% de humedad" },
-  { icon: Package, titulo: "Empaque", detalle: "Lote sellado con su huella SHA-256" },
-  { icon: QrIcon, titulo: "QR verificable", detalle: "La historia viaja con el producto" },
-];
+const MOTAS = Array.from({ length: 34 }, (_, i) => ({
+  left: (i * 37) % 100,
+  top: (i * 53) % 100,
+  size: 1.5 + (i % 3),
+  delay: (i * 0.8) % 12,
+  duration: 10 + (i % 5) * 2.5,
+}));
 
-const noop = () => () => {};
-
-/** Sección "Del grano al producto": el cacao se abre con el scroll y se encienden las etapas. */
+/**
+ * "Del grano al producto": recorrido scroll-world del cacao en cinco etapas
+ * (cosecha → fermentación → secado → empaque → QR verificable). Las fotos son capas fijas;
+ * stepper, textos, granos, vapor, destellos, anillo, sello y QR son componentes animados por el scroll.
+ */
 export function PodSection() {
   const ref = useRef<HTMLElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
-  const frame = useTransform(scrollYProgress, [0.05, 0.62], [0, POD_FRAMES - 1], { clamp: true });
-  const [paso, setPaso] = useState(0);
-  const origin = useSyncExternalStore(noop, () => window.location.origin, () => "");
+  const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const [etapa, setEtapa] = useState(0);
 
-  useMotionValueEvent(scrollYProgress, "change", (p) => {
-    setPaso(Math.max(0, Math.min(PASOS.length - 1, Math.floor(((p - 0.05) / 0.8) * PASOS.length))));
+  useMotionValueEvent(p, "change", (v) => {
+    const i = ETAPAS_RANGO.findIndex(([a, b]) => v >= a && v < b);
+    setEtapa(i === -1 ? ETAPAS.length - 1 : i);
   });
 
-  useSequence(canvasRef, frame);
+  const irA = (i: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const destino = Math.max(0, Math.min(ETAPAS.length - 1, i));
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    const recorrido = el.offsetHeight - window.innerHeight;
+    window.scrollTo({ top: top + recorrido * (ETAPAS_RANGO[destino][0] + 0.06), behavior: "smooth" });
+  };
 
-  const podScale = useTransform(scrollYProgress, [0, 0.6, 1], [0.86, 1, 1.04]);
-  const podRotate = useTransform(scrollYProgress, [0, 1], [-4, 3]);
-  const ringRotate = useTransform(scrollYProgress, [0, 1], [0, 140]);
-  const qrOpacity = useTransform(scrollYProgress, [0.55, 0.75], [0, 1]);
-  const qrY = useTransform(scrollYProgress, [0.55, 0.75], [40, 0]);
+  const hojas = useTransform(p, [0.2, 0.32], [0, 1]);
+  const hojasY = useTransform(p, [0, 1], ["10%", "-25%"]);
 
   return (
-    <section ref={ref} id="proceso" aria-label="Del grano al producto" className="relative h-[320svh] px-3 sm:px-6">
-      <div className="sticky top-3 h-[calc(100svh-1.5rem)] overflow-hidden rounded-[2.5rem] bg-[#141413] text-crema">
-        <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_55%,rgba(201,138,43,0.16),transparent_60%)]" />
-        <Rings rotate={ringRotate} />
-
-        <div className="relative mx-auto grid h-full max-w-7xl grid-rows-[auto_1fr_auto] gap-4 px-5 py-8 sm:px-10 lg:grid-cols-[1fr_minmax(0,1.1fr)_1fr] lg:grid-rows-1 lg:items-center lg:py-0">
-          {/* Etapas */}
-          <div className="lg:order-1">
-            <p className="text-[0.65rem] font-semibold tracking-[0.32em] text-ambar uppercase">Del grano al producto</p>
-            <h2 className="mt-3 max-w-xs text-2xl leading-tight font-semibold sm:text-4xl">Cada fruto de cacao, su historia a la vista.</h2>
-            <ol className="mt-6 hidden space-y-3 lg:block">
-              {PASOS.map((s, i) => (
-                <li key={s.titulo} className={cn("flex items-center gap-3 transition-all duration-500", i <= paso ? "opacity-100" : "opacity-30")}>
-                  <span
-                    className={cn(
-                      "grid size-10 shrink-0 place-items-center rounded-full border transition-all duration-500",
-                      i === paso ? "border-ambar bg-ambar/20 text-[#f3c77e] shadow-[0_0_24px_rgba(201,138,43,0.55)]" : "border-crema/20 text-crema/70",
-                    )}
-                  >
-                    <s.icon className="size-4" />
-                  </span>
-                  <span>
-                    <span className="block text-sm font-semibold">{s.titulo}</span>
-                    <span className="block text-[0.7rem] text-crema/55">{s.detalle}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          {/* Cacao */}
-          <motion.div style={{ scale: podScale, rotate: podRotate }} className="relative mx-auto h-full max-h-[78svh] w-full max-w-[460px] lg:order-2 lg:h-[82svh]">
-            <canvas
-              ref={canvasRef}
-              aria-label="Fruto de cacao que se abre mostrando sus granos"
-              role="img"
-              className="absolute inset-0 size-full"
+    <section ref={ref} id="proceso" aria-label="Del grano al producto" className="relative h-[620svh] px-3 sm:px-6">
+      <div className="sticky top-3 h-[calc(100svh-1.5rem)] overflow-hidden rounded-[2.5rem] bg-[#121211] text-crema">
+        {/* Atmósfera: resplandor y partículas doradas */}
+        <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(ellipse_at_55%_45%,rgba(201,138,43,0.12),transparent_60%)]" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          {MOTAS.map((m, i) => (
+            <span
+              key={i}
+              className="absolute rounded-full bg-[#f6e3b0] shadow-[0_0_6px_1px_rgba(246,227,176,0.5)] animate-mote"
+              style={{ left: `${m.left}%`, top: `${m.top}%`, width: m.size, height: m.size, animationDelay: `${-m.delay}s`, animationDuration: `${m.duration}s` }}
             />
-          </motion.div>
-
-          {/* Etapa activa (móvil) y QR */}
-          <div className="lg:order-3">
-            <div className="flex items-center gap-3 lg:hidden">
-              {(() => {
-                const S = PASOS[paso];
-                return (
-                  <>
-                    <span className="grid size-10 place-items-center rounded-full border border-ambar bg-ambar/20 text-[#f3c77e]">
-                      <S.icon className="size-4" />
-                    </span>
-                    <span>
-                      <span className="block text-sm font-semibold">{S.titulo}</span>
-                      <span className="block text-[0.7rem] text-crema/60">{S.detalle}</span>
-                    </span>
-                  </>
-                );
-              })()}
-            </div>
-            <motion.div style={{ opacity: qrOpacity, y: qrY }} className="mt-4 hidden rounded-[1.75rem] border border-crema/10 bg-crema/[0.06] p-5 backdrop-blur lg:block">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">Proceso verificado</p>
-                <span className="rounded-full bg-bosque-500/30 px-2.5 py-0.5 text-[0.6rem] font-bold tracking-wider text-[#9fd3b1]">LIBERADO</span>
-              </div>
-              <div className="mt-4 flex items-center gap-4">
-                <div className="rounded-2xl bg-[#fffcf7] p-2 shadow-[0_0_30px_rgba(201,138,43,0.35)]">
-                  {origin ? <QrCode value={`${origin}/ficha/CAC002`} label="QR de la ficha del lote CAC002" className="size-24" /> : <div className="size-24" />}
-                </div>
-                <div>
-                  <p className="font-mono text-[0.7rem] text-crema/60">Lote CAC002</p>
-                  <p className="text-xs leading-relaxed text-crema/80">Escanea para ver origen, proceso y estado.</p>
-                </div>
-              </div>
-              <Link
-                href="/ficha/CAC002"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-crema px-4 py-2 text-xs font-semibold text-bosque transition hover:bg-white"
-              >
-                Abrir ficha pública <ArrowUpRight className="size-3.5" />
-              </Link>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Progreso */}
-        <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-1.5">
-          {PASOS.map((s, i) => (
-            <span key={s.titulo} className={cn("h-1.5 rounded-full transition-all duration-500", i === paso ? "w-8 bg-ambar" : "w-2 bg-crema/25")} />
           ))}
         </div>
+
+        {/* Escenas */}
+        <div className="absolute inset-x-0 top-28 bottom-[42%] lg:inset-y-0 lg:left-[24%] lg:right-[26%]">
+          <EscenaCosecha p={p} />
+          <EscenaFermentacion p={p} />
+          <EscenaEmpaque p={p} />
+          <EscenaQr p={p} />
+        </div>
+        <EscenaSecadoFull p={p} />
+
+        {/* Hojas de cacao en los bordes, desenfocadas */}
+        <motion.div aria-hidden="true" style={{ opacity: hojas, y: hojasY }} className="pointer-events-none absolute inset-0">
+          <CacaoLeaf tone="profundo" className="absolute top-[4%] -left-24 w-80 rotate-[35deg] opacity-70 blur-[3px]" />
+          <CacaoLeaf tone="medio" className="absolute top-[40%] -right-28 hidden w-96 -scale-x-100 -rotate-[20deg] opacity-60 blur-[4px] sm:block" />
+          <CacaoLeaf tone="profundo" className="absolute -bottom-10 -left-16 w-72 -rotate-[15deg] opacity-60 blur-[5px]" />
+          <CacaoLeaf tone="medio" className="absolute -top-10 right-[20%] hidden w-64 rotate-[160deg] opacity-40 blur-[6px] lg:block" />
+        </motion.div>
+
+        {/* Flechas: etapa anterior / siguiente */}
+        <button
+          onClick={() => irA(etapa - 1)}
+          aria-label="Etapa anterior"
+          className="absolute top-1/2 left-[25%] hidden -translate-y-1/2 rounded-full p-2 text-crema/70 transition hover:bg-crema/10 hover:text-crema lg:block"
+        >
+          <ChevronLeft className="size-6" />
+        </button>
+        <button
+          onClick={() => irA(etapa + 1)}
+          aria-label="Etapa siguiente"
+          className="absolute top-1/2 right-4 hidden -translate-y-1/2 rounded-full p-2 text-crema/70 transition hover:bg-crema/10 hover:text-crema lg:block"
+        >
+          <ChevronRight className="size-6" />
+        </button>
+
+        <Stepper etapa={etapa} onIr={irA} />
+        <Panel etapa={etapa} p={p} />
+        <Progreso p={p} etapa={etapa} onIr={irA} />
       </div>
     </section>
   );
 }
 
-function Rings({ rotate }: { rotate: MotionValue<number> }) {
+/** El secado ocupa todo el escenario, como el plano completo del video. */
+function EscenaSecadoFull({ p }: { p: MotionValue<number> }) {
   return (
-    <motion.svg style={{ rotate }} viewBox="0 0 400 400" className="pointer-events-none absolute top-1/2 left-1/2 w-[min(120vw,1100px)] -translate-x-1/2 -translate-y-1/2 opacity-40" aria-hidden="true">
-      <circle cx="200" cy="200" r="190" fill="none" stroke="#c98a2b" strokeOpacity="0.25" strokeDasharray="2 6" />
-      <circle cx="200" cy="200" r="150" fill="none" stroke="#efe3cf" strokeOpacity="0.12" />
-      <circle cx="200" cy="200" r="120" fill="none" stroke="#c98a2b" strokeOpacity="0.3" strokeDasharray="40 14 4 14" />
-      <circle cx="200" cy="10" r="3" fill="#f3c77e" />
-      <circle cx="350" cy="200" r="2" fill="#efe3cf" />
-    </motion.svg>
+    <div className="absolute inset-0">
+      <EscenaSecado p={p} />
+    </div>
   );
 }
 
-/** Dibuja en el canvas el cuadro (fraccional) indicado por el valor de movimiento. */
-function useSequence(canvasRef: React.RefObject<HTMLCanvasElement | null>, frame: MotionValue<number>) {
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-    const imgs = Array.from({ length: POD_FRAMES }, (_, i) => {
-      const img = new Image();
-      img.decoding = "async";
-      img.src = podSrc(i);
-      return img;
-    });
-    const ready = (i: number) => imgs[i].complete && imgs[i].naturalWidth > 0;
-    let drawn = -1;
-    let raf = 0;
+function Stepper({ etapa, onIr }: { etapa: number; onIr: (i: number) => void }) {
+  return (
+    <nav aria-label="Etapas del proceso" className="absolute top-20 left-4 z-10 sm:left-8 lg:top-1/2 lg:w-[22%] lg:-translate-y-1/2">
+      <p className="mb-3 hidden text-[0.65rem] font-semibold tracking-[0.25em] text-crema/60 uppercase lg:block">Recorrido · lote CAC001</p>
+      <ol className="relative flex gap-1.5 overflow-x-auto pr-4 [scrollbar-width:none] lg:flex-col lg:gap-1 lg:overflow-visible lg:pr-0">
+        <span aria-hidden="true" className="absolute top-5 bottom-5 left-[1.15rem] hidden w-px bg-crema/15 lg:block" />
+        {ETAPAS.map((e, i) => {
+          const activa = i === etapa;
+          const hecha = i < etapa || (i === ETAPAS.length - 1 && activa);
+          return (
+            <li key={e.paso} className="relative shrink-0">
+              <button
+                onClick={() => onIr(i)}
+                aria-current={activa ? "step" : undefined}
+                className={cn(
+                  "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs transition-all duration-500",
+                  activa ? "bg-arena text-bosque shadow-[0_8px_24px_rgba(217,201,177,0.25)]" : "text-crema/70 hover:bg-crema/[0.06] hover:text-crema",
+                  !activa && "max-lg:hidden",
+                )}
+              >
+                <span
+                  className={cn(
+                    "relative grid size-7 shrink-0 place-items-center rounded-full border transition",
+                    activa ? "border-bosque/30 bg-bosque/10" : "border-crema/20 bg-[#121211]",
+                  )}
+                >
+                  <e.icon className="size-3.5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{e.paso}</span>
+                  {"sub" in e && <span className="block text-[0.65rem] opacity-70">{e.sub}</span>}
+                </span>
+                {hecha && <Check className={cn("size-3.5", activa ? "text-bosque" : "text-[#9fd3b1]")} />}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
 
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(canvas.offsetWidth * dpr);
-      canvas.height = Math.round(canvas.offsetHeight * dpr);
-      drawn = -1;
-    };
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(canvas);
+function Panel({ etapa, p }: { etapa: number; p: MotionValue<number> }) {
+  const e = ETAPAS[etapa];
+  return (
+    <div className="absolute inset-x-5 bottom-20 z-10 sm:inset-x-8 lg:top-1/2 lg:right-8 lg:bottom-auto lg:left-auto lg:w-[24%] lg:-translate-y-1/2">
+      {etapa === ETAPAS.length - 1 ? (
+        <Caligrafia p={p} />
+      ) : (
+        <motion.div key={etapa} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className="rounded-2xl bg-[#121211]/55 p-4 backdrop-blur-sm lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+          <p className="text-[0.62rem] font-semibold tracking-[0.28em] text-[#f3c77e] uppercase">{e.eyebrow}</p>
+          <h3 className="mt-2 text-2xl leading-tight font-semibold sm:text-3xl">{e.titulo}</h3>
+          {"sub2" in e && <p className="text-xl font-light text-crema/85 sm:text-2xl">{e.sub2}</p>}
+          <p className="mt-3 text-[0.8rem] leading-relaxed text-crema/70">{e.texto}</p>
+          <div className="mt-5 flex items-center gap-2">
+            <a href={e.cta.href} className="inline-flex items-center gap-1.5 rounded-full border border-crema/40 px-4 py-2 text-xs font-semibold transition hover:bg-crema hover:text-bosque">
+              {e.cta.label} <ArrowUpRight className="size-3.5" />
+            </a>
+            <CompartirBtn />
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+}
 
-    const drawImg = (img: HTMLImageElement) => {
-      // "contain" centrado.
-      const s = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
-      const w = img.naturalWidth * s;
-      const h = img.naturalHeight * s;
-      ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
-    };
+function CompartirBtn() {
+  const [ok, setOk] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        const url = `${window.location.origin}/ficha/CAC001`;
+        try {
+          if (navigator.share) await navigator.share({ title: "ORIVIA · Del grano al producto", url });
+          else await navigator.clipboard.writeText(url);
+          setOk(true);
+          setTimeout(() => setOk(false), 1800);
+        } catch {
+          // el usuario canceló
+        }
+      }}
+      aria-label="Compartir la ficha del lote"
+      className="grid size-8 place-items-center rounded-full border border-crema/30 text-crema/80 transition hover:bg-crema/10"
+    >
+      {ok ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
+    </button>
+  );
+}
 
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
-      const f = frame.get();
-      if (Math.abs(f - drawn) < 0.01) return;
-      const a = Math.floor(f);
-      const b = Math.min(POD_FRAMES - 1, a + 1);
-      if (!ready(a)) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.globalAlpha = 1;
-      drawImg(imgs[a]);
-      const mix = f - a;
-      if (mix > 0.02 && ready(b)) {
-        ctx.globalAlpha = mix;
-        drawImg(imgs[b]);
-        ctx.globalAlpha = 1;
-      }
-      // Funde los bordes del cuadro con el fondo (máscara elíptica suave).
-      const s = Math.min(canvas.width / imgs[a].naturalWidth, canvas.height / imgs[a].naturalHeight);
-      const iw = imgs[a].naturalWidth * s;
-      const ih = imgs[a].naturalHeight * s;
-      ctx.save();
-      ctx.globalCompositeOperation = "destination-in";
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.scale(iw / 2, ih / 2);
-      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
-      g.addColorStop(0, "rgba(0,0,0,1)");
-      g.addColorStop(0.62, "rgba(0,0,0,1)");
-      g.addColorStop(0.92, "rgba(0,0,0,0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(-1, -1, 2, 2);
-      ctx.restore();
-      drawn = f;
-    };
-    raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-    };
-  }, [canvasRef, frame]);
+/** "Cada grano tiene una historia" escrito a mano: se revela con el scroll y se traza el subrayado. */
+function Caligrafia({ p }: { p: MotionValue<number> }) {
+  const local = useLocal(p, 4);
+  const revela = useTransform(local, [0.15, 0.6], [100, 0]);
+  const clip = useTransform(revela, (v) => `inset(0 ${v}% 0 0)`);
+  const trazo = useTransform(local, [0.5, 0.8], [0, 1]);
+  const cta = useTransform(local, [0.7, 0.85], [0, 1]);
+  return (
+    <div>
+      <motion.p style={{ clipPath: clip }} className="font-script text-5xl leading-[1.05] text-crema sm:text-6xl lg:text-[3.1rem] xl:text-[3.6rem]">
+        Cada grano tiene una historia
+      </motion.p>
+      <svg viewBox="0 0 300 50" className="mt-1 w-56" aria-hidden="true">
+        <motion.path
+          d="M4 30 C 60 46, 120 10, 170 26 C 205 37, 225 40, 250 22 C 262 13, 276 14, 268 26 C 262 35, 280 34, 296 20"
+          fill="none"
+          stroke="#efe3cf"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          style={{ pathLength: trazo }}
+        />
+      </svg>
+      <motion.div style={{ opacity: cta }} className="mt-4">
+        <Link href="/ficha/CAC001" className="inline-flex items-center gap-1.5 rounded-full bg-crema px-4 py-2 text-xs font-semibold text-bosque transition hover:bg-white">
+          Abrir ficha CAC001 <ArrowUpRight className="size-3.5" />
+        </Link>
+      </motion.div>
+    </div>
+  );
+}
+
+function Progreso({ p, etapa, onIr }: { p: MotionValue<number>; etapa: number; onIr: (i: number) => void }) {
+  const ancho = useTransform(p, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
+  return (
+    <div className="absolute inset-x-5 bottom-5 z-10 flex items-center gap-4 sm:inset-x-8">
+      <span className="hidden text-[0.62rem] tracking-[0.2em] text-crema/50 uppercase sm:block">Del grano al producto</span>
+      <div className="relative h-px flex-1 bg-crema/15">
+        <motion.div style={{ width: ancho }} className="absolute inset-y-0 left-0 bg-[#d9c9b1]" />
+        <motion.span style={{ left: ancho }} className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-arena shadow-[0_0_10px_rgba(217,201,177,0.8)]" />
+      </div>
+      <div className="flex gap-1.5">
+        {ETAPAS.map((e, i) => (
+          <button
+            key={e.paso}
+            onClick={() => onIr(i)}
+            aria-label={`Ir a ${e.paso}`}
+            className={cn("h-1.5 rounded-full transition-all duration-500", i === etapa ? "w-6 bg-arena" : "w-1.5 bg-crema/30 hover:bg-crema/60")}
+          />
+        ))}
+      </div>
+      <span className="hidden items-center gap-1.5 text-[0.62rem] text-crema/60 sm:flex">
+        <OriviaIsotipo className="h-4" glow={false} /> ORIVIA · Huila
+      </span>
+    </div>
+  );
 }
