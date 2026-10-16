@@ -230,19 +230,23 @@ class EvmBlockchainAnchor(BlockchainAnchor):
             nonce = self._web3.eth.get_transaction_count(
                 self._account.address, "pending"
             )
-            transaction = self._contract.functions.anchor(
+            anchor_call = self._contract.functions.anchor(
                 event_hash_bytes,
                 subject_hash,
                 type_hash,
                 _occurred_timestamp(occurred_at),
-            ).build_transaction(
-                {
-                    "from": self._account.address,
-                    "nonce": nonce,
-                    "chainId": self._chain_id,
-                    "gas": self._gas_limit,
-                    "gasPrice": self._web3.eth.gas_price,
-                }
+            )
+            transaction_context = {
+                "from": self._account.address,
+                "nonce": nonce,
+                "chainId": self._chain_id,
+                "gasPrice": self._web3.eth.gas_price,
+            }
+            estimated_gas = int(anchor_call.estimate_gas(transaction_context))
+            safety_margin = max(estimated_gas // 10, 5_000)
+            gas_limit = min(self._gas_limit, estimated_gas + safety_margin)
+            transaction = anchor_call.build_transaction(
+                {**transaction_context, "gas": gas_limit}
             )
             signed = self._account.sign_transaction(transaction)
             tx_hash = self._web3.eth.send_raw_transaction(signed.raw_transaction)
