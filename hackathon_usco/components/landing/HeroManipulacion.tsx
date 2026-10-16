@@ -71,7 +71,12 @@ export function HeroManipulacion({ className }: { className?: string }) {
   useEffect(() => {
     const canvas = ref.current;
     const gl = canvas?.getContext("webgl", { premultipliedAlpha: false, antialias: false });
-    if (!canvas || !gl) return;
+    if (!canvas || !gl || gl.isContextLost()) return;
+    let vivo = true;
+    // El canvas solo se muestra cuando ya dibujó la foto; mientras tanto se ve el fondo.
+    const mostrar = (si: boolean) => (canvas.style.opacity = si ? "1" : "0");
+    const perdido = () => mostrar(false);
+    canvas.addEventListener("webglcontextlost", perdido);
 
     const shader = (type: number, src: string) => {
       const s = gl.createShader(type)!;
@@ -120,9 +125,10 @@ export function HeroManipulacion({ className }: { className?: string }) {
     };
 
     const dibujar = () => {
-      if (!listo) return;
+      if (!listo || gl.isContextLost()) return;
       gl.uniform1f(uT, reduce ? 0 : (performance.now() - inicio) / 1000);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      if (canvas.style.opacity !== "1") mostrar(true);
     };
 
     const bucle = () => {
@@ -133,6 +139,7 @@ export function HeroManipulacion({ className }: { className?: string }) {
     const img = new Image();
     img.decoding = "async";
     img.onload = () => {
+      if (!vivo || gl.isContextLost()) return;
       const tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -161,12 +168,15 @@ export function HeroManipulacion({ className }: { className?: string }) {
     io.observe(canvas);
 
     return () => {
+      // No se pierde el contexto a mano: React puede volver a montar el mismo canvas.
+      vivo = false;
+      listo = false;
       cancelAnimationFrame(raf);
       ro.disconnect();
       io.disconnect();
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      canvas.removeEventListener("webglcontextlost", perdido);
     };
   }, [reduce]);
 
-  return <canvas ref={ref} aria-hidden="true" className={className} />;
+  return <canvas ref={ref} aria-hidden="true" className={className} style={{ opacity: 0 }} />;
 }
