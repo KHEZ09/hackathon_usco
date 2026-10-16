@@ -1,7 +1,15 @@
 from __future__ import annotations
 
 ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
-    "operator": frozenset({"orders:read", "orders:create", "tracking:write"}),
+    "operator": frozenset(
+        {
+            "orders:read",
+            "orders:create",
+            "orders:update",
+            "tracking:read",
+            "tracking:write",
+        }
+    ),
     "accounting": frozenset({"orders:read", "accounting:read", "reports:read"}),
     "admin": frozenset({"*"}),
     "viewer": frozenset({"orders:read", "tracking:read"}),

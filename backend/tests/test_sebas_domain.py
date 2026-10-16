@@ -3,6 +3,7 @@ import pytest
 from app.ai.service import build_read_only_prompt
 from app.audit.service import create_audit_record
 from app.blockchain.adapter import MemoryBlockchainAnchor
+from app.orders.repository import InMemoryOrderRepository
 from app.orders.service import create_transition
 from app.orders.states import InvalidOrderTransition
 from app.security.roles import permissions_for_role
@@ -21,6 +22,29 @@ def test_order_transition_rejects_skipping_states():
             actor_id="user-1",
             current_state="CREATED",
             next_state="DELIVERED",
+        )
+
+
+def test_order_transition_requires_identifiers():
+    with pytest.raises(ValueError):
+        create_transition(
+            order_id="",
+            actor_id="user-1",
+            current_state="CREATED",
+            next_state="CONFIRMED",
+        )
+
+
+def test_order_repository_rejects_non_finite_quantity():
+    repository = InMemoryOrderRepository()
+
+    with pytest.raises(ValueError):
+        repository.create(
+            actor_id="user-1",
+            product="Cacao",
+            quantity=float("nan"),
+            origin="Huila",
+            destination="Neiva",
         )
 
 

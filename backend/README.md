@@ -21,6 +21,10 @@ Este backend pertenece al repositorio de la hackatón USCO y se prepara para des
 - Ejecución de producción con Gunicorn.
 - Docker Compose con PostgreSQL para desarrollo.
 
+La ruta de pedidos actualmente usa un repositorio en memoria para permitir el
+trabajo independiente de Sebas y las pruebas del MVP. No es persistencia de
+producción: Kevin lo reemplazará por PostgreSQL mediante el mismo contrato.
+
 Kevin integrará el módulo de usuarios y las migraciones. Este backend no crea una segunda base de usuarios.
 
 ## Ejecutar localmente

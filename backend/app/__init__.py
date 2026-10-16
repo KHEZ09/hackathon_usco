@@ -2,6 +2,8 @@ from flask import Flask
 
 from .auth_tokens.routes import auth_bp
 from .config import Settings
+from .orders.repository import InMemoryOrderRepository
+from .orders.routes import orders_bp
 from .routes import health_bp
 
 
@@ -18,8 +20,10 @@ def create_app(settings: Settings | None = None) -> Flask:
         ACCESS_TOKEN_TTL_SECONDS=settings.access_token_ttl_seconds,
         DATABASE_URL=settings.database_url,
     )
+    app.extensions["orivia_order_repository"] = InMemoryOrderRepository()
 
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
+    app.register_blueprint(orders_bp, url_prefix="/api/v1/orders")
 
     return app
