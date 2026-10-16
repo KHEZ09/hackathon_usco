@@ -15,7 +15,7 @@ rectificar, analizar errores, complementar, auditar y comprobar nuevamente.
 | RF08–RF09 | Estado de lote y disponibilidad pública/privada | CAC001 cambia a `BLOCKED` y no queda disponible | Cubierto | Frontend para visualización |
 | RF10 | Auditoría de cambio de estado y verificación de cadena | Auditoría y `history_verified` | Cubierto en adaptador | PostgreSQL para durable |
 | RF11–RF12 | Exportación y balance existentes permanecen en módulos de Kevin | No se modifican ni se rompen; suite completa pasa | Sin regresión detectada | Kevin / frontend según ruta |
-| Persistencia | `OrderRepository`, clúster y lotes usan PostgreSQL en producción; readiness tiene timeout de 2 s | 68 pruebas pasan; migración `007` ordenada y selección memory/postgres no rompe la factory | Pedidos, clúster y lotes listos | Ninguna en backend; falta ejercitar un reinicio real con CAC001 |
+| Persistencia | `OrderRepository`, clúster y lotes usan PostgreSQL en producción; readiness tiene timeout de 2 s | 68 pruebas pasan; migración `007` ordenada y CAC001 se valida después de reiniciar API | Pedidos, clúster y lotes listos | Ninguna del backend aislado |
 | Auditoría | Reutilización de `AuditRecord` inmutable | Prueba de auditoría de CAC001 | Listo | Ninguna |
 | Blockchain | Hash-chain de lotes y anclaje existente de pedidos | Verificación de eventos y pruebas de anclaje existentes | Listo para evidencia local | Proveedor público es decisión posterior |
 | IA | No se altera el límite read-only ni el fallback local | Suite IA existente pasa | Sin regresión | Ollama es opcional |
@@ -27,6 +27,8 @@ rectificar, analizar errores, complementar, auditar y comprobar nuevamente.
 backend: 68 passed in 6.94s
 ruff (app/cluster, app/lots y pruebas nuevas): All checks passed
 compileall app tests: OK
+orivia Docker: 68 passed; `007_lot_traceability.sql` applied
+orivia post-restart: CAC001 `BLOCKED`, history verified, audit count 1, affected 80 kg
 ```
 
 ## Faltantes reales, separados del bloque de Sebas
