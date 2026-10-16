@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 158" width="120" height="158">
+  <defs>
+    <linearGradient id="grano" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A8714A" />
+      <stop offset="1" stop-color="#5A321D" />
+    </linearGradient>
+    <clipPath id="pod">
+      <path d="M60 52 C 79 54, 89 80, 87 104 C 85 127, 71 145, 60 154 C 49 145, 35 127, 33 104 C 31 80, 41 54, 60 52 Z" />
+    </clipPath>
+  </defs>
+
+  <!-- Montaña -->
+  <path d="M16 60 C 30 40, 44 16, 58 13 C 70 11, 86 32, 104 58" fill="none" stroke="#EFE3CF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M41 43 L49 34 L54 39 L61 29 L72 43" fill="none" stroke="#EFE3CF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Pedúnculo -->
+  <path d="M60 53 C 59 47, 61 43, 65 40" fill="none" stroke="#EFE3CF" stroke-width="4" stroke-linecap="round" />
+
+  <!-- Mazorca -->
+  <path
+    d="M60 52 C 79 54, 89 80, 87 104 C 85 127, 71 145, 60 154 C 49 145, 35 127, 33 104 C 31 80, 41 54, 60 52 Z"
+    fill="#EFE3CF"
+  />
+  <g clip-path="url(#pod)">
+    <!-- Surcos -->
+    <path d="M58 54 C 51 68, 48 86, 48 104 C 48 122, 52 138, 58 152" fill="none" stroke="#B88A6C" stroke-width="2.4" stroke-linecap="round" />
+    <path d="M53 56 C 44 70, 40 86, 40.5 104 C 41 121, 46 136, 54 148" fill="none" stroke="#B88A6C" stroke-width="2.4" stroke-linecap="round" />
+    <path d="M46 61 C 38 74, 35.5 90, 36 104 C 36.5 118, 40 130, 47 141" fill="none" stroke="#B88A6C" stroke-width="2.4" stroke-linecap="round" />
+    <!-- Pulpa -->
+    <path d="M61 56 C 76 60, 83 82, 82 104 C 81 125, 71 141, 61 149 Z" fill="#F7EEDF" />
+    <!-- Granos -->
+    <ellipse cx="68" cy="70" rx="4.6" ry="7" transform="rotate(-28 68 70)" fill="url(#grano)" stroke="#F7EEDF" stroke-width="0.8" />
+    <ellipse cx="74.5" cy="80" rx="4.6" ry="7" transform="rotate(24 74.5 80)" fill="url(#grano)" stroke="#F7EEDF" stroke-width="0.8" />
+    <ellipse cx="67.5" cy="90" rx="4.6" ry="7" transform="rotate(-24 67.5 90)" fill="url(#grano)" stroke="#F7EEDF" stroke-width="0.8" />
+    <ellipse cx="75" cy="100" rx="4.6" ry="7" transform="rotate(22 75 100)" fill="url(#grano)" stroke="#F7EEDF" stroke-width="0.8" />
+    <ellipse cx="68" cy="110" rx="4.6" ry="7" transform="rotate(-22 68 110)" fill="url(#grano)" stroke="#F7EEDF" stroke-width="0.8" />
+    <ellipse cx="74.5" cy="120" rx="4.6" ry="7" transform="rotate(20 74.5 120)" fill="url(#grano)" stroke="#F7EEDF" stroke-width="0.8" />
+    <ellipse cx="68.5" cy="130" rx="4.6" ry="7" transform="rotate(-18 68.5 130)" fill="url(#grano)" stroke="#F7EEDF" stroke-width="0.8" />
+    <ellipse cx="73" cy="139" rx="4.6" ry="7" transform="rotate(14 73 139)" fill="url(#grano)" stroke="#F7EEDF" stroke-width="0.8" />
+  </g>
+  <path d="M60.5 53 L 60.5 153" stroke="#D9C9B1" stroke-width="1.6" />
+</svg>

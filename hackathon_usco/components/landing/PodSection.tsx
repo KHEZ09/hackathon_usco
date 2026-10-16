@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { Check, ChevronLeft, ChevronRight, Droplets, Leaf, Package, QrCode as QrIcon, Share2, Sun, type LucideIcon } from "lucide-react";
-import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
 import { CACAO_STAGES, PROCESS_SEQUENCE, STAGE_RANGES, frameForProgress, type ProcessStage } from "@/data/cacaoProcessData";
 import { ProcessSequence } from "./proceso/ProcessSequence";
 import { Caligrafia } from "./proceso/Caligrafia";
@@ -55,8 +54,8 @@ export function PodSection() {
   const entrada = useTransform(p, [0, 0.04], [1.06, 1]);
 
   return (
-    <section ref={ref} id="proceso" aria-label="Del grano al producto" className="relative h-[620svh] px-3 sm:px-6">
-      <div className="sticky top-3 h-[calc(100svh-1.5rem)] overflow-hidden rounded-[2.5rem] bg-[#121211] text-crema">
+    <section ref={ref} id="proceso" aria-label="Del grano al producto" className="relative h-[620svh]">
+      <div className="sticky top-0 h-[100svh] overflow-hidden bg-[#121211] text-crema">
         {/* Recorrido continuo */}
         <motion.div style={{ scale: entrada }} className="absolute inset-x-0 top-0 bottom-[34%] lg:bottom-0">
           <ProcessSequence sequence={PROCESS_SEQUENCE} frame={frame} fallback={CACAO_STAGES[0].visualAsset.fallbackImage} />
@@ -96,7 +95,6 @@ export function PodSection() {
 
         <Stepper activa={activa} onIr={irA} />
         <Panel activa={activa} p={p} />
-        <Progreso p={p} activa={activa} onIr={irA} />
       </div>
     </section>
   );
@@ -197,31 +195,5 @@ function CompartirBtn() {
     >
       {ok ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
     </button>
-  );
-}
-
-function Progreso({ p, activa, onIr }: { p: MotionValue<number>; activa: number; onIr: (i: number) => void }) {
-  const ancho = useTransform(p, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
-  return (
-    <div className="absolute inset-x-5 bottom-5 z-10 flex items-center gap-4 sm:inset-x-8">
-      <span className="hidden text-[0.62rem] tracking-[0.2em] text-crema/50 uppercase sm:block">Del grano al producto</span>
-      <div className="relative h-px flex-1 bg-crema/15">
-        <motion.div style={{ width: ancho }} className="absolute inset-y-0 left-0 bg-[#d9c9b1]" />
-        <motion.span style={{ left: ancho }} className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-arena shadow-[0_0_10px_rgba(217,201,177,0.8)]" />
-      </div>
-      <div className="flex gap-1.5">
-        {CACAO_STAGES.map((s, i) => (
-          <button
-            key={s.id}
-            onClick={() => onIr(i)}
-            aria-label={`Ir a ${s.label}`}
-            className={cn("h-1.5 rounded-full transition-all duration-500", i === activa ? "w-6 bg-arena" : "w-1.5 bg-crema/30 hover:bg-crema/60")}
-          />
-        ))}
-      </div>
-      <span className="hidden items-center gap-1.5 text-[0.62rem] text-crema/60 sm:flex">
-        <OriviaIsotipo className="h-4" glow={false} /> ORIVIA · Huila
-      </span>
-    </div>
   );
 }

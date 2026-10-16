@@ -38,9 +38,9 @@ export function SiteFooter({ onLogin }: { onLogin: (role?: Role) => void }) {
       <CacaoLeaf tone="brote" className="pointer-events-none absolute -bottom-16 -left-28 -z-10 w-[480px] rotate-[18deg] opacity-25 blur-[3px]" />
 
       <div className="relative z-10 mx-auto max-w-6xl px-5 pt-20 pb-10 sm:px-8">
-        <div className="grid gap-12 lg:grid-cols-[1.2fr_1fr_1fr]">
-          <div>
-            <OriviaLogo withTagline wordClassName="text-2xl" />
+        <div className="grid gap-12 text-center lg:grid-cols-[1.2fr_1fr_1fr] lg:text-left">
+          <div className="flex flex-col items-center lg:items-start">
+            <OriviaLogo withTagline wordClassName="text-2xl" className="justify-center lg:justify-start" />
             <p className="mt-8 font-script text-4xl text-crema/90">Trazabilidad que se siente.</p>
             <button
               onClick={() => onLogin()}
@@ -50,7 +50,7 @@ export function SiteFooter({ onLogin }: { onLogin: (role?: Role) => void }) {
             </button>
           </div>
 
-          <nav aria-label="Pie de página">
+          <nav aria-label="Pie de página" className="flex flex-col items-center lg:items-start">
             <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-crema/55 uppercase">Plataforma</p>
             <ul className="mt-5 space-y-3 text-sm">
               {[
@@ -68,22 +68,22 @@ export function SiteFooter({ onLogin }: { onLogin: (role?: Role) => void }) {
             </ul>
           </nav>
 
-          <div>
+          <div className="flex flex-col items-center lg:items-start">
             <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-crema/55 uppercase">Contacto</p>
             <ul className="mt-5 space-y-3 text-sm text-crema/80">
-              <li className="flex items-center gap-2">
-                <MapPin className="size-4" /> Rivera · Campoalegre · Algeciras, Huila
+              <li className="flex items-center justify-center gap-2 lg:justify-start">
+                <MapPin className="size-4 shrink-0" /> Rivera · Campoalegre · Algeciras, Huila
               </li>
-              <li>
+              <li className="flex items-center justify-center gap-2 lg:justify-start">
                 <a href="mailto:contacto@orivia.co" className="inline-flex items-center gap-2 transition hover:text-crema">
-                  <Mail className="size-4" /> contacto@orivia.co
+                  <Mail className="size-4 shrink-0" /> contacto@orivia.co
                 </a>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col gap-3 border-t border-crema/15 pt-6 text-[0.7rem] text-crema/55 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-16 flex flex-col items-center gap-3 border-t border-crema/15 pt-6 text-center text-[0.7rem] text-crema/55 sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <p>© 2026 ORIVIA · Hackatón de agroindustria USCO</p>
           <p className="tracking-[0.3em]">DEL ORIGEN AL MUNDO</p>
         </div>

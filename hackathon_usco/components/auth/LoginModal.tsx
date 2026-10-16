@@ -20,18 +20,17 @@ type Props = {
 
 const ROLE_ORDER: Role[] = ["operador", "administrador", "comprador"];
 
-export function LoginModal({ open, initialRole = "operador", initialEmail, onRegister, onClose, onSuccess }: Props) {
+export function LoginModal({ open, initialEmail, onRegister, onClose, onSuccess }: Props) {
   return (
     <AnimatePresence>
-      {open && <LoginDialog key={initialEmail ?? "login"} initialRole={initialRole} initialEmail={initialEmail} onRegister={onRegister} onClose={onClose} onSuccess={onSuccess} />}
+      {open && <LoginDialog key={initialEmail ?? "login"} initialEmail={initialEmail} onRegister={onRegister} onClose={onClose} onSuccess={onSuccess} />}
     </AnimatePresence>
   );
 }
 
 /** Se monta en cada apertura, así el formulario siempre arranca limpio. */
-function LoginDialog({ initialRole = "operador", initialEmail, onRegister, onClose, onSuccess }: Omit<Props, "open">) {
-  const [role, setRole] = useState<Role>(initialRole);
-  const [email, setEmail] = useState(initialEmail ?? ROLES[initialRole].email);
+function LoginDialog({ initialEmail, onRegister, onClose, onSuccess }: Omit<Props, "open">) {
+  const [email, setEmail] = useState(initialEmail ?? "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,32 +49,29 @@ function LoginDialog({ initialRole = "operador", initialEmail, onRegister, onClo
     };
   }, [onClose]);
 
-  const pickRole = (r: Role) => {
-    setRole(r);
-    setEmail(ROLES[r].email);
-    setError(null);
-  };
-
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const normalized = email.trim().toLowerCase();
+    if (!normalized || !password) return setError("Completa el correo y la contraseña.");
+    if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
+
+    setError(null);
+    setStatus("loading");
+
     if (process.env.NEXT_PUBLIC_ORIVIA_DEMO_MODE !== "true") {
-      if (!normalized || !password) return setError("Completa el correo y la contraseña.");
-      if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
-      setError(null);
-      setStatus("loading");
       try {
         const response = await loginApi(normalized, password);
         const backendRoles = (response.user.roles ?? []).map((value) => value.toUpperCase());
         const backendRole = backendRoles[0] ?? "";
-        const expected = role === "administrador" ? ["ADMIN", "ACCOUNTING"] : role === "operador" ? ["OPERATOR"] : ["BUYER", "VIEWER"];
-        if (!expected.some((candidate) => backendRoles.includes(candidate))) {
-          clearAuthTokens();
-          throw new OriviaApiError(`La cuenta no tiene el rol ${ROLES[role].label}.`, 403, "ROLE_MISMATCH");
-        }
+        const resolvedRole: Role = backendRoles.includes("ADMIN") || backendRoles.includes("ACCOUNTING")
+          ? "administrador"
+          : backendRoles.includes("OPERATOR")
+          ? "operador"
+          : "comprador";
+
         setStatus("ok");
         setTimeout(() => onSuccess({
-          role,
+          role: resolvedRole,
           email: response.user.email,
           startedAt: new Date().toISOString(),
           userId: response.user.user_id,
@@ -87,28 +83,29 @@ function LoginDialog({ initialRole = "operador", initialEmail, onRegister, onClo
         if (cause instanceof OriviaApiError && cause.status === 429) {
           setError(`Demasiados intentos. Espera ${cause.retryAfterSeconds ?? 900} segundos.`);
         } else if (cause instanceof OriviaApiError && cause.status === 401) {
-          setError("Credenciales inválidas. Verifica el usuario persistido.");
+          setError("Credenciales inválidas. Verifica tu correo y contraseña.");
         } else {
           setError(cause instanceof Error ? cause.message : "No se pudo iniciar sesión.");
         }
       }
       return;
     }
-    if (!normalized || !password) return setError("Completa el correo y la contraseña.");
-    const match = ROLE_ORDER.find((r) => ROLES[r].email === normalized);
-    if (!match) return setError("Ese correo no pertenece a un usuario de demostración.");
-    if (match !== role) return setError(`Ese correo corresponde al rol ${ROLES[match].label}. Selecciónalo arriba.`);
-    if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
 
-    setError(null);
-    setStatus("loading");
+    // Modo demostración: detecta el rol por correo
+    const match = ROLE_ORDER.find((r) => ROLES[r].email === normalized);
+    const demoRole: Role = match ?? (
+      normalized.includes("admin")
+        ? "administrador"
+        : normalized.includes("operador") || normalized.includes("operator")
+        ? "operador"
+        : "comprador"
+    );
+
     setTimeout(() => {
       setStatus("ok");
-      setTimeout(() => onSuccess({ role, email: normalized, startedAt: new Date().toISOString() }), 900);
-    }, 850);
+      setTimeout(() => onSuccess({ role: demoRole, email: normalized, startedAt: new Date().toISOString() }), 600);
+    }, 500);
   };
-
-  const active = ROLES[role];
 
   return (
     <motion.div
@@ -166,53 +163,16 @@ function LoginDialog({ initialRole = "operador", initialEmail, onRegister, onClo
                 </button>
               </div>
 
-              <fieldset className="mt-6">
-                <legend className="mb-3 text-xs font-medium text-ink-soft">Elige tu rol</legend>
-                <div className="grid grid-cols-3 gap-2">
-                  {ROLE_ORDER.map((r) => {
-                    const info = ROLES[r];
-                    const selected = r === role;
-                    return (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => pickRole(r)}
-                        aria-pressed={selected}
-                        className={cn(
-                          "relative flex flex-col items-center gap-2 rounded-2xl border px-2 py-3.5 text-center transition",
-                          selected
-                            ? "border-bosque bg-bosque text-crema shadow-lg shadow-bosque/25"
-                            : "border-line bg-surface text-ink hover:border-bosque-300",
-                        )}
-                      >
-                        <info.icon className="size-5" />
-                        <span className="text-xs font-semibold">{info.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={role}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    className="mt-3 text-xs leading-relaxed text-ink-soft"
-                  >
-                    {active.description} <span className="text-ink">{active.tema}</span>
-                  </motion.p>
-                </AnimatePresence>
-              </fieldset>
-
               <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
                 <label className="block">
-                  <span className="text-xs font-medium text-ink-soft">Correo</span>
+                  <span className="text-xs font-medium text-ink-soft">Correo electrónico</span>
                   <input
                     ref={emailRef}
                     type="email"
                     autoComplete="username"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    placeholder="tucorreo@orivia.test"
                     className="mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition focus:border-bosque-500 focus:ring-4 focus:ring-bosque-500/15"
                   />
                 </label>
@@ -224,7 +184,7 @@ function LoginDialog({ initialRole = "operador", initialEmail, onRegister, onClo
                       autoComplete="current-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Tu contraseña"
                       className="w-full rounded-xl border border-line bg-surface px-4 py-3 pr-12 text-sm text-ink outline-none transition placeholder:text-ink-soft/60 focus:border-bosque-500 focus:ring-4 focus:ring-bosque-500/15 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                     />
                     <button
@@ -262,7 +222,7 @@ function LoginDialog({ initialRole = "operador", initialEmail, onRegister, onClo
                 >
                   {status === "idle" && (
                     <>
-                      Entrar como {active.label}
+                      Iniciar sesión
                       <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />
                     </>
                   )}

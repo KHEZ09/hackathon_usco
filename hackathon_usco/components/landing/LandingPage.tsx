@@ -36,7 +36,7 @@ function Landing() {
   const session = useSession();
   const router = useRouter();
   const [login, setLogin] = useState<{ open: boolean; role: Role; email?: string }>({ open: false, role: "operador" });
-  const [registro, setRegistro] = useState(false);
+  const [registro, setRegistro] = useState<{ open: boolean; role?: Role }>({ open: false });
 
   const openLogin = useCallback(
     (role?: Role) => {
@@ -50,15 +50,16 @@ function Landing() {
   );
 
   const closeLogin = useCallback(() => setLogin((l) => ({ ...l, open: false })), []);
-  const closeRegistro = useCallback(() => setRegistro(false), []);
-  const abrirRegistro = () => {
+  const closeRegistro = useCallback(() => setRegistro((r) => ({ ...r, open: false })), []);
+  const abrirRegistro = (role?: Role) => {
     closeLogin();
-    setRegistro(true);
+    setRegistro({ open: true, role });
   };
   const onRegistered = (email: string, backendRole: string) => {
-    setRegistro(false);
+    setRegistro((r) => ({ ...r, open: false }));
     notify("exito", "Cuenta creada", "Inicia sesión con tu nueva cuenta.");
-    setLogin({ open: true, role: backendRole === "OPERATOR" ? "operador" : "comprador", email });
+    const mappedRole: Role = backendRole === "ADMIN" || backendRole === "administrador" ? "administrador" : backendRole === "OPERATOR" || backendRole === "operador" ? "operador" : "comprador";
+    setLogin({ open: true, role: mappedRole, email });
   };
 
   const onSuccess = (s: Session) => {
@@ -117,12 +118,13 @@ function Landing() {
         onSuccess={onSuccess}
       />
       <RegisterModal
-        open={registro}
+        open={registro.open}
+        initialRole={registro.role}
         onClose={closeRegistro}
         onRegistered={onRegistered}
         onLogin={() => {
-          setRegistro(false);
-          setLogin({ open: true, role: "comprador" });
+          closeRegistro();
+          openLogin();
         }}
       />
     </>

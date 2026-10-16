@@ -177,3 +177,12 @@ body {
   0%, 100% { transform: scale(0.6) rotate(0deg); opacity: 0.35; }
   50% { transform: scale(1.1) rotate(25deg); opacity: 1; }
 }
+
+/* Ocultar el botón/indicador flotante de desarrollo de Next.js */
+nextjs-portal,
+[data-nextjs-dev-indicator],
+[data-nextjs-toast],
+#nextjs-dev-tools {
+  display: none !important;
+}
+

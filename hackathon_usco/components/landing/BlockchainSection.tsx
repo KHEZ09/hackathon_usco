@@ -24,15 +24,15 @@ export function BlockchainSection() {
   return (
     <section id="productos" className="relative scroll-mt-20 px-5 py-24 sm:px-8">
       <div className="mx-auto max-w-6xl">
-        <div className="grid items-end gap-8 lg:grid-cols-2">
-          <Reveal>
+        <div className="grid items-end gap-8 text-center lg:grid-cols-2 lg:text-left">
+          <Reveal className="flex flex-col items-center lg:items-start">
             <Eyebrow>Cadena de evidencia</Eyebrow>
             <h2 className="mt-5 text-4xl leading-[1.08] font-semibold tracking-tight text-ink sm:text-5xl">
               Productos verificables en blockchain
             </h2>
           </Reveal>
           <Reveal delay={0.1}>
-            <p className="text-[0.95rem] leading-relaxed text-ink-soft">
+            <p className="mx-auto max-w-xl text-[0.95rem] leading-relaxed text-ink-soft lg:mx-0">
               Cada evento del lote se encadena con el anterior mediante SHA-256: <span className="font-mono text-xs">hash_n =
               SHA256(evento_n + hash_n-1)</span>. Si alguien cambia un dato, la cadena deja de coincidir con el ancla
               publicada. La ficha pública muestra origen, proceso y estado; nunca costos ni márgenes.

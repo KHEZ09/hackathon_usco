@@ -36,7 +36,7 @@ export function AnalyticsSection() {
   return (
     <section id="analitica" className="relative scroll-mt-20 px-5 py-24 sm:px-8">
       <div className="mx-auto max-w-6xl">
-        <Reveal className="max-w-2xl">
+        <Reveal className="mx-auto flex max-w-2xl flex-col items-center text-center lg:mx-0 lg:items-start lg:text-left">
           <Eyebrow>Analítica asistida</Eyebrow>
           <h2 className="mt-5 text-4xl leading-[1.08] font-semibold tracking-tight text-ink sm:text-5xl">
             Datos que se explican solos

@@ -37,16 +37,16 @@ export function OriginSection() {
 
   return (
     <section id="origen" className="relative mx-auto grid max-w-6xl scroll-mt-6 sm:scroll-mt-8 lg:scroll-mt-10 items-center gap-10 px-5 pt-20 pb-20 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:pt-24 lg:pb-24">
-      <Reveal>
+      <Reveal className="flex flex-col items-center text-center lg:items-start lg:text-left">
         <Eyebrow>Cacao del Huila</Eyebrow>
         <h2 className="mt-5 max-w-sm text-4xl leading-[1.08] font-semibold tracking-tight text-ink sm:text-5xl">
           Del origen al mundo, <span className="font-light text-tierra">lote por lote.</span>
         </h2>
-        <p className="mt-6 max-w-[330px] sm:max-w-[350px] lg:max-w-[320px] xl:max-w-[350px] text-[0.93rem] leading-relaxed text-ink-soft">
+        <p className="mt-6 max-w-[330px] sm:max-w-[420px] lg:max-w-[320px] xl:max-w-[350px] text-[0.93rem] leading-relaxed text-ink-soft">
           ORIVIA une la recepción, la fermentación, el secado, el inventario y los costos de la asociación cacaotera en una sola
           historia: clara para el operador, controlable para el administrador y verificable para quien compra.
         </p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
           <a
             href="#proceso"
             className="group inline-flex items-center gap-2 rounded-full bg-bosque px-6 py-3 text-sm font-semibold text-crema shadow-lg shadow-bosque/20 transition hover:bg-bosque-700"

@@ -160,7 +160,7 @@ export function TraceSection({ onLogin }: { onLogin: (role?: Role) => void }) {
           </div>
         </Reveal>
 
-        <Reveal delay={0.1} className="order-1 lg:order-2">
+        <Reveal delay={0.1} className="order-1 flex flex-col items-center text-center lg:order-2 lg:items-start lg:text-left">
           <Eyebrow>Verde bosque</Eyebrow>
           <h2 className="mt-5 text-4xl leading-[1.08] font-semibold tracking-tight text-ink sm:text-5xl">
             Trazabilidad agroindustrial
@@ -169,7 +169,7 @@ export function TraceSection({ onLogin }: { onLogin: (role?: Role) => void }) {
             Cada kilo queda conectado con su productor, su finca y cada transformación. Elige un lote y recorre su historia
             paso a paso.
           </p>
-          <ul className="mt-7 space-y-3 text-sm text-ink">
+          <ul className="mt-7 space-y-3 text-sm text-ink text-left">
             {[
               "Recepción con validación de cantidades y lote único",
               "Transformaciones que no consumen más de lo disponible",

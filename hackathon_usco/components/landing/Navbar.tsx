@@ -21,8 +21,8 @@ const ROLE_ORDER: Role[] = ["operador", "administrador", "comprador"];
 
 type Props = {
   session: Session | null;
-  onLogin: (role?: Role) => void;
-  onRegister: () => void;
+  onLogin: () => void;
+  onRegister: (role?: Role) => void;
   onLogout: () => void;
 };
 
@@ -109,28 +109,56 @@ export function Navbar({ session, onLogin, onRegister, onLogout }: Props) {
             </div>
           ) : (
             <>
-            <button
-              onClick={onRegister}
-              className={cn(
-                "hidden items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition sm:inline-flex sm:px-5 sm:py-2.5",
-                solid ? "border-bosque/40 text-bosque hover:bg-bosque/10 dark:text-bosque-300" : "border-crema/40 text-crema backdrop-blur hover:bg-crema/10",
-              )}
-            >
-              <UserPlus className="size-3.5" /> Crear cuenta
-            </button>
-            <div ref={menuRef} className="relative">
-              <button
-                onClick={() => setMenu((v) => !v)}
-                aria-expanded={menu}
-                aria-haspopup="menu"
+            <div ref={menuRef} className="relative hidden sm:inline-flex items-center">
+              <div
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-lg transition sm:px-5 sm:py-2.5",
-                  solid ? "bg-bosque text-crema shadow-bosque/20 hover:bg-bosque-700" : "bg-arena text-bosque shadow-black/20 hover:bg-crema",
+                  "inline-flex items-stretch rounded-full border text-xs font-semibold shadow-sm transition overflow-hidden",
+                  solid
+                    ? "border-bosque/40 text-bosque dark:text-bosque-300"
+                    : "border-crema/40 text-crema backdrop-blur",
                 )}
               >
-                <UserRound className="size-3.5" /> Iniciar sesión
-                <ChevronDown className={cn("size-3.5 transition", menu && "rotate-180")} />
-              </button>
+                {/* Clic al botón principal: abre el modal sin seleccionar ningún rol */}
+                <button
+                  type="button"
+                  onClick={() => onRegister()}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 pl-4 pr-3 py-2 transition sm:pl-5 sm:pr-3 sm:py-2.5",
+                    solid ? "hover:bg-bosque/10" : "hover:bg-crema/10",
+                  )}
+                >
+                  <UserPlus className="size-3.5" /> Crear cuenta
+                </button>
+
+                {/* Divisor sutil */}
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "w-px my-1.5",
+                    solid ? "bg-bosque/25 dark:bg-bosque-400/20" : "bg-crema/30",
+                  )}
+                />
+
+                {/* Clic solo a la flechita: despliega la checklist de los 3 tipos de usuario */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenu((v) => !v);
+                  }}
+                  aria-expanded={menu}
+                  aria-haspopup="menu"
+                  aria-label="Desplegar opciones de tipo de cuenta"
+                  className={cn(
+                    "inline-flex items-center px-2.5 py-2 transition sm:px-3 sm:py-2.5",
+                    solid ? "hover:bg-bosque/10" : "hover:bg-crema/10",
+                    menu && (solid ? "bg-bosque/15" : "bg-crema/15"),
+                  )}
+                >
+                  <ChevronDown className={cn("size-3.5 transition-transform duration-200", menu && "rotate-180")} />
+                </button>
+              </div>
+
               <AnimatePresence>
                 {menu && (
                   <motion.div
@@ -139,8 +167,11 @@ export function Navbar({ session, onLogin, onRegister, onLogout }: Props) {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.97 }}
                     transition={{ duration: 0.18 }}
-                    className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl border border-crema/15 bg-bosque-950/80 p-2 text-crema shadow-2xl backdrop-blur-xl"
+                    className="absolute right-0 top-full mt-2 w-64 origin-top-right rounded-2xl border border-crema/15 bg-bosque-950/95 p-2 text-crema shadow-2xl backdrop-blur-xl z-50"
                   >
+                    <p className="px-3 pt-1.5 pb-1 text-[0.6rem] font-semibold tracking-wider text-crema/60 uppercase">
+                      Elige tipo de cuenta
+                    </p>
                     {ROLE_ORDER.map((r) => {
                       const info = ROLES[r];
                       return (
@@ -149,7 +180,7 @@ export function Navbar({ session, onLogin, onRegister, onLogout }: Props) {
                           role="menuitem"
                           onClick={() => {
                             setMenu(false);
-                            onLogin(r);
+                            onRegister(r);
                           }}
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-arena hover:text-bosque"
                         >
@@ -175,6 +206,15 @@ export function Navbar({ session, onLogin, onRegister, onLogout }: Props) {
                 )}
               </AnimatePresence>
             </div>
+            <button
+              onClick={() => onLogin()}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-lg transition sm:px-5 sm:py-2.5",
+                solid ? "bg-bosque text-crema shadow-bosque/20 hover:bg-bosque-700" : "bg-arena text-bosque shadow-black/20 hover:bg-crema",
+              )}
+            >
+              <UserRound className="size-3.5" /> Iniciar sesión
+            </button>
             </>
           )}
           <button
@@ -219,6 +259,15 @@ export function Navbar({ session, onLogin, onRegister, onLogout }: Props) {
                 </>
               ) : (
                 <>
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      onLogin();
+                    }}
+                    className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface-2"
+                  >
+                    <UserRound className="size-4" /> Iniciar sesión
+                  </button>
                   <button
                     onClick={() => {
                       setOpen(false);
