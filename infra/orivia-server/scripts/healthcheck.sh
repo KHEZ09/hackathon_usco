@@ -12,5 +12,14 @@ if [[ ! -f "$ENV_FILE" ]]; then
 fi
 
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps
-curl --fail --silent --show-error http://127.0.0.1:8000/health
-echo
+
+for attempt in $(seq 1 5); do
+  if curl --fail --silent --show-error http://127.0.0.1:8000/health; then
+    echo
+    exit 0
+  fi
+  sleep 2
+done
+
+echo "La API no respondió a /health." >&2
+exit 1
