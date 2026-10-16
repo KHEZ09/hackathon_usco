@@ -4,10 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Boxes, Check, Link2, Loader2, RotateCcw, ShieldAlert, ShieldCheck, X } from "lucide-react";
 import { bloqueSimulado, hashChain, type EvidenceStep } from "@/lib/evidence";
+import type { ApiBlockchainReceipt } from "@/lib/orivia-api";
 import { useToast } from "@/components/ui/Toaster";
 import { cn } from "@/lib/cn";
 
-type Props = { entityId: string; title: string; steps: EvidenceStep[]; onClose: () => void };
+type RealEvidence = {
+  hashes: string[];
+  verified: boolean;
+  certificate: ApiBlockchainReceipt | null;
+};
+type Props = { entityId: string; title: string; steps: EvidenceStep[]; realEvidence?: RealEvidence; onClose: () => void };
 
 // Anclas "publicadas": se calculan una vez por entidad y longitud de la cadena.
 const anchors = new Map<string, string[]>();
@@ -16,7 +22,7 @@ const anchors = new Map<string, string[]>();
 export function EvidenceDialog({ open, ...props }: Props & { open: boolean }) {
   return <AnimatePresence>{open && <EvidenceDialogBody key={props.entityId} {...props} />}</AnimatePresence>;
 }
-function EvidenceDialogBody({ entityId, title, steps, onClose }: Props) {
+function EvidenceDialogBody({ entityId, title, steps, realEvidence, onClose }: Props) {
   const { notify } = useToast();
   const [tampered, setTampered] = useState(false);
   const [chain, setChain] = useState<string[] | null>(null);
@@ -36,25 +42,36 @@ function EvidenceDialogBody({ entityId, title, steps, onClose }: Props) {
   const verify = useCallback(
     async (alter: boolean) => {
       const id = ++run.current;
-      if (!anchors.has(anchorKey)) anchors.set(anchorKey, await hashChain(entityId, steps));
+      const published = realEvidence
+        ? realEvidence.hashes
+        : anchors.has(anchorKey)
+        ? anchors.get(anchorKey)!
+        : await hashChain(entityId, steps);
+      if (!realEvidence && !anchors.has(anchorKey)) anchors.set(anchorKey, published);
       const pasos = alter ? steps.map((p, n) => (n === tamperIndex ? { ...p, kg: p.kg + 5 } : p)) : steps;
-      const current = await hashChain(entityId, pasos);
+      const current = realEvidence
+        ? (alter ? published.map((hash, n) => (n === tamperIndex ? `${hash.slice(0, -1)}0` : hash)) : published)
+        : await hashChain(entityId, pasos);
       if (id !== run.current) return; // una verificación más reciente o el cierre la invalidó
       setChecked(0);
-      setAnchor(anchors.get(anchorKey)!);
+      setAnchor(published);
       setChain(current);
       const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
       current.forEach((_, n) => later(() => setChecked(n + 1), 260 * (n + 1)));
       later(() => {
-        const ok = current.at(-1) === anchors.get(anchorKey)!.at(-1);
+        const ok = current.at(-1) === published.at(-1) && (realEvidence ? realEvidence.verified && !alter : true);
         notify(
           ok ? "exito" : "error",
           ok ? `${entityId}: historial íntegro` : `${entityId}: alteración detectada`,
-          ok ? "El hash recalculado coincide con el ancla publicada." : `El evento "${steps[tamperIndex].etapa}" no coincide con la evidencia anclada.`,
+          ok
+            ? realEvidence
+              ? `La API confirmó la cadena y el anclaje${realEvidence.certificate?.network ? ` en ${realEvidence.certificate.network}` : ""}.`
+              : "El hash recalculado coincide con el ancla publicada."
+            : `El evento "${steps[tamperIndex]?.etapa ?? "seleccionado"}" no coincide con la evidencia anclada.`,
         );
       }, 260 * (current.length + 1));
     },
-    [entityId, steps, anchorKey, tamperIndex, notify],
+    [entityId, steps, realEvidence, anchorKey, tamperIndex, notify],
   );
 
   useEffect(() => {
@@ -76,8 +93,8 @@ function EvidenceDialogBody({ entityId, title, steps, onClose }: Props) {
   };
 
   const done = chain && checked >= chain.length;
-  const ok = done && anchor && chain.at(-1) === anchor.at(-1);
-  const bloque = anchor ? bloqueSimulado(anchor.at(-1)!) : 0;
+  const ok = done && anchor && chain.at(-1) === anchor.at(-1) && (realEvidence ? realEvidence.verified && !tampered : true);
+  const bloque = realEvidence?.certificate?.block_number ?? (anchor ? bloqueSimulado(anchor.at(-1)!) : 0);
 
   return (
         <motion.div
@@ -180,6 +197,12 @@ function EvidenceDialogBody({ entityId, title, steps, onClose }: Props) {
                       <p className="text-crema/60">Ancla publicada</p>
                       <p className="font-mono break-all">{anchor?.at(-1)}</p>
                     </div>
+                    {realEvidence?.certificate && (
+                      <div className="col-span-2">
+                        <p className="text-crema/60">Certificado</p>
+                        <p className="font-mono break-all">{String(realEvidence.certificate.transaction_id ?? realEvidence.certificate.reference ?? "anclaje confirmado")}</p>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -187,8 +210,9 @@ function EvidenceDialogBody({ entityId, title, steps, onClose }: Props) {
 
             <div className="mt-5 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-[0.68rem] leading-relaxed text-ink-soft">
-                Hashes reales calculados en tu navegador. Anclaje en modo local simulado: la publicación en testnet llega con el
-                backend.
+                {realEvidence
+                  ? "Hashes y estado de integridad leídos desde la API. El certificado corresponde al anclaje persistido del backend."
+                  : "Hashes calculados en tu navegador como respaldo local. Esta ficha aún no recibió evidencia persistida del backend."}
               </p>
               <button
                 onClick={toggleTamper}
@@ -196,7 +220,7 @@ function EvidenceDialogBody({ entityId, title, steps, onClose }: Props) {
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-line px-4 py-2.5 text-xs font-semibold text-ink transition hover:border-cereza/50 disabled:opacity-50"
               >
                 {tampered ? <RotateCcw className="size-3.5" /> : <ShieldAlert className="size-3.5" />}
-                {tampered ? "Restaurar dato original" : "Simular alteración"}
+                {tampered ? "Restaurar dato original" : realEvidence ? "Simular alteración visual" : "Simular alteración"}
               </button>
             </div>
           </motion.div>

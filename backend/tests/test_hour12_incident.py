@@ -39,6 +39,10 @@ def test_cac001_regression_blocks_lot_keeps_history_and_explains_quantity():
 
     assert before.status_code == 200
     assert before.get_json()["lot"]["available_for_order"] is True
+    public_before = before.get_json()["lot"]
+    assert public_before["history_verified"] is True
+    assert len(public_before["timeline"]) == 1
+    assert "actor_id" not in public_before["timeline"][0]
     assert blocked.status_code == 200
     result = blocked.get_json()["lot"]
     blockchain = blocked.get_json()["blockchain"]
@@ -60,6 +64,10 @@ def test_cac001_regression_blocks_lot_keeps_history_and_explains_quantity():
     public_lot = after.get_json()["lot"]
     assert public_lot["status"] == "BLOCKED"
     assert public_lot["available_for_order"] is False
+    assert public_lot["history_verified"] is True
+    assert len(public_lot["timeline"]) == 2
+    assert public_lot["timeline"][-1]["blockchain"]["status"] == "ANCHORED"
+    assert public_lot["timeline"][-1]["blockchain"]["verified"] is True
     assert "audits" not in public_lot
     assert "reason" not in public_lot
 

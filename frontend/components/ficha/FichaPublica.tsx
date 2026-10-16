@@ -10,7 +10,7 @@ import { Toaster, useToast } from "@/components/ui/Toaster";
 import { QrCode } from "./QrCode";
 import { fmtFecha, historia, inventario, useDatos, type Estado } from "@/lib/store";
 import { cn } from "@/lib/cn";
-import { getPublicTraceability, type InventoryRow } from "@/lib/orivia-api";
+import { getPublicLive, getPublicLot, type ApiPublicLive, type ApiPublicLot } from "@/lib/orivia-api";
 
 const ESTADO_PUBLICO: Record<Estado, { label: string; texto: string; clase: string }> = {
   LIBERADO: { label: "Disponible", texto: "Lote liberado por control de calidad.", clase: "bg-bosque-500 text-crema" },
@@ -34,26 +34,51 @@ function Ficha({ loteId }: { loteId: string }) {
   const datos = useDatos();
   const { notify } = useToast();
   const [verificar, setVerificar] = useState(false);
-  const [publicRemote, setPublicRemote] = useState<InventoryRow | null>(null);
+  const [publicRemote, setPublicRemote] = useState<ApiPublicLot | null>(null);
+  const [liveRemote, setLiveRemote] = useState<ApiPublicLive | null>(null);
+  const [remoteLoading, setRemoteLoading] = useState(true);
   const cerrar = useCallback(() => setVerificar(false), []);
   const url = useSyncExternalStore(noop, () => window.location.href, () => "");
-  const lote = datos.lotes.find((l) => l.id === loteId);
+  const localLote = datos.lotes.find((l) => l.id === loteId);
 
   useEffect(() => {
     let active = true;
-    getPublicTraceability(loteId)
-      .then((rows) => {
-        if (active) setPublicRemote(rows[0] ?? null);
+    Promise.all([getPublicLot(loteId), getPublicLive()])
+      .then(([lot, live]) => {
+        if (!active) return;
+        setPublicRemote(lot);
+        setLiveRemote(live);
       })
       .catch(() => {
-        if (active) setPublicRemote(null);
+        if (!active) return;
+        setPublicRemote(null);
+        setLiveRemote(null);
+      })
+      .finally(() => {
+        if (active) setRemoteLoading(false);
       });
     return () => {
       active = false;
     };
   }, [loteId]);
 
+  const lote = localLote ?? (publicRemote ? {
+    id: publicRemote.id,
+    productor: publicRemote.producer,
+    origen: "Rivera" as const,
+    finca: publicRemote.producer,
+    producto: publicRemote.product,
+    recibidoKg: publicRemote.received_kg,
+    fecha: publicRemote.timeline?.[0]?.occurred_at ?? new Date().toISOString(),
+    estado: publicRemote.status === "BLOCKED" ? "BLOQUEADO" as const : publicRemote.status === "PENDING" ? "PENDIENTE" as const : "LIBERADO" as const,
+    costoTotalCop: 0,
+    precioVentaKgCop: 0,
+  } : undefined);
+
   if (!lote) {
+    if (remoteLoading) {
+      return <main className="mx-auto flex min-h-svh max-w-md items-center justify-center bg-surface px-6 text-sm text-ink-soft">Consultando la ficha verificable…</main>;
+    }
     return (
       <main className="mx-auto flex min-h-svh max-w-md flex-col items-center justify-center bg-surface px-6 text-center">
         <OriviaIsotipo tone="oscuro" className="h-14" />
@@ -70,14 +95,42 @@ function Ficha({ loteId }: { loteId: string }) {
     );
   }
 
-  const pasos = historia(datos, lote.id);
-  const estado = ESTADO_PUBLICO[lote.estado];
-  const { producido, recibido } = inventario(datos, lote.id);
+  const estadoKey: Estado = publicRemote?.status === "BLOCKED"
+    ? "BLOQUEADO"
+    : publicRemote?.status === "PENDING"
+    ? "PENDIENTE"
+    : publicRemote?.status === "LIBERATED"
+    ? "LIBERADO"
+    : lote.estado;
+  const estado = ESTADO_PUBLICO[estadoKey];
+  const displayId = publicRemote?.id ?? lote.id;
+  const displayProduct = publicRemote?.product ?? lote.producto;
+  const displayOrigin = publicRemote?.origin ?? lote.origen;
+  const displayProducer = publicRemote?.producer ?? lote.productor;
+  const pasos = publicRemote?.timeline?.length
+    ? publicRemote.timeline.map((event, index) => ({
+        key: event.id ?? `${displayId}-${index}`,
+        etapa: event.type === "LOT_STATUS_CHANGED" ? `Estado · ${event.to ?? estadoKey}` : "Cosecha y recepción",
+        fecha: event.occurred_at ?? new Date().toISOString(),
+        kg: index === 0 ? (publicRemote.received_kg ?? 0) : (publicRemote.available_kg ?? 0),
+        responsable: index === 0 ? displayProducer : "ORIVIA · API",
+      }))
+    : historia(datos, lote.id);
+  const producido = publicRemote ? Math.max(0, publicRemote.received_kg - publicRemote.available_kg) : inventario(datos, lote.id).producido;
+  const recibido = publicRemote?.received_kg ?? inventario(datos, lote.id).recibido;
+  const realHashes = publicRemote?.timeline?.map((event) => event.event_hash).filter((hash): hash is string => Boolean(hash)) ?? [];
+  const realEvidence = publicRemote && realHashes.length === publicRemote.timeline?.length
+    ? {
+        hashes: realHashes,
+        verified: publicRemote.history_verified === true,
+        certificate: publicRemote.timeline?.at(-1)?.blockchain ?? null,
+      }
+    : undefined;
 
   const compartir = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: `ORIVIA · ${lote.producto}`, url });
+        await navigator.share({ title: `ORIVIA · ${displayProduct}`, url });
         return;
       }
       await navigator.clipboard.writeText(url);
@@ -88,11 +141,11 @@ function Ficha({ loteId }: { loteId: string }) {
   };
 
   const pedir = () => {
-    if (lote.estado !== "LIBERADO") {
+    if (estadoKey !== "LIBERADO") {
       notify("error", "Pedido no disponible", `${estado.texto} Solo los productos liberados pueden pedirse.`);
       return;
     }
-    notify("exito", "Solicitud enviada", `La asociación recibirá tu interés por ${lote.producto} (lote ${lote.id}).`);
+    notify("exito", "Solicitud preparada", `El lote ${displayId} está liberado. El pedido se enviará desde el panel operativo autenticado.`);
   };
 
   return (
@@ -122,17 +175,17 @@ function Ficha({ loteId }: { loteId: string }) {
           <div className="rounded-[1.75rem] bg-card p-5 shadow-xl shadow-black/10">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-mono text-[0.7rem] text-ink-soft">Lote {lote.id}</p>
-                <h1 className="mt-1 text-2xl leading-tight font-semibold text-ink">{lote.producto}</h1>
+                <p className="font-mono text-[0.7rem] text-ink-soft">Lote {displayId}</p>
+                <h1 className="mt-1 text-2xl leading-tight font-semibold text-ink">{displayProduct}</h1>
               </div>
               <span className={cn("shrink-0 rounded-full px-3 py-1 text-[0.65rem] font-bold tracking-wider", estado.clase)}>{estado.label}</span>
             </div>
             <p className="mt-2 text-xs text-ink-soft">{estado.texto}</p>
             <div className="mt-4 grid grid-cols-3 gap-2 text-center">
               {[
-                { icon: MapPin, k: "Origen", v: `${lote.origen}, Huila` },
-                { icon: Mountain, k: "Finca", v: lote.finca.replace("Finca ", "") },
-                { icon: Leaf, k: "Productor", v: lote.productor },
+                { icon: MapPin, k: "Origen", v: displayOrigin },
+                { icon: Mountain, k: "Finca", v: displayProducer.replace("Finca ", "") },
+                { icon: Leaf, k: "Productor", v: displayProducer },
               ].map((x) => (
                 <div key={x.k} className="rounded-2xl bg-surface-2 px-2 py-3">
                   <x.icon className="mx-auto size-4 text-bosque-500" />
@@ -146,13 +199,24 @@ function Ficha({ loteId }: { loteId: string }) {
           {publicRemote && (
             <section className="mt-4 rounded-[1.5rem] border border-bosque-500/20 bg-bosque-500/[0.05] p-4">
               <p className="text-[0.65rem] font-semibold tracking-[0.2em] text-bosque-500 uppercase">Catálogo público verificado</p>
-              <p className="mt-2 text-xs leading-relaxed text-ink-soft">Esta ficha también coincide con la vista pública persistida del backend.</p>
+              <p className="mt-2 text-xs leading-relaxed text-ink-soft">La ficha se lee directamente de la API pública persistida; la cadena y el anclaje se muestran sin exponer datos privados.</p>
               <dl className="mt-3 grid grid-cols-2 gap-2 text-[0.7rem]">
-                <div><dt className="text-ink-soft">Código</dt><dd className="font-mono font-semibold text-ink">{String(publicRemote.lot_code ?? lote.id)}</dd></div>
-                <div><dt className="text-ink-soft">Producto</dt><dd className="font-semibold text-ink">{String(publicRemote.product_name ?? lote.producto)}</dd></div>
-                <div><dt className="text-ink-soft">Proveedor</dt><dd className="font-semibold text-ink">{String(publicRemote.supplier_name ?? "No publicado")}</dd></div>
-                <div><dt className="text-ink-soft">Municipio</dt><dd className="font-semibold text-ink">{String(publicRemote.municipality ?? "Huila")}</dd></div>
+                <div><dt className="text-ink-soft">Código</dt><dd className="font-mono font-semibold text-ink">{publicRemote.id}</dd></div>
+                <div><dt className="text-ink-soft">Producto</dt><dd className="font-semibold text-ink">{publicRemote.product}</dd></div>
+                <div><dt className="text-ink-soft">Proveedor</dt><dd className="font-semibold text-ink">{publicRemote.producer}</dd></div>
+                <div><dt className="text-ink-soft">Estado de cadena</dt><dd className="font-semibold text-bosque-500">{publicRemote.history_verified ? "Íntegra" : "Revisar"}</dd></div>
               </dl>
+              {realEvidence?.certificate && (
+                <p className="mt-3 rounded-xl bg-bosque-500/10 px-3 py-2 text-[0.68rem] text-bosque-700">
+                  Anclaje real: {String(realEvidence.certificate.network ?? "EVM")} · {realEvidence.certificate.verified ? "verificado" : "pendiente"}
+                </p>
+              )}
+            </section>
+          )}
+
+          {liveRemote && (
+            <section className="mt-3 rounded-2xl border border-line bg-card px-4 py-3 text-[0.68rem] text-ink-soft">
+              <span className="font-semibold text-ink">API en vivo:</span> {liveRemote.status} · blockchain {String(liveRemote.capabilities?.blockchain?.backend ?? "no informado")} · IA {String(liveRemote.capabilities?.ai?.model ?? "no informado")}
             </section>
           )}
 
@@ -186,7 +250,7 @@ function Ficha({ loteId }: { loteId: string }) {
                 <span className={cn("absolute top-1 -left-[2.1rem] grid size-6 place-items-center rounded-full ring-4 ring-surface", estado.clase)}>
                   <PackageCheck className="size-3" />
                 </span>
-                <p className="text-sm font-semibold text-ink">Lote de exportación · {lote.producto}</p>
+                <p className="text-sm font-semibold text-ink">Lote de exportación · {displayProduct}</p>
                 <p className="text-[0.7rem] text-ink-soft">
                   {producido > 0 ? `${producido} kg de producto` : `${recibido} kg en proceso`} · {estado.label}
                 </p>
@@ -197,10 +261,10 @@ function Ficha({ loteId }: { loteId: string }) {
           {/* QR y verificación */}
           <section className="mt-8 grid grid-cols-[auto_1fr] items-center gap-4 rounded-[1.75rem] bg-card p-4 shadow-sm">
             <div className="rounded-2xl border border-line bg-[#fffcf7] p-2">
-              {url ? <QrCode value={url} label={`Código QR de la ficha del lote ${lote.id}`} className="size-28" /> : <div className="size-28 animate-pulse rounded-xl bg-surface-2" />}
+              {url ? <QrCode value={url} label={`Código QR de la ficha del lote ${displayId}`} className="size-28" /> : <div className="size-28 animate-pulse rounded-xl bg-surface-2" />}
             </div>
             <div>
-              <p className="text-sm font-semibold text-ink">Escanea o comparte</p>
+            <p className="text-sm font-semibold text-ink">Escanea o comparte</p>
               <p className="mt-1 text-[0.7rem] leading-relaxed text-ink-soft">Este código abre esta misma ficha en cualquier teléfono.</p>
               <button onClick={compartir} className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-[0.7rem] font-semibold text-ink hover:bg-surface-2">
                 <Share2 className="size-3.5" /> Compartir
@@ -231,7 +295,7 @@ function Ficha({ loteId }: { loteId: string }) {
         </div>
       </main>
 
-      <EvidenceDialog open={verificar} entityId={lote.id} title={`${lote.producto} · lote ${lote.id}`} steps={pasos} onClose={cerrar} />
+      <EvidenceDialog open={verificar} entityId={displayId} title={`${displayProduct} · lote ${displayId}`} steps={pasos} realEvidence={realEvidence} onClose={cerrar} />
     </div>
   );
 }

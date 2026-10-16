@@ -179,7 +179,7 @@ una prueba legal, financiera ni de identidad.
 
 | Método | Ruta | Permiso | Uso |
 | --- | --- | --- | --- |
-| GET | `/api/v1/public/lots/{lot_id}` | No | Estado público y disponibilidad del lote |
+| GET | `/api/v1/public/lots/{lot_id}` | No | Estado público, cadena de hashes y anclaje blockchain verificable |
 | GET | `/api/v1/lots/{lot_id}` | `lots:read` | Lote, cantidades, auditorías e integridad |
 | GET | `/api/v1/lots/{lot_id}/timeline` | `lots:read` | Cadena de eventos y auditorías |
 | PATCH | `/api/v1/lots/{lot_id}/status` | `lots:status` | Cambiar estado con razón obligatoria |
@@ -188,7 +188,9 @@ Estados permitidos: `PENDING`, `LIBERATED` y `BLOCKED`. La transición no borra
 eventos; cada cambio agrega un `TraceEvent` con `payload_hash`,
 `previous_event_hash` y `event_hash`, además de una `AuditRecord`. La respuesta
 privada incluye `history_verified` y `affected_quantities`; la respuesta
-pública no expone razón, auditorías ni actores internos.
+pública incluye `history_verified`, una `timeline` sanitizada (sin actor ni
+payload privado) y, cuando existe, el certificado del anclaje EVM por evento.
+No expone razones, auditorías internas, actores ni claves.
 
 Regresión de la incidencia anunciada para la hora 12:
 
