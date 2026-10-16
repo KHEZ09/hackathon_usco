@@ -3,12 +3,11 @@
 import { useCallback, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Cpu, LogOut, RefreshCw, WifiOff } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 import { OriviaLogo } from "@/components/brand/OriviaLogo";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { ROLES, useHydrated, useSession, writeSession, type Role } from "@/components/auth/roles";
 import { Toaster, useToast } from "@/components/ui/Toaster";
-import { sincronizar, useDatos, useOnline } from "@/lib/store";
 import { cn } from "@/lib/cn";
 
 type Props = { rol: Role; tema: "claro" | "oscuro"; titulo: string; subtitulo: string; children: ReactNode };
@@ -50,7 +49,6 @@ function Shell({ rol, tema, titulo, subtitulo, children }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {hydrated && <Conectividad />}
             {hydrated && session && (
               <button
                 onClick={salir}
@@ -80,47 +78,6 @@ function Shell({ rol, tema, titulo, subtitulo, children }: Props) {
   );
 }
 
-function Conectividad() {
-  const online = useOnline();
-  const datos = useDatos();
-  const { notify } = useToast();
-  const session = useSession();
-  const pendientes = datos.transformaciones.filter((t) => t.sync === "pendiente").length;
-
-  const sync = () => {
-    if (!online) return notify("error", "Sin conexión", "Las operaciones siguen guardadas en el nodo local de la Raspberry Pi.");
-    const r = sincronizar({ email: session?.email ?? "sistema@orivia.co" });
-    notify(r.ok ? "exito" : "error", r.ok ? r.mensaje : r.error);
-  };
-
-  return (
-    <button
-      onClick={sync}
-      title="Estado del nodo local y la sincronización"
-      className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[0.68rem] font-semibold transition",
-        online ? "border-bosque-500/30 bg-bosque-500/10 text-bosque-500" : "border-ambar/40 bg-ambar/10 text-ambar",
-      )}
-    >
-      {online ? (
-        <span className="relative flex size-2">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-bosque-500 opacity-60" />
-          <span className="relative inline-flex size-2 rounded-full bg-bosque-500" />
-        </span>
-      ) : (
-        <WifiOff className="size-3.5" />
-      )}
-      <Cpu className="hidden size-3.5 sm:block" />
-      <span className="hidden md:inline">{online ? "Raspberry Pi sincronizada" : "Modo offline · nodo local"}</span>
-      <span className="md:hidden">{online ? "En línea" : "Offline"}</span>
-      {pendientes > 0 && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-ambar px-1.5 py-0.5 text-[0.6rem] text-carbon">
-          <RefreshCw className="size-3" /> {pendientes}
-        </span>
-      )}
-    </button>
-  );
-}
 
 function RoleGate({ rol, actual }: { rol: Role; actual?: Role }) {
   const [open, setOpen] = useState(false);

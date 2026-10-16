@@ -232,12 +232,15 @@ export function CacaoBranch({ className, wind, lado = "izquierda" }: BranchProps
   ];
 
   return (
-    <motion.div
-      style={{ rotate: rama }}
-      className={cn("relative origin-left", lado === "derecha" && "-scale-x-100 origin-right", className)}
+    <div
+      className={cn("relative", lado === "derecha" && "-scale-x-100", className)}
       aria-hidden="true"
     >
-      <svg viewBox="0 0 600 300" className="block w-full overflow-visible">
+      <motion.div
+        style={{ rotate: rama }}
+        className="relative w-full origin-left"
+      >
+        <svg viewBox="0 0 600 300" className="block w-full overflow-visible">
         <defs>
           <linearGradient id={`${id}-tallo`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#8a8a6a" />
@@ -275,6 +278,7 @@ export function CacaoBranch({ className, wind, lado = "izquierda" }: BranchProps
           </div>
         </motion.div>
       ))}
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }

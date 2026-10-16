@@ -1,18 +1,43 @@
 "use client";
 
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowUpRight, Mail, MapPin } from "lucide-react";
 import { OriviaLogo } from "@/components/brand/OriviaLogo";
-import { CacaoLeaf, CacaoPod } from "./Botanica";
+import { CacaoBranch, CacaoLeaf, useWind } from "./Botanica";
 import type { Role } from "@/components/auth/roles";
 
 export function SiteFooter({ onLogin }: { onLogin: (role?: Role) => void }) {
-  return (
-    <footer id="contacto" className="relative isolate mt-12 overflow-hidden bg-bosque text-crema">
-      <CacaoLeaf tone="profundo" className="pointer-events-none absolute -top-10 -right-24 -z-10 w-[560px] rotate-[200deg] opacity-40 blur-[2px]" />
-      <CacaoPod tone="morada" className="pointer-events-none absolute top-6 right-[18%] -z-10 hidden w-20 rotate-[12deg] opacity-50 blur-[1.5px] lg:block" />
-      <CacaoLeaf tone="brote" className="pointer-events-none absolute -bottom-16 -left-28 -z-10 w-[480px] rotate-[18deg] opacity-30 blur-[3px]" />
+  const footerRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: footerRef, offset: ["start end", "end end"] });
+  const branchY = useTransform(scrollYProgress, [0, 1], [30, -10]);
+  const leftRotate = useTransform(scrollYProgress, [0, 1], [-4, 2]);
+  const rightRotate = useTransform(scrollYProgress, [0, 1], [4, -2]);
+  const wind = useWind(1.2);
 
-      <div className="mx-auto max-w-6xl px-5 pt-20 pb-10 sm:px-8">
+  return (
+    <footer ref={footerRef} id="contacto" className="relative isolate mt-12 overflow-hidden bg-bosque text-crema">
+      {/* Rama y hojas animadas en la esquina superior izquierda (estilo fincas) */}
+      <motion.div
+        aria-hidden="true"
+        style={{ y: branchY, rotate: leftRotate }}
+        className="pointer-events-none absolute -top-12 -left-8 z-0 w-[min(70vw,420px)] drop-shadow-[0_20px_28px_rgba(0,0,0,0.45)] sm:-top-16 sm:-left-10 sm:w-[460px] lg:-top-20 lg:w-[500px]"
+      >
+        <CacaoBranch className="w-full" wind={wind} lado="izquierda" />
+      </motion.div>
+
+      {/* Rama y hojas animadas en la esquina superior derecha (estilo fincas) */}
+      <motion.div
+        aria-hidden="true"
+        style={{ y: branchY, rotate: rightRotate }}
+        className="pointer-events-none absolute -top-12 -right-8 z-0 w-[min(70vw,420px)] drop-shadow-[0_20px_28px_rgba(0,0,0,0.45)] sm:-top-16 sm:-right-10 sm:w-[460px] lg:-top-20 lg:w-[500px]"
+      >
+        <CacaoBranch className="w-full" wind={wind} lado="derecha" />
+      </motion.div>
+
+      <CacaoLeaf tone="brote" className="pointer-events-none absolute -bottom-16 -left-28 -z-10 w-[480px] rotate-[18deg] opacity-25 blur-[3px]" />
+
+      <div className="relative z-10 mx-auto max-w-6xl px-5 pt-20 pb-10 sm:px-8">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_1fr_1fr]">
           <div>
             <OriviaLogo withTagline wordClassName="text-2xl" />
