@@ -21,7 +21,16 @@ class PostgresBlockchainAnchor(BlockchainAnchor):
         return AnchorReceipt(
             event_hash=str(row["event_hash"]),
             status="ANCHORED" if row["status"] == "ANCHORED" else str(row["status"]),
-            reference=f"postgres://orivia/blockchain_anchor/{row['anchor_id']}",
+            reference=(
+                f"eip155:{row['chain_id']}/tx/{row['transaction_id']}"
+                if row.get("chain_id") and row.get("transaction_id")
+                else f"postgres://orivia/blockchain_anchor/{row['anchor_id']}"
+            ),
+            network=str(row.get("network") or "postgres-local"),
+            transaction_id=row.get("transaction_id"),
+            block_number=row.get("block_number"),
+            chain_id=row.get("chain_id"),
+            contract_address=row.get("contract_address"),
         )
 
     def get(self, event_hash: str) -> AnchorReceipt | None:
@@ -29,6 +38,7 @@ class PostgresBlockchainAnchor(BlockchainAnchor):
             fetch_one(
                 """
                 SELECT anchor_id, event_hash, status
+                       , network, transaction_id, block_number, chain_id, contract_address
                 FROM orivia.blockchain_anchor WHERE event_hash=%s
                 ORDER BY created_at DESC LIMIT 1
                 """,
@@ -36,7 +46,15 @@ class PostgresBlockchainAnchor(BlockchainAnchor):
             )
         )
 
-    def anchor(self, event_hash: str) -> AnchorReceipt:
+    def anchor(
+        self,
+        event_hash: str,
+        *,
+        entity_type: str = "order",
+        entity_id: str | None = None,
+        event_type: str | None = None,
+        occurred_at: str | None = None,
+    ) -> AnchorReceipt:
         if not event_hash:
             raise ValueError("event_hash is required")
         existing = self.get(event_hash)
@@ -44,21 +62,35 @@ class PostgresBlockchainAnchor(BlockchainAnchor):
             return existing
         with transaction() as connection:
             event = connection.execute(
-                "SELECT event_id FROM orivia.order_event WHERE event_hash=%s",
-                (event_hash,),
+                """
+                SELECT event_id, order_id AS entity_id, event_type
+                FROM orivia.order_event WHERE event_hash=%s
+                UNION ALL
+                SELECT event_id, lot_id AS entity_id, event_type
+                FROM orivia.trace_lot_event WHERE event_hash=%s
+                LIMIT 1
+                """,
+                (event_hash, event_hash),
             ).fetchone()
             if event is None:
                 raise ValueError("event_hash does not exist")
             row = connection.execute(
                 """
                 INSERT INTO orivia.blockchain_anchor(
-                    event_id, network, status, transaction_id, event_hash,
-                    attempts, anchored_at
-                ) VALUES(%s,'postgres-local','ANCHORED',%s,%s,1,now())
-                ON CONFLICT(event_id) DO UPDATE SET event_hash=EXCLUDED.event_hash
-                RETURNING anchor_id, event_hash, status
+                    event_id, entity_type, entity_id, network, status,
+                    transaction_id, event_hash, attempts, anchored_at
+                ) VALUES(%s,%s,%s,'postgres-local','ANCHORED',%s,%s,1,now())
+                ON CONFLICT(event_hash) DO UPDATE SET event_hash=EXCLUDED.event_hash
+                RETURNING anchor_id, event_hash, status, network, transaction_id,
+                          block_number, chain_id, contract_address
                 """,
-                (event["event_id"], f"local:{event_hash}", event_hash),
+                (
+                    event.get("event_id") if entity_type == "order" else None,
+                    entity_type,
+                    entity_id or event.get("entity_id"),
+                    f"local:{event_hash}",
+                    event_hash,
+                ),
             ).fetchone()
         receipt = self._receipt(row)
         if receipt is None:

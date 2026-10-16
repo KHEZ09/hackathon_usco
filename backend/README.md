@@ -28,16 +28,26 @@ Este backend pertenece al repositorio de la hackatón USCO y se prepara para des
   puntuación opaca.
 - Estados de lote `PENDING`, `LIBERATED` y `BLOCKED`, con cadena hash,
   auditoría e incidencia de regresión para `CAC001`.
+- Registro EVM real opcional mediante el contrato `OriviaTraceRegistry`: cada
+  evento comprometido puede quedar anclado con transacción, bloque, red y
+  dirección del contrato; el hash encadenado y los datos operativos siguen en
+  PostgreSQL.
 
 La ruta de pedidos usa memoria en desarrollo y PostgreSQL en producción mediante
 el mismo contrato `OrderRepository`. En producción se conservan los pedidos,
 eventos de trazabilidad, auditorías y anclajes después de reiniciar el proceso.
 La selección se controla con `ORIVIA_ORDER_REPOSITORY=memory|postgres`.
 
+La selección de blockchain se controla con `ORIVIA_BLOCKCHAIN_BACKEND`:
+`memory` para pruebas unitarias, `postgres` para compatibilidad local y `evm`
+para una red EVM real. En modo `evm` son obligatorios el RPC, una clave privada
+dedicada, el `chain_id` y la dirección del contrato desplegado. La clave nunca
+se versiona.
+
 Los endpoints de IA funcionan sin servicios externos mediante un resumen local
 determinista. Ollama es opcional: al configurar `OLLAMA_BASE_URL`, se utiliza
 el modelo indicado en `OLLAMA_MODEL` y, si no responde, se conserva el fallback
-local de solo lectura.
+local de solo lectura. La IA no modifica estados ni escribe en blockchain.
 
 El clúster usa el adaptador de memoria en desarrollo y el repositorio PostgreSQL
 de Kevin cuando `ORIVIA_ORDER_REPOSITORY=postgres`; el contrato HTTP y los
@@ -135,6 +145,8 @@ Scripts disponibles:
 - `scripts/verify_postgres_persistence.py`: prueba pedido, eventos, auditoría y anclaje después de recrear la app.
 - `scripts/verify_auth_postgres.py`: prueba login, `/me`, rotación y revocación de refresh tokens.
 - `scripts/provision_demo_users.py`: provisiona hashes bcrypt demo desde variables efímeras.
+- `scripts/deploy_registry.py`: despliega `OriviaTraceRegistry` en la red EVM
+  indicada por variables de entorno y devuelve contrato, transacción y bloque.
 - `scripts/backup.sh`: genera un backup custom de PostgreSQL.
 - `scripts/restore.sh`: restaura un backup previamente creado.
 
@@ -147,8 +159,20 @@ Los endpoints de Kevin incluyen usuarios, catálogo, proveedores, clientes, inve
 - Access tokens JWT con roles y permisos derivados del usuario.
 - Refresh tokens opacos persistidos, expirables, rotables y revocables.
 
+## Estado de blockchain real
+
+El contrato fuente está en `blockchain/OriviaTraceRegistry.sol` y su artefacto
+verificado está incluido en `app/blockchain/contract_artifact.json`. El backend
+ancla automáticamente los eventos de creación y cambio de pedidos, además de
+los cambios de estado de lotes como `BLOCKED`. El endpoint manual de anclaje se
+conserva como reintento idempotente.
+
+Antes de activar `ORIVIA_BLOCKCHAIN_BACKEND=evm` en `orivia` se debe desplegar el
+contrato en una red elegida, financiar una cuenta firmante dedicada únicamente
+con fondos de prueba si se usa testnet y guardar RPC, clave, chain id y
+dirección en el `.env` privado del servidor. No se debe subir la clave a GitHub.
+
 ## Responsabilidades pendientes de integración
 
-- Completar la selección del proveedor blockchain público, si la hackatón lo exige.
 - Integrar el frontend con los endpoints persistentes y sus credenciales demo.
 - Mantener pruebas de integración y restauración sobre el servidor oficial.

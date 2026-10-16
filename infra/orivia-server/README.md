@@ -13,7 +13,7 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
 ## Estado
 
 - El backend está en `../../backend/`.
-- El checkout oficial está desplegado y validado en `706f8d4`; repetir el flujo
+- El checkout oficial fue validado en `83a8868`; repetir el flujo
   después de cada cambio publicado.
 - Los secretos y el `.env` real nunca se suben a GitHub.
 - El acceso previsto es `ssh admin@orivia` por Tailscale.
@@ -24,7 +24,8 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
   cuando el servidor corre con `ORIVIA_ORDER_REPOSITORY=postgres`; los lotes
   usan la migración propia `007_lot_traceability.sql`. La persistencia
   PostgreSQL de pedidos, lotes, eventos, auditorías y anclajes continúa siendo
-  la prueba obligatoria.
+  la prueba obligatoria. La migración `008_blockchain_registry.sql` conserva
+  además la evidencia de red, transacción, bloque y contrato EVM.
 
 ## Servidor objetivo
 
@@ -178,9 +179,23 @@ docker compose --env-file infra/orivia-server/.env -f infra/orivia-server/docker
 
 No usar `down -v` salvo que se haya respaldado y aprobado explícitamente la eliminación del volumen de PostgreSQL.
 
+## Activar blockchain EVM real
+
+1. Elegir una red EVM; para la demo se recomienda una testnet.
+2. Desplegar el contrato desde `backend/scripts/deploy_registry.py` con una
+   cuenta firmante dedicada y fondos de prueba.
+3. Guardar RPC, clave privada, chain id y contrato únicamente en
+   `infra/orivia-server/.env` con permisos `600`.
+4. Ejecutar la migración `008_blockchain_registry.sql`, pruebas, despliegue y
+   smoke test antes de cambiar el backend a `ORIVIA_BLOCKCHAIN_BACKEND=evm`.
+5. Verificar que un evento `BLOCKED` devuelve `transaction_id` y que su ruta
+   de consulta reporta `verified=true` directamente desde el contrato.
+
+Mientras no existan contrato, RPC y cuenta financiada, el servidor debe seguir
+en `postgres`; eso no debe presentarse como blockchain pública real.
+
 ## Pendientes antes de producción
 
-- Definir el proveedor blockchain público, si aplica.
 - Configurar HTTPS mediante un proxy y dominio aprobado.
 - Ejecutar backup y restauración en un entorno aislado; no restaurar sobre producción sin aprobación.
 - Rotar secretos y definir retención/alertas de backups.

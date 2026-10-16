@@ -14,6 +14,7 @@ debe editar una migración que ya haya sido aplicada; se debe crear otra.
 005_cluster_network.sql
 006_seed_cluster_synthetic.sql
 007_lot_traceability.sql
+008_blockchain_registry.sql
 ```
 
 `001_initial.sql` crea usuarios, roles, proveedores, clientes, productos,
@@ -40,6 +41,10 @@ conexiones y señales de confianza sintéticas.
 trazabilidad de Sebas, sus eventos hash-encadenados y auditorías. Incluye los
 lotes sintéticos `CAC001`, `CAC002` y `CAC003`; la aplicación crea el primer
 evento de registro de cada lote de forma idempotente al consultarlo.
+
+`008_blockchain_registry.sql` vuelve genérica la tabla de anclajes y agrega el
+metadato de red, transacción, bloque y contrato necesario para registrar
+pruebas en una red EVM real sin guardar datos personales en cadena.
 
 ## Aplicar migraciones
 

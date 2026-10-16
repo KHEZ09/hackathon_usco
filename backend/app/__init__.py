@@ -6,6 +6,7 @@ from .ai.routes import ai_bp
 from .audit.routes import audit_bp
 from .auth_tokens.routes import auth_bp
 from .blockchain.adapter import MemoryBlockchainAnchor
+from .blockchain.evm import EvmBlockchainAnchor
 from .blockchain.postgres_anchor import PostgresBlockchainAnchor
 from .blockchain.routes import blockchain_bp
 from .cluster.postgres_repository import PostgresClusterRepository
@@ -37,6 +38,12 @@ def create_app(settings: Settings | None = None) -> Flask:
         REFRESH_TOKEN_TTL_SECONDS=settings.refresh_token_ttl_seconds,
         DATABASE_URL=settings.database_url,
         ORDER_REPOSITORY_BACKEND=settings.order_repository_backend,
+        BLOCKCHAIN_BACKEND=settings.blockchain_backend,
+        BLOCKCHAIN_RPC_URL=settings.blockchain_rpc_url,
+        BLOCKCHAIN_CHAIN_ID=settings.blockchain_chain_id,
+        BLOCKCHAIN_CONTRACT_ADDRESS=settings.blockchain_contract_address,
+        BLOCKCHAIN_TX_TIMEOUT_SECONDS=settings.blockchain_tx_timeout_seconds,
+        BLOCKCHAIN_GAS_LIMIT=settings.blockchain_gas_limit,
         OLLAMA_BASE_URL=settings.ollama_base_url,
         OLLAMA_MODEL=settings.ollama_model,
         CORS_ORIGINS=settings.cors_origins,
@@ -167,9 +174,20 @@ def create_app(settings: Settings | None = None) -> Flask:
 
     if settings.order_repository_backend == "postgres":
         app.extensions["orivia_order_repository"] = PostgresOrderRepository()
-        app.extensions["orivia_blockchain_anchor"] = PostgresBlockchainAnchor()
     else:
         app.extensions["orivia_order_repository"] = InMemoryOrderRepository()
+    if settings.blockchain_backend == "evm":
+        app.extensions["orivia_blockchain_anchor"] = EvmBlockchainAnchor(
+            rpc_url=settings.blockchain_rpc_url or "",
+            private_key=settings.blockchain_private_key or "",
+            contract_address=settings.blockchain_contract_address or "",
+            expected_chain_id=settings.blockchain_chain_id,
+            tx_timeout_seconds=settings.blockchain_tx_timeout_seconds,
+            gas_limit=settings.blockchain_gas_limit,
+        )
+    elif settings.blockchain_backend == "postgres":
+        app.extensions["orivia_blockchain_anchor"] = PostgresBlockchainAnchor()
+    else:
         app.extensions["orivia_blockchain_anchor"] = MemoryBlockchainAnchor()
     app.extensions["orivia_anchor_receipts"] = {}
     if settings.order_repository_backend == "postgres":

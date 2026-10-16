@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, g, jsonify, request
 
+from ..blockchain.evm import BlockchainUnavailable
+from ..blockchain.routes import anchor_event, receipt_to_dict
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
 from .projections import lot_private, lot_public
@@ -75,7 +77,35 @@ def update_lot_status(lot_id: str):
         return jsonify({"error": "LOT_NOT_FOUND"}), 404
     except LotTransitionError as exc:
         return jsonify({"error": "INVALID_LOT_TRANSITION", "message": str(exc)}), 409
-    return jsonify({"lot": lot_private(lot, _repository())}), 200
+    event = lot.events[-1]
+    try:
+        receipt = anchor_event(
+            event_hash=event.event_hash,
+            entity_type="lot",
+            entity_id=lot.lot_id,
+            event_type=event.event_type,
+            occurred_at=event.occurred_at,
+        )
+    except BlockchainUnavailable as exc:
+        return (
+            jsonify(
+                {
+                    "error": "BLOCKCHAIN_UNAVAILABLE",
+                    "message": str(exc),
+                    "lot": lot_private(lot, _repository()),
+                }
+            ),
+            503,
+        )
+    return (
+        jsonify(
+            {
+                "lot": lot_private(lot, _repository()),
+                "blockchain": receipt_to_dict(receipt),
+            }
+        ),
+        200,
+    )
 
 
 @public_lots_bp.get("/<lot_id>")

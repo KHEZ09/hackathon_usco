@@ -39,6 +39,7 @@ def test_order_traceability_blockchain_and_ai_demo_flow():
     )
     assert created.status_code == 201
     order_id = created.get_json()["order"]["id"]
+    assert created.get_json()["blockchain"]["status"] == "ANCHORED"
 
     transition = client.patch(
         f"/api/v1/orders/{order_id}/status",
@@ -46,6 +47,7 @@ def test_order_traceability_blockchain_and_ai_demo_flow():
         json={"status": "CONFIRMED"},
     )
     assert transition.status_code == 200
+    assert transition.get_json()["blockchain"]["status"] == "ANCHORED"
 
     audit = client.get(f"/api/v1/audit/orders/{order_id}/verify", headers=headers)
     assert audit.status_code == 200
@@ -54,7 +56,8 @@ def test_order_traceability_blockchain_and_ai_demo_flow():
     anchor = client.post(
         "/api/v1/blockchain/anchors", headers=headers, json={"order_id": order_id}
     )
-    assert anchor.status_code == 201
+    assert anchor.status_code == 200
+    assert anchor.get_json()["idempotent"] is True
     event_hash = anchor.get_json()["anchor"]["event_hash"]
 
     receipt = client.get(f"/api/v1/blockchain/anchors/{event_hash}", headers=headers)

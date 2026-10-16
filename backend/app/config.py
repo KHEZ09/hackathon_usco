@@ -20,6 +20,13 @@ class Settings:
     refresh_token_ttl_seconds: int
     database_url: str
     order_repository_backend: str
+    blockchain_backend: str
+    blockchain_rpc_url: str | None
+    blockchain_private_key: str | None
+    blockchain_contract_address: str | None
+    blockchain_chain_id: int | None
+    blockchain_tx_timeout_seconds: int
+    blockchain_gas_limit: int
     ollama_base_url: str | None
     ollama_model: str
     cors_origins: tuple[str, ...]
@@ -65,6 +72,25 @@ class Settings:
                 "ORIVIA_ORDER_REPOSITORY",
                 "postgres" if environment.lower() == "production" else "memory",
             ).strip().lower(),
+            blockchain_backend=os.getenv(
+                "ORIVIA_BLOCKCHAIN_BACKEND",
+                "postgres" if environment.lower() == "production" else "memory",
+            ).strip().lower(),
+            blockchain_rpc_url=os.getenv("ORIVIA_BLOCKCHAIN_RPC_URL") or None,
+            blockchain_private_key=os.getenv("ORIVIA_BLOCKCHAIN_PRIVATE_KEY") or None,
+            blockchain_contract_address=os.getenv("ORIVIA_BLOCKCHAIN_CONTRACT_ADDRESS")
+            or None,
+            blockchain_chain_id=(
+                int(os.environ["ORIVIA_BLOCKCHAIN_CHAIN_ID"])
+                if os.getenv("ORIVIA_BLOCKCHAIN_CHAIN_ID")
+                else None
+            ),
+            blockchain_tx_timeout_seconds=int(
+                os.getenv("ORIVIA_BLOCKCHAIN_TX_TIMEOUT_SECONDS", "120")
+            ),
+            blockchain_gas_limit=int(
+                os.getenv("ORIVIA_BLOCKCHAIN_GAS_LIMIT", "180000")
+            ),
             ollama_base_url=os.getenv("OLLAMA_BASE_URL") or None,
             ollama_model=os.getenv("OLLAMA_MODEL", "gpt-oss:120b"),
             cors_origins=cors_origins,
@@ -90,6 +116,32 @@ class Settings:
             raise ConfigurationError(
                 "ORIVIA_ORDER_REPOSITORY must be either memory or postgres"
             )
+        if settings.blockchain_backend not in {"memory", "postgres", "evm"}:
+            raise ConfigurationError(
+                "ORIVIA_BLOCKCHAIN_BACKEND must be memory, postgres or evm"
+            )
+        if any(
+            value <= 0
+            for value in (
+                settings.blockchain_tx_timeout_seconds,
+                settings.blockchain_gas_limit,
+            )
+        ):
+            raise ConfigurationError("Blockchain transaction settings must be positive")
+        if settings.blockchain_backend == "evm":
+            if not all(
+                (
+                    settings.blockchain_rpc_url,
+                    settings.blockchain_private_key,
+                    settings.blockchain_contract_address,
+                    settings.blockchain_chain_id,
+                )
+            ):
+                raise ConfigurationError(
+                    "EVM blockchain requires RPC URL, private key, contract address and chain id"
+                )
+            if settings.blockchain_chain_id <= 0:
+                raise ConfigurationError("ORIVIA_BLOCKCHAIN_CHAIN_ID must be positive")
 
         if any(
             origin == "*"

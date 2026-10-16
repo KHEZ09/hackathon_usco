@@ -4,6 +4,8 @@ from math import isfinite
 
 from flask import Blueprint, current_app, g, jsonify, request
 
+from ..blockchain.evm import BlockchainUnavailable
+from ..blockchain.routes import anchor_event, receipt_to_dict
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
 from .access import can_read_order, can_update_order
@@ -70,7 +72,27 @@ def create_order():
     except (TypeError, ValueError) as exc:
         return jsonify({"error": "INVALID_ORDER", "message": str(exc)}), 400
 
-    return jsonify({"order": order_to_dict(order)}), 201
+    event = order.events[-1]
+    try:
+        receipt = anchor_event(
+            event_hash=event.event_hash,
+            entity_type="order",
+            entity_id=order.order_id,
+            event_type=event.event_type,
+            occurred_at=event.occurred_at,
+        )
+    except BlockchainUnavailable as exc:
+        return (
+            jsonify(
+                {
+                    "error": "BLOCKCHAIN_UNAVAILABLE",
+                    "message": str(exc),
+                    "order": order_to_dict(order),
+                }
+            ),
+            503,
+        )
+    return jsonify({"order": order_to_dict(order), "blockchain": receipt_to_dict(receipt)}), 201
 
 
 @orders_bp.get("")
@@ -125,7 +147,27 @@ def update_order_status(order_id: str):
             409,
         )
 
-    return jsonify({"order": order_to_dict(order)}), 200
+    event = order.events[-1]
+    try:
+        receipt = anchor_event(
+            event_hash=event.event_hash,
+            entity_type="order",
+            entity_id=order.order_id,
+            event_type=event.event_type,
+            occurred_at=event.occurred_at,
+        )
+    except BlockchainUnavailable as exc:
+        return (
+            jsonify(
+                {
+                    "error": "BLOCKCHAIN_UNAVAILABLE",
+                    "message": str(exc),
+                    "order": order_to_dict(order),
+                }
+            ),
+            503,
+        )
+    return jsonify({"order": order_to_dict(order), "blockchain": receipt_to_dict(receipt)}), 200
 
 
 @orders_bp.get("/<order_id>/timeline")

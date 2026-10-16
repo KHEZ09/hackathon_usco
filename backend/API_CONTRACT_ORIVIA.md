@@ -102,8 +102,9 @@ POST /api/v1/ai/analytics
 ```
 
 La IA solo recibe hechos filtrados y es de lectura. Sin Ollama usa reglas locales;
-si Ollama falla, conserva ese fallback. El anclaje local es idempotente: repetir
-el mismo pedido devuelve `200` con `idempotent=true`.
+si Ollama falla, conserva ese fallback. Los eventos se anclan automáticamente
+cuando se crea o cambia un pedido o un lote. Repetir el anclaje del último
+evento devuelve `200` con `idempotent=true`.
 
 ## Integración con PostgreSQL
 
@@ -118,10 +119,12 @@ del pedido y el hash completo del evento sin reemplazar las tablas de Kevin.
 Los pedidos, eventos, auditorías y anclajes sobreviven al reinicio del proceso
 cuando se usa PostgreSQL.
 
-El anclaje PostgreSQL se identifica como `postgres://orivia/blockchain_anchor/<id>`.
-Es evidencia durable local para la hackatón; no se presenta como una transacción
-de una red blockchain pública. La interfaz `BlockchainAnchor` permite conectar
-posteriormente un proveedor real sin modificar las rutas del frontend.
+El backend ofrece tres modos: `memory` para pruebas, `postgres` para
+compatibilidad local y `evm` para una red blockchain real. En modo `evm`, la
+respuesta incluye `network`, `transaction_id`, `block_number`, `chain_id` y
+`contract_address`; `verified` consulta el contrato `OriviaTraceRegistry` y no
+solo PostgreSQL. Los datos sensibles nunca se escriben en cadena: únicamente
+se anclan hashes y referencias no sensibles.
 
 ## Clúster de actores y necesidades
 

@@ -5,12 +5,45 @@ from flask import Blueprint, current_app, jsonify, request
 from ..orders.repository import OrderRepository
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
+from .adapter import AnchorReceipt
+from .evm import BlockchainUnavailable
 
 blockchain_bp = Blueprint("blockchain", __name__)
 
 
 def _repository() -> OrderRepository:
     return current_app.extensions["orivia_order_repository"]
+
+
+def receipt_to_dict(receipt: AnchorReceipt) -> dict[str, object]:
+    return {
+        "event_hash": receipt.event_hash,
+        "status": receipt.status,
+        "reference": receipt.reference,
+        "network": receipt.network,
+        "transaction_id": receipt.transaction_id,
+        "block_number": receipt.block_number,
+        "chain_id": receipt.chain_id,
+        "contract_address": receipt.contract_address,
+    }
+
+
+def anchor_event(
+    *,
+    event_hash: str,
+    entity_type: str,
+    entity_id: str,
+    event_type: str,
+    occurred_at: str,
+) -> AnchorReceipt:
+    """Anchor a committed domain event in the configured chain."""
+    return current_app.extensions["orivia_blockchain_anchor"].anchor(
+        event_hash,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        event_type=event_type,
+        occurred_at=occurred_at,
+    )
 
 
 @blockchain_bp.post("/anchors")
@@ -44,38 +77,24 @@ def create_anchor():
             409,
         )
 
-    event_hash = _repository().timeline(order_id)[-1].event_hash
+    event = _repository().timeline(order_id)[-1]
     anchor = current_app.extensions["orivia_blockchain_anchor"]
-    existing = anchor.get(event_hash)
-    if existing is not None:
-        return (
-            jsonify(
-                {
-                    "anchor": {
-                        "event_hash": existing.event_hash,
-                        "status": existing.status,
-                        "reference": existing.reference,
-                    },
-                    "idempotent": True,
-                }
-            ),
-            200,
-        )
+    existing = anchor.get(event.event_hash)
+    if existing is not None and existing.status == "ANCHORED":
+        return jsonify({"anchor": receipt_to_dict(existing), "idempotent": True}), 200
 
-    receipt = anchor.anchor(event_hash)
-    current_app.extensions["orivia_anchor_receipts"][event_hash] = receipt
-    return (
-        jsonify(
-            {
-                "anchor": {
-                    "event_hash": receipt.event_hash,
-                    "status": receipt.status,
-                    "reference": receipt.reference,
-                }
-            }
-        ),
-        201,
-    )
+    try:
+        receipt = anchor_event(
+            event_hash=event.event_hash,
+            entity_type="order",
+            entity_id=order_id,
+            event_type=event.event_type,
+            occurred_at=event.occurred_at,
+        )
+    except BlockchainUnavailable as exc:
+        return jsonify({"error": "BLOCKCHAIN_UNAVAILABLE", "message": str(exc)}), 503
+    current_app.extensions["orivia_anchor_receipts"][event.event_hash] = receipt
+    return jsonify({"anchor": receipt_to_dict(receipt)}), 201
 
 
 @blockchain_bp.get("/anchors/<path:event_hash>")
@@ -89,9 +108,7 @@ def get_anchor(event_hash: str):
     return jsonify(
         {
             "anchor": {
-                "event_hash": receipt.event_hash,
-                "status": receipt.status,
-                "reference": receipt.reference,
+                **receipt_to_dict(receipt),
                 "verified": anchor.verify(receipt),
             }
         }

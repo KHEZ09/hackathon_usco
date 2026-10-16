@@ -99,7 +99,8 @@ def test_audit_verification_and_blockchain_anchor_flow():
         ),
     )
 
-    assert anchored.status_code == 201
+    assert anchored.status_code == 200
+    assert anchored.get_json()["idempotent"] is True
     assert receipt.status_code == 200
     assert receipt.get_json()["anchor"]["verified"] is True
 

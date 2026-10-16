@@ -41,11 +41,17 @@ def test_cac001_regression_blocks_lot_keeps_history_and_explains_quantity():
     assert before.get_json()["lot"]["available_for_order"] is True
     assert blocked.status_code == 200
     result = blocked.get_json()["lot"]
+    blockchain = blocked.get_json()["blockchain"]
     assert result["status"] == "BLOCKED"
     assert result["available_kg"] == 0
     assert result["affected_quantities"]["affected_kg"] == 80
     assert result["history_verified"] is True
     assert len(result["audits"]) == 1
+    assert blockchain["status"] == "ANCHORED"
+    assert blockchain["network"] == "memory"
+    assert app.extensions["orivia_blockchain_anchor"].verify(
+        app.extensions["orivia_blockchain_anchor"].get(blockchain["event_hash"])
+    ) is True
     assert timeline.status_code == 200
     assert timeline.get_json()["history_verified"] is True
     assert len(timeline.get_json()["events"]) == 2
