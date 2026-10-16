@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Hostinger sirve el frontend como archivos estáticos. Todas las rutas
+  // públicas y de panel tienen su HTML generado en `out/`.
+  output: "export",
+  trailingSlash: true,
   devIndicators: false,
   turbopack: {
     rules: {

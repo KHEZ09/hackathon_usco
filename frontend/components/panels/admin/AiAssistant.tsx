@@ -6,6 +6,7 @@ import { BadgeCheck, Bot, Loader2, Send, Sparkles } from "lucide-react";
 import { cop } from "@/lib/demo-data";
 import { MERMA_UMBRAL, economia, inventario, merma, type Datos } from "@/lib/store";
 import { cn } from "@/lib/cn";
+import { getAiAnalytics } from "@/lib/orivia-api";
 
 type Analisis = {
   resumen: string;
@@ -80,19 +81,39 @@ export function AiAssistant({ datos, loteId }: { datos: Datos; loteId: string })
   const [visible, setVisible] = useState(0);
   const [chat, setChat] = useState<{ q: string; a: string }[]>([]);
   const [pregunta, setPregunta] = useState("");
+  const [remote, setRemote] = useState<{ text: string; source: string } | null>(null);
+  const [remoteError, setRemoteError] = useState<string | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const analisis = analizar(datos, loteId);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
-  const generar = () => {
+  const generar = async () => {
     timers.current.forEach(clearTimeout);
     setEstado("pensando");
     setVisible(0);
-    timers.current = [
-      setTimeout(() => setEstado("listo"), 900),
-      ...[1, 2, 3, 4].map((n) => setTimeout(() => setVisible(n), 900 + n * 320)),
-    ];
+    setRemoteError(null);
+    try {
+      const response = await getAiAnalytics({ focus_lot: loteId });
+      const insight = response.insight;
+      const text = insight && typeof insight === "object" && typeof (insight as { text?: unknown }).text === "string"
+        ? (insight as { text: string }).text
+        : "";
+      const source = insight && typeof insight === "object" && typeof (insight as { source?: unknown }).source === "string"
+        ? (insight as { source: string }).source
+        : "api";
+      if (!text) throw new Error("La API de IA devolvió un análisis vacío.");
+      setRemote({ text, source });
+    } catch (error) {
+      setRemote(null);
+      setRemoteError(error instanceof Error ? error.message : "La API de IA no respondió; se usará el respaldo local.");
+    } finally {
+      setEstado("listo");
+      setVisible(1);
+      timers.current = [
+        ...[2, 3, 4].map((n) => setTimeout(() => setVisible(n), n * 320)),
+      ];
+    }
   };
 
   const preguntar = (q: string) => {
@@ -126,9 +147,9 @@ export function AiAssistant({ datos, loteId }: { datos: Datos; loteId: string })
       </div>
 
       <div className="mt-4 min-h-[220px] flex-1 rounded-2xl bg-surface-2 p-4 text-sm">
-        {estado === "pensando" ? (
+          {estado === "pensando" ? (
           <p className="flex items-center gap-2 text-ink-soft">
-            <Loader2 className="size-4 animate-spin" /> Leyendo eventos del lote…
+            <Loader2 className="size-4 animate-spin" /> Consultando la auditoría operativa en la API…
           </p>
         ) : !analisis ? null : visible === 0 ? (
           <p className="leading-relaxed text-ink-soft">
@@ -137,7 +158,7 @@ export function AiAssistant({ datos, loteId }: { datos: Datos; loteId: string })
         ) : (
           <div className="space-y-3.5">
             <div className="flex items-start justify-between gap-3">
-              <p className="font-semibold leading-snug">{analisis.resumen}</p>
+              <p className="font-semibold leading-snug">{remote?.text ?? analisis.resumen}</p>
               <span
                 className={cn(
                   "shrink-0 rounded-full px-2.5 py-0.5 text-[0.6rem] font-bold tracking-wider",
@@ -179,6 +200,8 @@ export function AiAssistant({ datos, loteId }: { datos: Datos; loteId: string })
                 </motion.div>
               )}
             </AnimatePresence>
+            {remote && <p className="mt-3 font-mono text-[0.62rem] text-bosque-500">Fuente confirmada: {remote.source}</p>}
+            {remoteError && <p className="mt-3 text-[0.68rem] text-ambar">IA remota no disponible: {remoteError} Se muestran hechos locales verificables.</p>}
           </div>
         )}
       </div>
@@ -198,7 +221,7 @@ export function AiAssistant({ datos, loteId }: { datos: Datos; loteId: string })
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {PREGUNTAS.map((q) => (
-          <button key={q} onClick={() => preguntar(q)} className="rounded-full border border-line px-2.5 py-1 text-[0.68rem] text-ink-soft transition hover:border-bosque-300 hover:text-ink">
+        <button key={q} onClick={() => preguntar(q)} className="rounded-full border border-line px-2.5 py-1 text-[0.68rem] text-ink-soft transition hover:border-bosque-300 hover:text-ink">
             {q}
           </button>
         ))}
@@ -223,7 +246,7 @@ export function AiAssistant({ datos, loteId }: { datos: Datos; loteId: string })
       </form>
 
       <p className="mt-3 flex items-center gap-1.5 text-[0.65rem] text-ink-soft">
-        <BadgeCheck className="size-3.5 text-bosque-300" /> Hechos calculados por el sistema. Sin conexión a Ollama: auditoría determinística.
+        <BadgeCheck className="size-3.5 text-bosque-300" /> {remote ? `Resumen generado por ${remote.source}; hechos y cálculos se contrastan con el backend.` : "Hechos calculados por el sistema. Pulsa Analizar para intentar usar la IA remota; si no hay sesión, queda el fallback local."}
       </p>
     </div>
   );

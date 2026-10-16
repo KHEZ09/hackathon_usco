@@ -113,4 +113,36 @@ def public_get_lot(lot_id: str):
     lot, error = _get(lot_id)
     if error:
         return error
-    return jsonify({"lot": lot_public(lot)})
+    public = lot_public(lot)
+    anchor = current_app.extensions.get("orivia_blockchain_anchor")
+    timeline = []
+    for event in lot.events:
+        certificate = None
+        if anchor is not None:
+            receipt = anchor.get(event.event_hash)
+            if receipt is not None:
+                certificate = {
+                    **receipt_to_dict(receipt),
+                    "verified": bool(anchor.verify(receipt)),
+                }
+        # Public evidence contains hashes and state transitions, never actor IDs,
+        # payloads, reasons, or private audit fields.
+        timeline.append(
+            {
+                "id": event.event_id,
+                "type": event.event_type,
+                "from": event.previous_status,
+                "to": event.new_status,
+                "occurred_at": event.occurred_at,
+                "previous_event_hash": event.previous_event_hash,
+                "event_hash": event.event_hash,
+                "blockchain": certificate,
+            }
+        )
+    public.update(
+        {
+            "history_verified": bool(_repository().verify_history(lot.lot_id)),
+            "timeline": timeline,
+        }
+    )
+    return jsonify({"lot": public})

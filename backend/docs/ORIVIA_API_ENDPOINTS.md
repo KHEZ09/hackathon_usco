@@ -117,7 +117,7 @@ indica si respondió Ollama Cloud o el fallback local; la IA no modifica datos.
 
 | Método | Ruta | Auth/permisos | Uso |
 | --- | --- | --- | --- |
-| GET | /api/v1/public/lots/{lot_id} | Público | Estado y disponibilidad pública |
+| GET | /api/v1/public/lots/{lot_id} | Público | Estado, cadena SHA y certificado blockchain público |
 | GET | /api/v1/lots/{lot_id} | lots:read | Lote, auditoría e integridad |
 | GET | /api/v1/lots/{lot_id}/timeline | lots:read | Eventos y auditorías |
 | PATCH | /api/v1/lots/{lot_id}/status | lots:status | Cambiar estado |
@@ -131,8 +131,11 @@ evento, auditoría y anclaje. La incidencia de referencia es:
 
     {"status":"BLOCKED","reason":"Incidencia informada durante la hora 12."}
 
-El resultado esperado es history_verified=true y available_for_order=false en la
-proyección pública.
+El resultado esperado es `history_verified=true`, `available_for_order=false` y
+una `timeline` sanitizada en la proyección pública. Cada evento puede incluir
+`blockchain` con `network`, `chain_id`, `transaction_id`, `block_number`,
+`contract_address`, `status` y `verified`; no se exponen actores, razones ni
+payloads privados.
 
 ## Clúster cacaotero y confianza
 

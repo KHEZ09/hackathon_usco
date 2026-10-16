@@ -47,7 +47,7 @@ import { cn } from "@/lib/cn";
 import { PanelTabs } from "../PanelTabs";
 import { ClusterView } from "../cluster/ClusterView";
 import { ASOCIACION_ID, useCluster } from "@/lib/cluster";
-import { syncIntegration, useKevinOverview } from "@/lib/orivia-api";
+import { syncIntegration, updateLotStatus, useKevinOverview } from "@/lib/orivia-api";
 import { OperationalAuditCard } from "./OperationalAuditCard";
 
 type Dialogo = { tipo: "bloquear" | "liberar"; lote: Lote } | { tipo: "reset" } | null;
@@ -78,6 +78,27 @@ function OperacionAdmin() {
       notify("error", "No se pudo sincronizar", error instanceof Error ? error.message : "El backend rechazó la operación.");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const confirmarCambioLote = async (motivo: string) => {
+    if (!dialogo) return;
+    if (dialogo.tipo === "reset") {
+      restablecerDemo();
+      notify("info", "Datos restablecidos", "Se cargaron de nuevo los datos visuales de demostración.");
+      setDialogo(null);
+      return;
+    }
+    const estado: "PENDING" | "LIBERATED" | "BLOCKED" = dialogo.tipo === "bloquear" ? "BLOCKED" : "LIBERATED";
+    try {
+      const response = await updateLotStatus(dialogo.lote.id, estado, motivo);
+      const localEstado: Estado = estado === "BLOCKED" ? "BLOQUEADO" : "LIBERADO";
+      const mirrored = cambiarEstado(dialogo.lote.id, localEstado, motivo, actor);
+      if (!mirrored.ok) throw new Error(mirrored.error);
+      notify("exito", `${dialogo.lote.id} actualizado`, `La API persistió el cambio y generó el anclaje ${String(response.blockchain?.network ?? "blockchain")}.`);
+      setDialogo(null);
+    } catch (error) {
+      notify("error", "No se cambió el lote", error instanceof Error ? error.message : "La API rechazó la transición.");
     }
   };
 
@@ -236,18 +257,7 @@ function OperacionAdmin() {
           <ConfirmDialog
             dialogo={dialogo}
             onClose={() => setDialogo(null)}
-            onConfirm={(motivo) => {
-              if (dialogo.tipo === "reset") {
-                restablecerDemo();
-                notify("info", "Datos restablecidos", "Se cargaron de nuevo CAC001, CAC002 y CAC003.");
-                setDialogo(null);
-                return;
-              }
-              const estado: Estado = dialogo.tipo === "bloquear" ? "BLOQUEADO" : "LIBERADO";
-              const r = cambiarEstado(dialogo.lote.id, estado, motivo, actor);
-              notify(r.ok ? "exito" : "error", r.ok ? `${dialogo.lote.id} ${estado.toLowerCase()}` : "No se cambió el estado", r.ok ? r.mensaje : r.error);
-              if (r.ok) setDialogo(null);
-            }}
+            onConfirm={(motivo) => void confirmarCambioLote(motivo)}
           />
         )}
       </AnimatePresence>

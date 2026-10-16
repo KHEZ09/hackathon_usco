@@ -7,7 +7,9 @@ export async function generateStaticParams() {
   return [{ lote: "CAC001" }, { lote: "CAC002" }, { lote: "CAC003" }];
 }
 
-export default async function FichaPage({ params }: PageProps<"/ficha/[lote]">) {
+type FichaParams = { params: Promise<{ lote: string }> };
+
+export default async function FichaPage({ params }: FichaParams) {
   const { lote } = await params;
   return <FichaPublica loteId={decodeURIComponent(lote).toUpperCase()} />;
 }

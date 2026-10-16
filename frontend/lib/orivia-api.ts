@@ -72,6 +72,40 @@ export type ApiAuditVerification = { order_id?: string; verified?: boolean; even
 export type ApiClusterActor = Record<string, unknown> & { id?: string; name?: string; type?: string };
 export type ApiClusterNeed = Record<string, unknown> & { need_id?: string; title?: string };
 export type ApiAiResult = Record<string, unknown>;
+export type ApiPublicLotEvent = {
+  id?: string;
+  type?: string;
+  from?: string | null;
+  to?: string;
+  occurred_at?: string;
+  previous_event_hash?: string | null;
+  event_hash?: string;
+  blockchain?: ApiBlockchainReceipt | null;
+};
+export type ApiPublicLot = {
+  id: string;
+  product: string;
+  origin: string;
+  producer: string;
+  received_kg: number;
+  available_kg: number;
+  status: "PENDING" | "LIBERATED" | "BLOCKED" | string;
+  available_for_order: boolean;
+  history_verified?: boolean;
+  timeline?: ApiPublicLotEvent[];
+};
+export type ApiPublicLive = {
+  service: string;
+  status: string;
+  generated_at?: string;
+  last_change_at?: string;
+  refresh_after_ms?: number;
+  metrics?: Record<string, number>;
+  capabilities?: {
+    blockchain?: { backend?: string; chain_id?: number | null; contract_configured?: boolean };
+    ai?: { provider?: string; model?: string; configured?: boolean };
+  };
+};
 
 export class OriviaApiError extends Error {
   readonly status: number;
@@ -242,7 +276,12 @@ export async function getOrderAudit(orderId: string, verify = false) {
 }
 
 export async function getPublicLot(lotId: string) {
-  return request<Record<string, unknown>>(`/public/lots/${encodeURIComponent(lotId)}`);
+  const response = await request<{ lot: ApiPublicLot }>(`/public/lots/${encodeURIComponent(lotId)}`);
+  return response.lot;
+}
+
+export async function getPublicLive() {
+  return request<ApiPublicLive>("/public/live");
 }
 
 export async function getLot(lotId: string) {
@@ -254,7 +293,7 @@ export async function getLotTimeline(lotId: string) {
 }
 
 export async function updateLotStatus(lotId: string, status: "PENDING" | "LIBERATED" | "BLOCKED", reason: string) {
-  return request<Record<string, unknown>>(`/lots/${encodeURIComponent(lotId)}/status`, {
+  return request<{ lot: Record<string, unknown>; blockchain?: ApiBlockchainReceipt }>(`/lots/${encodeURIComponent(lotId)}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status, reason }),
   });
@@ -271,7 +310,8 @@ export async function getClusterActors() {
 }
 
 export async function getClusterActor(actorId: string, publicOnly = false) {
-  return request<ApiClusterActor>(`${publicOnly ? "/public" : ""}/cluster/actors/${encodeURIComponent(actorId)}`);
+  const response = await request<{ actor: ApiClusterActor }>(`${publicOnly ? "/public" : ""}/cluster/actors/${encodeURIComponent(actorId)}`);
+  return response.actor;
 }
 
 export async function getClusterNeeds(publicOnly = false) {
@@ -284,11 +324,13 @@ export async function getActorTrust(actorId: string) {
 }
 
 export async function createClusterNeed(payload: { title: string; description: string; category: string; quantity: number; unit: string }) {
-  return request<ApiClusterNeed>("/cluster/needs", { method: "POST", body: JSON.stringify(payload) });
+  const response = await request<{ need: ApiClusterNeed }>("/cluster/needs", { method: "POST", body: JSON.stringify(payload) });
+  return response.need;
 }
 
 export async function createClusterConnection(payload: { target_actor_id: string; need_id?: string; message: string }) {
-  return request<Record<string, unknown>>("/cluster/connections", { method: "POST", body: JSON.stringify(payload) });
+  const response = await request<{ connection: Record<string, unknown> }>("/cluster/connections", { method: "POST", body: JSON.stringify(payload) });
+  return response.connection;
 }
 
 export async function getOrderAiSummary(orderId: string) {
