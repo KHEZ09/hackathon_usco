@@ -19,7 +19,7 @@ type Props = {
 };
 
 const REGISTRO_ROLES: Array<{
-  id: Role;
+  id: string;
   backendRole: string;
   label: string;
   sublabel: string;
@@ -48,6 +48,14 @@ const REGISTRO_ROLES: Array<{
     label: "Comprador",
     sublabel: "Ficha móvil · QR",
     description: "Consulta de fichas públicas, origen de lotes, trazabilidad y verificación.",
+    icon: ROLES.comprador.icon,
+  },
+  {
+    id: "consulta",
+    backendRole: "VIEWER",
+    label: "Consulta",
+    sublabel: "Acceso público Â· lectura",
+    description: "Consulta fichas públicas, origen, trazabilidad y estado de los lotes.",
     icon: ROLES.comprador.icon,
   },
 ];
