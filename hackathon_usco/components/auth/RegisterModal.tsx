@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, Eye, EyeOff, Loader2, X, type LucideIcon } from "lucide-react";
 import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
 import { cn } from "@/lib/cn";
-import { ROLES, ROLE_ORDER, type Role } from "@/components/auth/roles";
+import { ROLES, type Role } from "@/components/auth/roles";
 import { getRegistrationRoles, OriviaApiError, register, type RegistrationRole } from "@/lib/orivia-api";
 import { fortaleza, limpiarTexto, requisitosPendientes, validarRegistro, type RegistroCampo, type RegistroDatos, type RegistroErrores } from "@/lib/registro";
 
@@ -19,7 +19,7 @@ type Props = {
 };
 
 const REGISTRO_ROLES: Array<{
-  id: Role;
+  id: string;
   backendRole: string;
   label: string;
   icon: LucideIcon;
@@ -27,6 +27,7 @@ const REGISTRO_ROLES: Array<{
   { id: "operador",      backendRole: "OPERATOR", label: "Operador",       icon: ROLES.operador.icon },
   { id: "administrador", backendRole: "ADMIN",    label: "Administrador",  icon: ROLES.administrador.icon },
   { id: "comprador",     backendRole: "BUYER",    label: "Comprador",      icon: ROLES.comprador.icon },
+  { id: "consulta",      backendRole: "VIEWER",   label: "Consulta",       icon: ROLES.comprador.icon },
 ];
 
 const CAMPO_DEL_ERROR: Record<string, RegistroCampo> = {
@@ -101,7 +102,7 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const rolConfig = REGISTRO_ROLES.find((r) => r.id === datos.rol || r.backendRole === datos.rol);
-    const permitidos = roles?.map((r) => r.role) ?? ["BUYER", "OPERATOR"];
+    const permitidos = roles?.map((r) => r.role) ?? ["BUYER", "VIEWER"];
     const encontrados = validarRegistro({ ...datos, rol: rolConfig?.backendRole ?? "" }, permitidos);
     if (!datos.rol) {
       encontrados.rol = "Por favor selecciona el tipo de cuenta que deseas crear.";
