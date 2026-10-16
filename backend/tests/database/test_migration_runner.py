@@ -15,6 +15,7 @@ def test_migrations_are_ordered_and_have_transaction_boundaries():
         "008_blockchain_registry.sql",
         "009_expand_user_roles.sql",
         "010_lot_reception_transformations.sql",
+        "011_lot_economics.sql",
     ]
     for file in files:
         content = file.read_text(encoding="utf-8")

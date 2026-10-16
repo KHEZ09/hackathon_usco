@@ -39,6 +39,17 @@ class UserRepository:
             (status, status),
         )
 
+    def list_accounts(self, status: str | None = None) -> list[dict[str, Any]]:
+        """Usuarios con sus roles, sin hash de contraseña (gestión de cuentas del administrador)."""
+        return fetch_all(
+            """SELECT u.user_id,u.full_name,u.email,u.account_status,u.created_at,
+                      array_agg(ur.role::text) FILTER (WHERE ur.role IS NOT NULL) AS roles
+               FROM orivia.app_user u LEFT JOIN orivia.app_user_role ur USING(user_id)
+               WHERE (%s::text IS NULL OR u.account_status=%s::orivia.account_status)
+               GROUP BY u.user_id ORDER BY u.created_at DESC""",
+            (status, status),
+        )
+
     def create(self, data: dict[str, Any], roles: list[str]) -> dict[str, Any]:
         with transaction() as connection:
             row = connection.execute(

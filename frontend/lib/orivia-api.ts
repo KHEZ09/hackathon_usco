@@ -401,7 +401,7 @@ export async function listUsers(status?: "ACTIVE" | "BLOCKED" | "SUSPENDED") {
   return response.data;
 }
 
-export type RegistrationRole = { role: string; label: string };
+export type RegistrationRole = { role: string; label: string; requires_approval?: boolean };
 
 /** Roles que el backend permite elegir al crear una cuenta (nunca administrativos). */
 export async function getRegistrationRoles() {
@@ -411,8 +411,104 @@ export async function getRegistrationRoles() {
 
 /** Crea la cuenta; la contraseña viaja solo en el cuerpo HTTPS y el backend guarda su hash. */
 export async function register(payload: { full_name: string; email: string; password: string; password_confirmation: string; role: string }) {
-  const response = await request<{ data: ApiUser }>("/auth/register", { method: "POST", body: JSON.stringify(payload) }, false);
+  const response = await request<{ data: ApiUser & { requires_approval?: boolean } }>("/auth/register", { method: "POST", body: JSON.stringify(payload) }, false);
   return response.data;
+}
+
+// ── Gestión de cuentas (solo administrador) ────────────────────────────────
+export type ApiAccount = ApiUser & { roles: string[]; pending_approval: boolean; created_at?: string };
+
+export async function listAccounts(status?: "ACTIVE" | "BLOCKED" | "SUSPENDED") {
+  const suffix = status ? `?status=${status}` : "";
+  const response = await request<{ data: ApiAccount[] }>(`/auth/accounts${suffix}`);
+  return response.data;
+}
+
+export async function createAccount(payload: { full_name: string; email: string; password: string; password_confirmation: string; role: string }) {
+  const response = await request<{ data: ApiAccount }>("/auth/accounts", { method: "POST", body: JSON.stringify(payload) });
+  return response.data;
+}
+
+export async function setAccountStatus(userId: string, status: "ACTIVE" | "BLOCKED") {
+  return request<{ data: ApiUser }>(`/auth/accounts/${encodeURIComponent(userId)}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+}
+
+// ── Lotes: lista, costos, alertas y CSV (RF04, RF05, RF11, RF12) ────────────
+export type ApiLotTransformation = {
+  operation_code: string;
+  stage: string;
+  responsible: string;
+  input_kg: number;
+  output_kg: number;
+  merma_pct: number;
+  incident: string;
+  alert: { message: string } | null;
+};
+export type ApiLotAudit = { id: string; actor_id: string; action: string; changes: Record<string, unknown> };
+export type ApiLotEvent = { id: string; type: string; actor_id: string; from: string | null; to: string; occurred_at: string; payload: Record<string, unknown> };
+export type ApiLotAlert = { type: string; rule: string; cause: string };
+export type ApiLotEconomics = {
+  sellable_kg: number;
+  total_cost_cop: number | null;
+  sale_price_cop_kg: number | null;
+  included_costs: string;
+  unit_cost_cop_kg: number | null;
+  margin_pct: number | null;
+  notes: string[];
+  formulas: Record<string, string>;
+  updated_by: string | null;
+  updated_at: string | null;
+};
+export type ApiLot = {
+  id: string;
+  product: string;
+  origin: string;
+  producer: string;
+  received_kg: number;
+  available_kg: number;
+  status: "PENDING" | "LIBERATED" | "BLOCKED";
+  received_at: string;
+  created_at: string;
+  merma_pct: number | null;
+  transformations: ApiLotTransformation[];
+  timeline: ApiLotEvent[];
+  audits: ApiLotAudit[];
+  alerts: ApiLotAlert[];
+  economics?: ApiLotEconomics;
+};
+
+export async function listLots(filters: { origin?: string; status?: string } = {}) {
+  const params = new URLSearchParams();
+  if (filters.origin) params.set("origin", filters.origin);
+  if (filters.status) params.set("status", filters.status);
+  const suffix = params.size ? `?${params}` : "";
+  const response = await request<{ data: ApiLot[] }>(`/lots${suffix}`);
+  return response.data;
+}
+
+export async function setLotEconomics(lotId: string, payload: { total_cost_cop: number; sale_price_cop_kg: number; included_costs: string }) {
+  return request<{ lot: ApiLot }>(`/lots/${encodeURIComponent(lotId)}/economics`, { method: "PUT", body: JSON.stringify(payload) });
+}
+
+/** Descarga el CSV generado por el servidor (solo administración/contabilidad). */
+export async function downloadLotsCsv(filters: { origin?: string; status?: string } = {}) {
+  const params = new URLSearchParams();
+  if (filters.origin) params.set("origin", filters.origin);
+  if (filters.status) params.set("status", filters.status);
+  const url = `${API_BASE_URL}/lots/export.csv${params.size ? `?${params}` : ""}`;
+  const send = () => fetch(url, { headers: { Authorization: `Bearer ${readToken(ACCESS_TOKEN_KEY) ?? ""}` }, credentials: "omit" });
+  let response: Response;
+  try {
+    response = await send();
+    if (response.status === 401 && (await refreshAccessToken())) response = await send();
+  } catch {
+    throw new OriviaApiError("No se pudo conectar con el backend de ORIVIA.", 0, "NETWORK_ERROR");
+  }
+  if (!response.ok) {
+    const payload = await parseResponse(response);
+    throw new OriviaApiError(errorMessage(payload, `La API respondió ${response.status}.`), response.status);
+  }
+  return response.blob();
 }
 
 export async function getReportOverview() {

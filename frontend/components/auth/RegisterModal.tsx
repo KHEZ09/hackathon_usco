@@ -51,6 +51,7 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
   const [estado, setEstado] = useState<"idle" | "loading" | "ok">("idle");
   const [roles, setRoles] = useState<RegistrationRole[] | null>(null);
   const [rolesError, setRolesError] = useState(false);
+  const [pendiente, setPendiente] = useState(false);
   const nombreRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -116,7 +117,7 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
     }
 
     try {
-      await register({
+      const creado = await register({
         full_name: limpiarTexto(datos.nombre),
         email: correo,
         password: datos.password,
@@ -125,9 +126,11 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
       });
       setDatos((d) => ({ ...d, password: "", confirmacion: "" }));
       setEstado("ok");
-      setTimeout(() => onRegistered(correo, rolConfig.id), 1200);
+      // Operador y Administrador quedan pendientes: no pueden entrar hasta que un administrador apruebe.
+      if (creado.requires_approval) setPendiente(true);
+      else setTimeout(() => onRegistered(correo, rolConfig.id), 1200);
     } catch (cause) {
-      if (process.env.NEXT_PUBLIC_ORIVIA_DEMO_MODE === "true" || (cause instanceof OriviaApiError && cause.status === 0)) {
+      if (process.env.NEXT_PUBLIC_ORIVIA_DEMO_MODE === "true") {
         // En modo demostración local, permitir crear y acceder
         setDatos((d) => ({ ...d, password: "", confirmacion: "" }));
         setEstado("ok");
@@ -185,8 +188,17 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
               <span className="grid size-14 place-items-center rounded-full bg-bosque text-crema shadow-lg shadow-bosque/30">
                 <Check className="size-7" />
               </span>
-              <p className="text-lg font-semibold text-ink">Cuenta creada</p>
-              <p className="max-w-xs text-sm text-ink-soft">Ya puedes iniciar sesión con tu correo y la contraseña que acabas de crear.</p>
+              <p className="text-lg font-semibold text-ink">{pendiente ? "Solicitud enviada" : "Cuenta creada"}</p>
+              <p className="max-w-xs text-sm text-ink-soft">
+                {pendiente
+                  ? "Tu cuenta quedó pendiente de aprobación por un administrador. Podrás iniciar sesión cuando la aprueben."
+                  : "Ya puedes iniciar sesión con tu correo y la contraseña que acabas de crear."}
+              </p>
+              {pendiente && (
+                <button type="button" onClick={onClose} className="mt-2 rounded-full bg-bosque px-5 py-2.5 text-sm font-semibold text-crema transition hover:bg-bosque-700">
+                  Entendido
+                </button>
+              )}
             </motion.div>
           ) : (
             <form onSubmit={submit} className="mt-5 space-y-3.5" noValidate>
@@ -243,6 +255,15 @@ function RegisterDialog({ initialRole, onClose, onRegistered, onLogin }: Omit<Pr
                     {errores.rol}
                   </p>
                 )}
+                {(() => {
+                  const elegido = REGISTRO_ROLES.find((r) => r.id === datos.rol || r.backendRole === datos.rol);
+                  const info = roles?.find((r) => r.role === elegido?.backendRole);
+                  return info?.requires_approval ? (
+                    <p className="mt-1 rounded-xl bg-ambar/10 px-3 py-1.5 text-[0.7rem] text-ink-soft">
+                      La cuenta de {info.label.toLowerCase()} se activa cuando un administrador apruebe tu solicitud.
+                    </p>
+                  ) : null;
+                })()}
               </fieldset>
 
               <div className="pt-1">

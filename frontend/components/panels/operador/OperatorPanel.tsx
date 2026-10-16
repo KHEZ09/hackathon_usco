@@ -26,6 +26,9 @@ import { PanelTabs } from "../PanelTabs";
 import { ClusterView } from "../cluster/ClusterView";
 import { cn } from "@/lib/cn";
 import { ApiOrder, createLot, createOrder, hasApiSession, listOrders, transformLot, transitionOrder } from "@/lib/orivia-api";
+import { sincronizarConBackend, useSincronizacionBackend } from "@/lib/backend-sync";
+import { mensajeError } from "@/lib/errores-api";
+import { SyncBadge } from "../SyncBadge";
 
 const newIdem = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 const hoy = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
@@ -36,6 +39,7 @@ export function OperatorPanel() {
 
 function OperacionOperador() {
   const datos = useDatos();
+  const { estado: sync, recargar } = useSincronizacionBackend();
   const totales = useMemo(() => {
     const inv = datos.lotes.map((l) => inventario(datos, l.id));
     return {
@@ -48,6 +52,7 @@ function OperacionOperador() {
 
   return (
     <div className="space-y-6">
+      <SyncBadge estado={sync} onRecargar={() => void recargar()} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Lotes registrados" value={String(datos.lotes.length)} hint="CAC001 · CAC002 · CAC003…" />
         <Kpi label="Kilos recibidos" value={totales.recibido.toLocaleString("es-CO")} unit="kg" />
@@ -229,7 +234,7 @@ function RecepcionForm() {
           received_at: form.fecha,
         });
       } catch (remoteError) {
-        const message = remoteError instanceof Error ? remoteError.message : "No se pudo persistir la recepción en la API.";
+        const message = mensajeError(remoteError, "No se pudo guardar la recepción en el servidor.");
         setError(message);
         notify("error", "Lote no registrado", message);
         setSaving(false);
@@ -248,6 +253,7 @@ function RecepcionForm() {
         return;
       }
     }
+    if (hasApiSession()) await sincronizarConBackend().catch(() => undefined);
     setError(null);
     notify("exito", "Lote recibido", hasApiSession() ? "Persistido en la API y reflejado en el panel." : r.ok ? r.mensaje : "Lote reflejado en el panel local.");
     setForm({ id: "", producto: "Cacao de montaña", productor: "", origen: form.origen, kg: "", fecha: hoy() });
@@ -324,8 +330,9 @@ function TransformacionForm() {
           output_kg: payload.salidaKg,
           incident: payload.incidencias,
         });
-        const local = registrarTransformacion(payload, { email: session?.email ?? "operador@orivia.co" }, true);
-        if (!local.ok && !remote.idempotent) throw new Error(local.error);
+        registrarTransformacion(payload, { email: session?.email ?? "operador@orivia.co" }, true);
+        // El servidor es la fuente de verdad: se vuelve a leer el lote ya transformado.
+        await sincronizarConBackend().catch(() => undefined);
         setError(null);
         notify("exito", remote.idempotent ? "Reenvío idempotente" : "Transformación registrada", remote.idempotent ? "La API no duplicó la operación." : "API persistida · merma calculada y trazabilidad actualizada.");
         setUltimo(payload);
@@ -334,7 +341,7 @@ function TransformacionForm() {
         setSaving(false);
         return;
       } catch (remoteError) {
-        const message = remoteError instanceof Error ? remoteError.message : "No se pudo persistir la transformación en la API.";
+        const message = mensajeError(remoteError, "No se pudo guardar la transformación en el servidor.");
         setError(reenvio ? null : message);
         notify(reenvio ? "info" : "error", reenvio ? "Reenvío bloqueado" : "Transformación rechazada", message);
         setSaving(false);

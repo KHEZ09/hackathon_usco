@@ -10,7 +10,8 @@ import { MERMA_UMBRAL } from "./demo-data";
 export { MERMA_UMBRAL };
 
 export type Estado = "PENDIENTE" | "LIBERADO" | "BLOQUEADO";
-export type Origen = "Rivera" | "Campoalegre" | "Algeciras";
+// Los tres orígenes del caso; el servidor puede traer otros municipios.
+export type Origen = "Rivera" | "Campoalegre" | "Algeciras" | (string & {});
 
 export type Lote = {
   id: string;
@@ -23,6 +24,8 @@ export type Lote = {
   estado: Estado;
   costoTotalCop: number;
   precioVentaKgCop: number;
+  /** Qué costos incluye el total (lo declara el administrador en el servidor). */
+  costosIncluidos?: string;
 };
 
 export type Transformacion = {
@@ -60,7 +63,7 @@ export type Actor = { email: string };
 export type Resultado = { ok: true; mensaje: string } | { ok: false; error: string };
 
 export const ORIGENES: Origen[] = ["Rivera", "Campoalegre", "Algeciras"];
-export const FINCAS: Record<Origen, string> = {
+export const FINCAS: Record<string, string> = {
   Rivera: "Finca La Esperanza",
   Campoalegre: "Finca El Mirador",
   Algeciras: "Finca Alto Bonito",
@@ -383,6 +386,11 @@ export function sincronizar(actor: Actor): Resultado {
 
 export function restablecerDemo() {
   commit(seed());
+}
+
+/** Reemplaza el estado local con los datos del servidor (lib/backend-sync.ts). */
+export function reemplazarDatos(next: Datos) {
+  commit(next);
 }
 
 /** Registra en la auditoría común un cambio hecho en otro módulo (p. ej. la red del clúster). */

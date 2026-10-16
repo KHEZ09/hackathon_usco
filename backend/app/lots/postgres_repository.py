@@ -163,6 +163,21 @@ class PostgresLotRepository:
         self._ensure_seed(lot_id)
         return self._load(lot_id)
 
+    def list(self, *, origin: str | None = None, status: str | None = None) -> list[LotRecord]:
+        """Lotes filtrados por origen (contiene, sin distinguir mayúsculas) y estado (RF11)."""
+        pattern = origin.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") if origin else None
+        rows = fetch_all(
+            """
+            SELECT lot_id FROM orivia.trace_lot
+            WHERE (%s::text IS NULL OR origin ILIKE '%%' || %s || '%%')
+              AND (%s::text IS NULL OR status = upper(%s))
+            ORDER BY created_at, lot_id
+            """,
+            (pattern, pattern, status or None, status or None),
+        )
+        lots = [self.get(str(row["lot_id"])) for row in rows]
+        return [lot for lot in lots if lot is not None]
+
     def create(
         self,
         *,

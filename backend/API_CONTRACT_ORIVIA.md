@@ -44,7 +44,9 @@ equivalente en el proxy o un almacenamiento compartido antes de producción.
 | --- | --- | --- |
 | POST | `/api/v1/auth/login` | Disponible; valida bcrypt, emite access y refresh token |
 | GET | `/api/v1/auth/register/roles` | Disponible; roles de autoservicio permitidos (nunca ADMIN ni ACCOUNTING) |
-| POST | `/api/v1/auth/register` | Disponible; crea cuenta con hash bcrypt. Ver `docs/REGISTRO_CUENTAS.md` |
+| POST | `/api/v1/auth/register` | Disponible; crea cuenta con hash bcrypt (Operador/Administrador quedan pendientes de aprobación). Ver `docs/REGISTRO_CUENTAS.md` |
+| GET / POST | `/api/v1/auth/accounts` | Solo administrador: listar cuentas con roles y crear cuentas activas de cualquier rol |
+| PATCH | `/api/v1/auth/accounts/{user_id}/status` | Solo administrador: aprobar (`ACTIVE`) o bloquear (`BLOCKED`) |
 | GET | `/api/v1/auth/me` | Disponible con access token |
 | POST | `/api/v1/auth/refresh` | Disponible; rota y revoca el refresh token anterior |
 
@@ -185,6 +187,10 @@ una prueba legal, financiera ni de identidad.
 | GET | `/api/v1/lots/{lot_id}` | `lots:read` | Lote, cantidades, auditorías e integridad |
 | GET | `/api/v1/lots/{lot_id}/timeline` | `lots:read` | Cadena de eventos y auditorías |
 | PATCH | `/api/v1/lots/{lot_id}/status` | `lots:status` | Cambiar estado con razón obligatoria |
+| GET | `/api/v1/lots?origin=&status=` | `lots:read` | RF11: lista filtrada con transformaciones, auditoría, `merma_pct` y alertas explicadas (RF04); `economics` solo con `accounting:read` |
+| GET | `/api/v1/lots/export.csv?origin=&status=` | `accounting:read` | RF11: CSV con lote, origen, cantidades, estado, costos, margen y alertas |
+| GET | `/api/v1/lots/{lot_id}/economics` | `accounting:read` | RF05/RF12: costo unitario = costo total ÷ kg vendibles; margen = (precio − costo) ÷ precio × 100; sin división entre cero |
+| PUT | `/api/v1/lots/{lot_id}/economics` | `accounting:write` | Guarda `total_cost_cop`, `sale_price_cop_kg` e `included_costs` (obligatorio si hay costo); queda auditado con valor anterior y nuevo (RF10) |
 
 Estados permitidos: `PENDING`, `LIBERATED` y `BLOCKED`. La transición no borra
 eventos; cada cambio agrega un `TraceEvent` con `payload_hash`,

@@ -6,8 +6,24 @@ Registro público con nombre, correo, contraseña, confirmación y tipo de cuent
 
 | Método | Ruta | Respuesta |
 | --- | --- | --- |
-| GET | `/api/v1/auth/register/roles` | `200 {"data":[{"role":"BUYER","label":"Comprador"}, …]}` |
-| POST | `/api/v1/auth/register` | `201 {"data": usuario público}` (sin hash ni contraseña) |
+| GET | `/api/v1/auth/register/roles` | `200 {"data":[{"role":"BUYER","label":"Comprador","requires_approval":false}, …]}` |
+| POST | `/api/v1/auth/register` | `201 {"data": usuario público, "requires_approval": bool}` (sin hash ni contraseña) |
+
+### Tres tipos de usuario
+
+- **Comprador** (`BUYER`) y **Consulta** (`VIEWER`): la cuenta queda activa y puede iniciar sesión de inmediato.
+- **Operador** (`OPERATOR`) y **Administrador** (`ADMIN`): se pueden solicitar en el registro público, pero la cuenta nace `SUSPENDED` (pendiente). No puede iniciar sesión hasta que un administrador la apruebe. Nadie se asigna permisos por sí mismo.
+- **Contabilidad** (`ACCOUNTING`) solo la crea un administrador.
+
+### Gestión de cuentas (solo administrador)
+
+| Método | Ruta | Uso |
+| --- | --- | --- |
+| GET | `/api/v1/auth/accounts?status=SUSPENDED` | Cuentas con sus roles (sin hash); `pending_approval` marca las solicitudes |
+| POST | `/api/v1/auth/accounts` | Crea una cuenta **activa** de cualquier rol (mismas validaciones y bcrypt) |
+| PATCH | `/api/v1/auth/accounts/{user_id}/status` | `{"status":"ACTIVE"}` aprueba; `{"status":"BLOCKED"}` bloquea. Un administrador no puede bloquearse a sí mismo |
+
+En el frontend: tarjeta **Cuentas de usuario** del panel de administrador (aprobar, rechazar, crear).
 
 Cuerpo del POST: `full_name`, `email`, `password`, `password_confirmation`, `role`. Cualquier otro campo (`roles`, `permissions`, `account_status`…) se ignora.
 
@@ -16,7 +32,7 @@ Cuerpo del POST: `full_name`, `email`, `password`, `password_confirmation`, `rol
 | 400 | `VALIDATION_ERROR` | Nombre, correo o cuerpo inválidos (`field` indica el campo) |
 | 400 | `PASSWORD_MISMATCH` | La confirmación no coincide |
 | 400 | `WEAK_PASSWORD` | Menos de 10 caracteres, sin mayúscula, minúscula, número o símbolo, más de 72 bytes, común o contiene el correo |
-| 403 | `ROLE_NOT_ALLOWED` | Rol fuera de los de autoservicio (p. ej. ADMIN) |
+| 403 | `ROLE_NOT_ALLOWED` | Rol no habilitado para registro público (p. ej. ACCOUNTING) |
 | 409 | `EMAIL_UNAVAILABLE` | Correo ya registrado (también por el índice único `lower(email)`) |
 | 429 | `REGISTER_RATE_LIMITED` | Demasiados intentos desde la misma IP (`Retry-After`) |
 | 503 | `REGISTER_FAILED` | Error interno; el detalle solo va al log del servidor |
@@ -25,14 +41,15 @@ Cuerpo del POST: `full_name`, `email`, `password`, `password_confirmation`, `rol
 
 - La contraseña se guarda solo como hash bcrypt (`auth_tokens/passwords.hash_password`); nunca se registra en logs ni se devuelve.
 - Sanitización: normalización Unicode, sin caracteres de control, nombre solo con letras y separadores, correo en minúsculas.
-- ADMIN y ACCOUNTING no pueden habilitarse para autoservicio ni por configuración. Los administradores siguen creando cuentas privilegiadas con `POST /api/v1/users`.
+- ADMIN y ACCOUNTING nunca quedan activos por autoservicio, ni por configuración: ADMIN solo como solicitud pendiente de aprobación. Los administradores crean cuentas activas con `POST /api/v1/auth/accounts`.
 - Límite por IP en proceso (igual que el login); en producción conviene reforzarlo en el proxy.
 
 ## Variables de entorno
 
 | Variable | Defecto | Uso |
 | --- | --- | --- |
-| `ORIVIA_SELF_REGISTRATION_ROLES` | `BUYER,VIEWER` | Roles elegibles al registrarse (OPERATOR solo si el equipo lo decide) |
+| `ORIVIA_SELF_REGISTRATION_ROLES` | `BUYER,VIEWER` | Roles que quedan activos al registrarse (nunca ADMIN ni ACCOUNTING) |
+| `ORIVIA_APPROVAL_REGISTRATION_ROLES` | `OPERATOR,ADMIN` | Roles que se pueden solicitar y quedan pendientes de aprobación (vacío los desactiva) |
 | `ORIVIA_REGISTER_RATE_LIMIT_ENABLED` | `true` | Activa el límite de intentos |
 | `ORIVIA_REGISTER_RATE_LIMIT_MAX_ATTEMPTS` | `5` | Intentos por IP dentro de la ventana |
 | `ORIVIA_REGISTER_RATE_LIMIT_WINDOW_SECONDS` | `3600` | Ventana y bloqueo, en segundos |

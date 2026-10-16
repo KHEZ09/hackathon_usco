@@ -15,7 +15,9 @@ class FakeUserRepository:
         self.rows = {}
 
     def by_login(self, login):
-        return self.rows.get(login.lower())
+        # Igual que PostgreSQL: solo devuelve cuentas activas.
+        row = self.rows.get(login.lower())
+        return row if row and row["account_status"] == "ACTIVE" else None
 
     def create(self, data, roles):
         if data["email"].lower() in self.rows:
@@ -30,6 +32,16 @@ class FakeUserRepository:
         }
         self.rows[data["email"].lower()] = row
         return {k: v for k, v in row.items() if k != "roles"}
+
+    def list_accounts(self, status=None):
+        return [r for r in self.rows.values() if status is None or r["account_status"] == status]
+
+    def update(self, user_id, fields):
+        for row in self.rows.values():
+            if row["user_id"] == user_id:
+                row.update(fields)
+                return {k: v for k, v in row.items() if k != "roles"}
+        return None
 
 
 @pytest.fixture
@@ -147,7 +159,29 @@ def test_non_json_body_is_rejected(setup):
     assert response.status_code == 400
 
 
-@pytest.mark.parametrize("role", ["ADMIN", "admin", "ACCOUNTING", "OPERATOR", "ROOT"])
+@pytest.mark.parametrize("role", ["ADMIN", "admin", "OPERATOR"])
+def test_privileged_roles_are_created_pending_approval(setup, role):
+    client, repo = setup
+    response = client.post("/api/v1/auth/register", json=_payload(role=role))
+
+    assert response.status_code == 201
+    assert response.get_json()["data"]["requires_approval"] is True
+    stored = repo.rows["ana.rivera@finca.co"]
+    assert stored["account_status"] == "SUSPENDED"
+    assert stored["roles"] == [role.upper()]
+    # Una cuenta pendiente no puede iniciar sesión hasta que un administrador la apruebe.
+    login = client.post("/api/v1/auth/login", json={"email": "ana.rivera@finca.co", "password": STRONG})
+    assert login.status_code == 401
+
+
+def test_buyer_is_active_immediately(setup):
+    client, repo = setup
+    response = client.post("/api/v1/auth/register", json=_payload(role="BUYER"))
+    assert response.get_json()["data"]["requires_approval"] is False
+    assert repo.rows["ana.rivera@finca.co"]["account_status"] == "ACTIVE"
+
+
+@pytest.mark.parametrize("role", ["ACCOUNTING", "ROOT"])
 def test_unauthorized_role_cannot_be_self_assigned(setup, role):
     client, repo = setup
     response = client.post("/api/v1/auth/register", json=_payload(role=role))
@@ -176,7 +210,7 @@ def test_admin_roles_are_never_enabled_by_configuration(monkeypatch):
 def test_roles_endpoint_lists_only_self_service_roles(setup):
     client, _ = setup
     roles = [r["role"] for r in client.get("/api/v1/auth/register/roles").get_json()["data"]]
-    assert roles == ["BUYER", "VIEWER"]
+    assert roles == ["BUYER", "VIEWER", "OPERATOR", "ADMIN"]
 
 
 def test_registration_is_rate_limited(monkeypatch):
@@ -190,3 +224,54 @@ def test_registration_is_rate_limited(monkeypatch):
 
     assert codes[:3] == [201, 201, 201]
     assert codes[3] == 429
+
+
+def _admin_headers(app, subject="admin-1", role="ADMIN"):
+    import jwt
+
+    token = jwt.encode(
+        {"sub": subject, "role": role.lower(), "roles": [role], "permissions": ["*"] if role == "ADMIN" else ["orders:read"],
+         "iat": 1730000000, "exp": 4102444800, "iss": app.config["JWT_ISSUER"], "jti": f"acc-{subject}", "type": "access"},
+        app.config["JWT_SECRET_KEY"], algorithm="HS256",
+    )
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_admin_approves_pending_operator_who_then_can_login(setup):
+    client, _ = setup
+    client.post("/api/v1/auth/register", json=_payload(role="OPERATOR"))
+    admin = _admin_headers(client.application)
+
+    pending = client.get("/api/v1/auth/accounts?status=SUSPENDED", headers=admin).get_json()["data"]
+    assert [a["email"] for a in pending] == ["ana.rivera@finca.co"]
+    assert pending[0]["pending_approval"] is True and "password_hash" not in pending[0]
+
+    approved = client.patch(f"/api/v1/auth/accounts/{pending[0]['user_id']}/status", headers=admin, json={"status": "ACTIVE"})
+    assert approved.status_code == 200
+    client.application.extensions["orivia_auth_repository"] = type("A", (), {"insert_refresh_token": lambda *a, **k: None})()
+    login = client.post("/api/v1/auth/login", json={"email": "ana.rivera@finca.co", "password": STRONG})
+    assert login.status_code == 200
+    assert login.get_json()["user"]["roles"] == ["OPERATOR"]
+
+
+@pytest.mark.parametrize("role", ["OPERATOR", "ADMIN", "BUYER", "ACCOUNTING", "VIEWER"])
+def test_admin_creates_active_accounts_of_any_role(setup, role):
+    client, repo = setup
+    response = client.post("/api/v1/auth/accounts", headers=_admin_headers(client.application), json=_payload(role=role))
+    assert response.status_code == 201
+    assert repo.rows["ana.rivera@finca.co"]["account_status"] == "ACTIVE"
+    assert repo.rows["ana.rivera@finca.co"]["roles"] == [role]
+
+
+def test_non_admin_cannot_manage_accounts(setup):
+    client, _ = setup
+    buyer = _admin_headers(client.application, subject="buyer-1", role="BUYER")
+    assert client.get("/api/v1/auth/accounts", headers=buyer).status_code == 403
+    assert client.post("/api/v1/auth/accounts", headers=buyer, json=_payload(role="ADMIN")).status_code == 403
+    assert client.get("/api/v1/auth/accounts").status_code == 401
+
+
+def test_admin_cannot_block_itself(setup):
+    client, _ = setup
+    response = client.patch("/api/v1/auth/accounts/admin-1/status", headers=_admin_headers(client.application), json={"status": "BLOCKED"})
+    assert response.status_code == 400

@@ -17,6 +17,8 @@ from .config import Settings
 from .database.registration import register_kevin_modules
 from .lots.postgres_repository import PostgresLotRepository
 from .lots.repository import InMemoryLotRepository
+from .lots.admin_routes import lot_admin_bp
+from .lots.economics import InMemoryEconomicsStore, PostgresEconomicsStore
 from .lots.routes import lots_bp, public_lots_bp
 from .orders.postgres_repository import PostgresOrderRepository
 from .orders.repository import InMemoryOrderRepository
@@ -174,6 +176,7 @@ def create_app(settings: Settings | None = None) -> Flask:
     app.register_blueprint(cluster_bp, url_prefix="/api/v1/cluster")
     app.register_blueprint(public_cluster_bp, url_prefix="/api/v1/public/cluster")
     app.register_blueprint(lots_bp, url_prefix="/api/v1/lots")
+    app.register_blueprint(lot_admin_bp, url_prefix="/api/v1/lots")
     app.register_blueprint(public_lots_bp, url_prefix="/api/v1/public/lots")
     app.register_blueprint(public_live_bp, url_prefix="/api/v1/public")
     register_kevin_modules(app)
@@ -204,7 +207,9 @@ def create_app(settings: Settings | None = None) -> Flask:
         app.extensions["orivia_cluster_repository"] = InMemoryClusterRepository()
     if settings.order_repository_backend == "postgres":
         app.extensions["orivia_lot_repository"] = PostgresLotRepository()
+        app.extensions["orivia_lot_economics"] = PostgresEconomicsStore()
     else:
         app.extensions["orivia_lot_repository"] = InMemoryLotRepository()
+        app.extensions["orivia_lot_economics"] = InMemoryEconomicsStore()
 
     return app

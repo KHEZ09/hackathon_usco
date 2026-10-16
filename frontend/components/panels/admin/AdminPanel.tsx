@@ -47,7 +47,11 @@ import { cn } from "@/lib/cn";
 import { PanelTabs } from "../PanelTabs";
 import { ClusterView } from "../cluster/ClusterView";
 import { ASOCIACION_ID, useCluster } from "@/lib/cluster";
-import { syncIntegration, updateLotStatus, useKevinOverview } from "@/lib/orivia-api";
+import { downloadLotsCsv, hasApiSession, setLotEconomics, syncIntegration, updateLotStatus, useKevinOverview } from "@/lib/orivia-api";
+import { sincronizarConBackend, useSincronizacionBackend } from "@/lib/backend-sync";
+import { mensajeError } from "@/lib/errores-api";
+import { SyncBadge } from "../SyncBadge";
+import { CuentasCard } from "./CuentasCard";
 import { OperationalAuditCard } from "./OperationalAuditCard";
 
 type Dialogo = { tipo: "bloquear" | "liberar"; lote: Lote } | { tipo: "reset" } | null;
@@ -68,6 +72,7 @@ function OperacionAdmin() {
   const lista = alertas(datos);
   const backend = useKevinOverview(Boolean(session));
   const [syncing, setSyncing] = useState(false);
+  const { estado: syncDatos, recargar } = useSincronizacionBackend();
 
   const sincronizarProveedor = async () => {
     setSyncing(true);
@@ -93,12 +98,12 @@ function OperacionAdmin() {
     try {
       const response = await updateLotStatus(dialogo.lote.id, estado, motivo);
       const localEstado: Estado = estado === "BLOCKED" ? "BLOQUEADO" : "LIBERADO";
-      const mirrored = cambiarEstado(dialogo.lote.id, localEstado, motivo, actor);
-      if (!mirrored.ok) throw new Error(mirrored.error);
+      cambiarEstado(dialogo.lote.id, localEstado, motivo, actor);
+      await recargar();
       notify("exito", `${dialogo.lote.id} actualizado`, `La API persistió el cambio y generó el anclaje ${String(response.blockchain?.network ?? "blockchain")}.`);
       setDialogo(null);
     } catch (error) {
-      notify("error", "No se cambió el lote", error instanceof Error ? error.message : "La API rechazó la transición.");
+      notify("error", "No se cambió el lote", mensajeError(error, "El servidor rechazó el cambio de estado."));
     }
   };
 
@@ -122,6 +127,7 @@ function OperacionAdmin() {
 
   return (
     <div className="space-y-6">
+      <SyncBadge estado={syncDatos} onRecargar={() => void recargar()} />
       {/* RF04: alerta automática */}
       <AnimatePresence>
         {lista.length > 0 && (
@@ -244,6 +250,7 @@ function OperacionAdmin() {
       </div>
 
       <LotesCard onAccion={setDialogo} onSelect={setSel} />
+      {hasApiSession() && <CuentasCard />}
       <AuditoriaCard />
 
       <div className="flex justify-end">
@@ -268,9 +275,43 @@ function OperacionAdmin() {
 function BalanceCard({ loteId, actor }: { loteId: string; actor: { email: string } }) {
   const datos = useDatos();
   const { notify } = useToast();
-  const lote = datos.lotes.find((l) => l.id === loteId)!;
+  const lote = datos.lotes.find((l) => l.id === loteId);
+  const [edit, setEdit] = useState<{ costo: string; precio: string; incluidos: string } | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  if (!lote) return null;
   const eco = economia(datos, lote);
-  const [edit, setEdit] = useState<{ costo: string; precio: string } | null>(null);
+
+  const guardar = async () => {
+    if (!edit) return;
+    const costo = Number(edit.costo);
+    const precio = Number(edit.precio);
+    if (!hasApiSession()) {
+      const r = actualizarEconomia(loteId, costo, precio, actor);
+      notify(r.ok ? "exito" : "error", r.ok ? r.mensaje : r.error);
+      if (r.ok) setEdit(null);
+      return;
+    }
+    if (!(costo >= 0) || !(precio >= 0)) return notify("error", "Valores inválidos", "El costo y el precio no pueden ser negativos.");
+    if (costo > 0 && !edit.incluidos.trim()) return notify("error", "Falta un dato", "Explica qué costos incluye el total.");
+    setGuardando(true);
+    try {
+      const { lot } = await setLotEconomics(loteId, { total_cost_cop: costo, sale_price_cop_kg: precio, included_costs: edit.incluidos.trim() });
+      await sincronizarConBackend();
+      const e = lot.economics;
+      notify(
+        "exito",
+        `Costos de ${loteId} guardados`,
+        e?.unit_cost_cop_kg != null
+          ? `Costo unitario ${cop.format(e.unit_cost_cop_kg)}/kg · margen ${e.margin_pct ?? "—"}%. Cambio auditado.`
+          : (e?.notes[0] ?? "Cambio auditado en el servidor."),
+      );
+      setEdit(null);
+    } catch (error) {
+      notify("error", "No se guardaron los costos", mensajeError(error));
+    } finally {
+      setGuardando(false);
+    }
+  };
 
   return (
     <Card className="lg:col-span-7">
@@ -280,7 +321,7 @@ function BalanceCard({ loteId, actor }: { loteId: string; actor: { email: string
         hint="RF05 · RF12 · fórmulas y supuestos visibles."
         action={
           !edit && (
-            <Button variant="secundario" onClick={() => setEdit({ costo: String(lote.costoTotalCop), precio: String(lote.precioVentaKgCop) })}>
+            <Button variant="secundario" onClick={() => setEdit({ costo: String(lote.costoTotalCop), precio: String(lote.precioVentaKgCop), incluidos: lote.costosIncluidos ?? "" })}>
               Editar supuestos
             </Button>
           )
@@ -309,7 +350,9 @@ function BalanceCard({ loteId, actor }: { loteId: string; actor: { email: string
           margen = (precio − costo) / precio
           <br />= ({cop.format(lote.precioVentaKgCop)} − {cop.format(eco.costoUnitario)}) / {cop.format(lote.precioVentaKgCop)} = <span className="text-ink">{eco.margen}%</span>
         </p>
-        <p className="sm:col-span-2">Supuestos: el costo total incluye compra, beneficio y mano de obra; sin kg producidos se usa lo recibido (nunca se divide entre cero).</p>
+        <p className="sm:col-span-2">
+          Costos incluidos: {lote.costosIncluidos ?? "compra, beneficio y mano de obra"}. Sin kg vendibles no se calcula el costo unitario (nunca se divide entre cero).
+        </p>
       </div>
       <AnimatePresence>
         {edit && (
@@ -320,9 +363,7 @@ function BalanceCard({ loteId, actor }: { loteId: string; actor: { email: string
             className="overflow-hidden"
             onSubmit={(e) => {
               e.preventDefault();
-              const r = actualizarEconomia(loteId, Number(edit.costo), Number(edit.precio), actor);
-              notify(r.ok ? "exito" : "error", r.ok ? r.mensaje : r.error);
-              if (r.ok) setEdit(null);
+              void guardar();
             }}
           >
             <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end">
@@ -332,7 +373,10 @@ function BalanceCard({ loteId, actor }: { loteId: string; actor: { email: string
               <Field label="Precio de venta (COP/kg)">
                 <Input type="number" value={edit.precio} onChange={(e) => setEdit({ ...edit, precio: e.target.value })} />
               </Field>
-              <Button type="submit" className="py-3">Guardar</Button>
+              <Field label="Costos incluidos" className="sm:col-span-4">
+                <Input value={edit.incluidos} maxLength={300} placeholder="Ej.: mano de obra, energía y empaque" onChange={(e) => setEdit({ ...edit, incluidos: e.target.value })} />
+              </Field>
+              <Button type="submit" className="py-3" disabled={guardando}>{guardando ? "Guardando…" : "Guardar"}</Button>
               <Button type="button" variant="fantasma" className="py-3" onClick={() => setEdit(null)}>Cancelar</Button>
             </div>
           </motion.form>
@@ -355,8 +399,20 @@ function LotesCard({ onAccion, onSelect }: { onAccion: (d: Dialogo) => void; onS
       `${l.id} ${l.productor} ${l.producto}`.toLowerCase().includes(q.toLowerCase()),
   );
 
-  const descargar = () => {
-    const blob = new Blob([exportarCsv({ ...datos, lotes: filas })], { type: "text/csv;charset=utf-8" });
+  const descargar = async () => {
+    let blob: Blob;
+    if (hasApiSession()) {
+      try {
+        // CSV generado por el servidor con los mismos filtros (RF11).
+        const estadoApi = { PENDIENTE: "PENDING", LIBERADO: "LIBERATED", BLOQUEADO: "BLOCKED" }[estado as Estado];
+        blob = await downloadLotsCsv({ origin: origen === "todos" ? undefined : origen, status: estadoApi });
+      } catch (error) {
+        notify("error", "No se exportó el CSV", mensajeError(error));
+        return;
+      }
+    } else {
+      blob = new Blob([exportarCsv({ ...datos, lotes: filas })], { type: "text/csv;charset=utf-8" });
+    }
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -390,7 +446,7 @@ function LotesCard({ onAccion, onSelect }: { onAccion: (d: Dialogo) => void; onS
               <option>LIBERADO</option>
               <option>BLOQUEADO</option>
             </Select>
-            <Button onClick={descargar}>
+            <Button onClick={() => void descargar()}>
               <Download className="size-3.5" /> Exportar CSV
             </Button>
           </div>
