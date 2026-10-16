@@ -101,9 +101,9 @@ POST /api/v1/ai/orders/{order_id}/audit
 POST /api/v1/ai/analytics
 ```
 
-La IA solo recibe hechos filtrados y es de lectura. Sin Ollama usa reglas locales;
-si Ollama falla, conserva ese fallback. Un proveedor Ollama remoto puede usar
-`OLLAMA_API_KEY` en el entorno privado del servidor; nunca se envía esa clave al
+La IA solo recibe hechos filtrados y es de lectura. En staging se conecta a
+Ollama Cloud con `gpt-oss:120b`; si Ollama falla, conserva el fallback local.
+`OLLAMA_API_KEY` vive en el entorno privado del servidor; nunca se envía al
 frontend ni se registra en logs. Los eventos se anclan automáticamente
 cuando se crea o cambia un pedido o un lote. Repetir el anclaje del último
 evento devuelve `200` con `idempotent=true`.
@@ -126,7 +126,8 @@ compatibilidad local y `evm` para una red blockchain real. En modo `evm`, la
 respuesta incluye `network`, `transaction_id`, `block_number`, `chain_id` y
 `contract_address`; `verified` consulta el contrato `OriviaTraceRegistry` y no
 solo PostgreSQL. Los datos sensibles nunca se escriben en cadena: únicamente
-se anclan hashes y referencias no sensibles.
+se anclan hashes y referencias no sensibles. El staging `orivia` usa Polygon
+Amoy (`chain_id=80002`); el endpoint no debe asumir esa red para producción.
 
 ## Clúster de actores y necesidades
 

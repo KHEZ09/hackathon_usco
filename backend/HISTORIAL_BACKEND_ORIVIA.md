@@ -391,3 +391,30 @@ La prueba EVM local posterior confirmó despliegue del contrato en el bloque 1,
 anclaje de un evento en el bloque 2 y verificación `isAnchored=true`. Esta
 prueba usa un nodo efímero y no se presenta como una transacción pública.
 
+## 15. Cierre EVM y Ollama Cloud en staging — 2026-10-16
+
+Se cerró el bloque de Sebas sin depender de Kevin ni del frontend:
+
+- Se financió una cuenta EVM dedicada únicamente con fondos de prueba en
+  Polygon Amoy (`chain_id=80002`).
+- Se desplegó `OriviaTraceRegistry` y se verificó que el bytecode existe en la
+  red. El contrato quedó en
+  `0xE38cB991af12f21EEb7de72B681c2a0CB9DdA85C`.
+- Se validó desde el backend un pedido sintético con anclaje real, reintento
+  idempotente y consulta `verified=true` contra el contrato. La evidencia
+  operativa continúa en PostgreSQL; la cadena EVM registra el hash y prueba de
+  integridad.
+- Se configuró Ollama Cloud con `gpt-oss:120b` en `orivia`. La prueba real
+  devolvió `source=ollama:gpt-oss:120b`; el fallback local read-only permanece
+  disponible si el proveedor falla.
+- Se corrigieron los scripts de `test`, `deploy`, `healthcheck` y persistencia
+  para cargar tanto `infra/orivia-server/.env` como el `.env` raíz privado. Así
+  un despliegue futuro no pierde por accidente la configuración EVM u Ollama.
+- Se actualizaron la matriz de validación y la documentación operativa para
+  distinguir claramente staging/testnet de producción. Ninguna clave privada,
+  API key, token o contraseña se versiona.
+
+Resultado: blockchain EVM y análisis Ollama quedan funcionales en staging. Lo
+pendiente para integración es que frontend consuma los contratos y que Kevin
+termine sus validaciones de usuarios, roles persistidos y módulos empresariales.
+

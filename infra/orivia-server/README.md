@@ -18,6 +18,9 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
 - Los secretos y el `.env` real nunca se suben a GitHub.
 - El acceso previsto es `ssh admin@orivia` por Tailscale.
 - CORS se configura con `ORIVIA_CORS_ORIGINS` usando orígenes explícitos; no se permite `*`.
+- La configuración se separa en `infra/orivia-server/.env` (API/PostgreSQL) y
+  `.env` en la raíz (blockchain EVM y Ollama). Los scripts oficiales cargan
+  ambos archivos si el segundo existe; ninguno se versiona.
 - El login tiene límite local por IP/identificador: 5 fallos en 10 minutos y bloqueo de 15 minutos.
 - La API registra método, ruta, código y `X-Request-ID`, sin registrar tokens ni cuerpos de solicitud.
 - El clúster usa las migraciones y repositorios PostgreSQL compartidos de Kevin
@@ -120,7 +123,7 @@ Para validar específicamente el clúster y la regresión de `CAC001` dentro del
 contenedor:
 
 ```bash
-docker compose --env-file infra/orivia-server/.env -f infra/orivia-server/docker-compose.yml \
+docker compose --env-file infra/orivia-server/.env --env-file .env -f infra/orivia-server/docker-compose.yml \
   exec -T api python -m pytest tests/test_cluster.py tests/test_hour12_incident.py -q
 ```
 
@@ -138,7 +141,7 @@ finalmente elimina únicamente los datos de prueba.
 Para verificar autenticación real sin exponer tokens:
 
 ```bash
-docker compose --env-file infra/orivia-server/.env -f infra/orivia-server/docker-compose.yml exec -T \
+docker compose --env-file infra/orivia-server/.env --env-file .env -f infra/orivia-server/docker-compose.yml exec -T \
   -e ORIVIA_TEST_LOGIN_EMAIL=operador@orivia.test \
   -e ORIVIA_TEST_LOGIN_PASSWORD='password-demo-no-versionada' api \
   python scripts/verify_auth_postgres.py
@@ -173,26 +176,29 @@ La política del script deniega entradas por defecto y permite SSH únicamente s
 ## Parar y reanudar
 
 ```bash
-docker compose --env-file infra/orivia-server/.env -f infra/orivia-server/docker-compose.yml down
-docker compose --env-file infra/orivia-server/.env -f infra/orivia-server/docker-compose.yml up -d
+docker compose --env-file infra/orivia-server/.env --env-file .env -f infra/orivia-server/docker-compose.yml down
+docker compose --env-file infra/orivia-server/.env --env-file .env -f infra/orivia-server/docker-compose.yml up -d
 ```
 
 No usar `down -v` salvo que se haya respaldado y aprobado explícitamente la eliminación del volumen de PostgreSQL.
 
-## Activar blockchain EVM real
+## Estado blockchain EVM real — activado en staging
 
-1. Elegir una red EVM; para la demo se recomienda una testnet.
-2. Usar un RPC vigente de un proveedor dedicado y una cuenta firmante dedicada.
-   No depender de un endpoint público retirado ni poner la API key en Git.
-3. Obtener fondos de prueba para esa cuenta en la testnet elegida.
-4. Desplegar el contrato desde `backend/scripts/deploy_registry.py` con una
-   cuenta firmante dedicada y fondos de prueba.
-5. Guardar RPC, clave privada, chain id y contrato únicamente en
-   `infra/orivia-server/.env` con permisos `600`.
-6. Ejecutar la migración `008_blockchain_registry.sql`, pruebas, despliegue y
-   smoke test antes de cambiar el backend a `ORIVIA_BLOCKCHAIN_BACKEND=evm`.
-7. Verificar que un evento `BLOCKED` devuelve `transaction_id` y que su ruta
-   de consulta reporta `verified=true` directamente desde el contrato.
+La integración EVM real ya está activa en la instancia `orivia` para la demo.
+Los pedidos y eventos operativos siguen persistiendo en PostgreSQL; el backend
+ancla el hash del evento en el contrato y guarda la evidencia de red,
+transacción, bloque y contrato en `blockchain_anchor`.
+
+- Red: Polygon Amoy (`chain_id=80002`).
+- Contrato: `0xE38cB991af12f21EEb7de72B681c2a0CB9DdA85C`.
+- Cuenta firmante dedicada: `0x9021979d1a0992CDb0F17f2bdC34c928d2DfCDd2`.
+- Evidencia de despliegue: [PolygonScan Amoy](https://amoy.polygonscan.com/address/0xE38cB991af12f21EEb7de72B681c2a0CB9DdA85C).
+- Evidencia funcional: el servidor creó un pedido sintético, lo ancló, repitió
+  el anclaje de forma idempotente y verificó `verified=true` contra el contrato.
+
+Las variables privadas viven únicamente en el `.env` raíz del servidor, con
+permisos `600`. El contrato y la cuenta se usan solo para testnet/staging; no
+se deben reutilizar fondos, claves ni RPC de prueba en producción.
 
 Configuración objetivo para Polygon Amoy:
 
@@ -205,12 +211,30 @@ ORIVIA_BLOCKCHAIN_CHAIN_ID=80002
 ```
 
 La clave privada se escribe directamente en el `.env` privado del servidor y
-no se comparte por chat, commits, capturas ni logs. El despliegue se ejecuta
-primero con `ORIVIA_BLOCKCHAIN_BACKEND=postgres`, se obtiene la dirección del
-contrato, y solo después se cambia a `evm` y se reconstruye el servicio.
+no se comparte por chat, commits, capturas ni logs. Para reconstruir el API
+con la configuración real se deben cargar ambos archivos:
 
-Mientras no existan contrato, RPC y cuenta financiada, el servidor debe seguir
-en `postgres`; eso no debe presentarse como blockchain pública real.
+```bash
+docker compose --env-file infra/orivia-server/.env --env-file .env \
+  -f infra/orivia-server/docker-compose.yml up -d --force-recreate api
+```
+
+## Ollama Cloud — activo en staging
+
+La instancia no descarga `gpt-oss:120b`: el API usa Ollama Cloud para no agotar
+la RAM de Lightsail. La configuración no secreta es:
+
+```dotenv
+OLLAMA_BASE_URL=https://ollama.com
+OLLAMA_MODEL=gpt-oss:120b
+```
+
+`OLLAMA_API_KEY` queda solo en el `.env` raíz del servidor. La API mantiene el
+fallback local de solo lectura si Ollama no responde, no expone la clave y no
+permite que la IA cambie pedidos ni escriba directamente en blockchain. La
+prueba real del servidor respondió desde `ollama:gpt-oss:120b`.
+
+Referencia operativa: [Ollama Cloud](https://docs.ollama.com/cloud).
 
 ## Pendientes antes de producción
 
@@ -218,3 +242,5 @@ en `postgres`; eso no debe presentarse como blockchain pública real.
 - Ejecutar backup y restauración en un entorno aislado; no restaurar sobre producción sin aprobación.
 - Rotar secretos y definir retención/alertas de backups.
 - Si se despliega más de un worker o réplica, mover el límite de login a un proxy o store compartido.
+- Para producción, sustituir Polygon Amoy y la cuenta de prueba por una política
+  de red, custodia y rotación aprobada; el staging no es producción.

@@ -4,6 +4,8 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 SERVER_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 ENV_FILE="$SERVER_DIR/.env"
+REPO_DIR="$SERVER_DIR/../.."
+ROOT_ENV_FILE="$REPO_DIR/.env"
 COMPOSE_FILE="$SERVER_DIR/docker-compose.yml"
 
 if [[ ! -f "$ENV_FILE" ]]; then
@@ -11,7 +13,12 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps
+COMPOSE_ENV_FILES=(--env-file "$ENV_FILE")
+if [[ -f "$ROOT_ENV_FILE" ]]; then
+  COMPOSE_ENV_FILES+=(--env-file "$ROOT_ENV_FILE")
+fi
+
+docker compose "${COMPOSE_ENV_FILES[@]}" -f "$COMPOSE_FILE" ps
 
 for attempt in $(seq 1 5); do
   if curl --fail --silent --show-error http://127.0.0.1:8000/health; then

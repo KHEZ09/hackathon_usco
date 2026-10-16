@@ -45,11 +45,11 @@ dedicada, el `chain_id` y la dirección del contrato desplegado. La clave nunca
 se versiona.
 
 Los endpoints de IA funcionan sin servicios externos mediante un resumen local
-determinista. Ollama es opcional: al configurar `OLLAMA_BASE_URL`, se utiliza
-el modelo indicado en `OLLAMA_MODEL`; `OLLAMA_API_KEY` permite autenticarse
-contra un proveedor remoto y nunca se devuelve al cliente. Si Ollama no
-responde, se conserva el fallback local de solo lectura. La IA no modifica
-estados ni escribe en blockchain.
+determinista. En el staging `orivia` usan Ollama Cloud con
+`OLLAMA_BASE_URL=https://ollama.com` y `OLLAMA_MODEL=gpt-oss:120b`; la
+`OLLAMA_API_KEY` se mantiene solo en el `.env` privado del servidor y nunca se
+devuelve al cliente. Si Ollama no responde, se conserva el fallback local de
+solo lectura. La IA no modifica estados ni escribe directamente en blockchain.
 
 El clúster usa el adaptador de memoria en desarrollo y el repositorio PostgreSQL
 de Kevin cuando `ORIVIA_ORDER_REPOSITORY=postgres`; el contrato HTTP y los
@@ -172,12 +172,21 @@ ancla automáticamente los eventos de creación y cambio de pedidos, además de
 los cambios de estado de lotes como `BLOCKED`. El endpoint manual de anclaje se
 conserva como reintento idempotente.
 
-Antes de activar `ORIVIA_BLOCKCHAIN_BACKEND=evm` en `orivia` se debe desplegar el
-contrato en una red elegida, financiar una cuenta firmante dedicada únicamente
-con fondos de prueba si se usa testnet y guardar RPC, clave, chain id y
-dirección en el `.env` privado del servidor. No se debe subir la clave a GitHub.
+En `orivia` ya está activado `ORIVIA_BLOCKCHAIN_BACKEND=evm` sobre Polygon Amoy
+(`chain_id=80002`). El contrato desplegado es
+`0xE38cB991af12f21EEb7de72B681c2a0CB9DdA85C` y la cuenta firmante dedicada es
+`0x9021979d1a0992CDb0F17f2bdC34c928d2DfCDd2`. La cuenta y el contrato se usan
+solo para staging/testnet; el RPC y la clave privada permanecen únicamente en
+el `.env` privado del servidor y no se suben a GitHub.
+
+La prueba remota creó un pedido sintético, produjo un anclaje EVM, repitió la
+operación de forma idempotente y verificó `verified=true` contra el contrato.
+La persistencia operativa sigue en PostgreSQL y el contrato solo registra el
+hash/evidencia mínima de trazabilidad.
 
 ## Responsabilidades pendientes de integración
 
 - Integrar el frontend con los endpoints persistentes y sus credenciales demo.
 - Mantener pruebas de integración y restauración sobre el servidor oficial.
+- Definir para producción la política de custodia, rotación y financiación de la
+  cuenta blockchain; Polygon Amoy no debe tratarse como red productiva.

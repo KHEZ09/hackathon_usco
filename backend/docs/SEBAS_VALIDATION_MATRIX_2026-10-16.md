@@ -17,9 +17,9 @@ rectificar, analizar errores, complementar, auditar y comprobar nuevamente.
 | RF11–RF12 | Exportación y balance existentes permanecen en módulos de Kevin | No se modifican ni se rompen; suite completa pasa | Sin regresión detectada | Kevin / frontend según ruta |
 | Persistencia | `OrderRepository`, clúster y lotes usan PostgreSQL en producción; readiness tiene timeout de 2 s | 80 pruebas locales; servidor con PostgreSQL saludable y prueba de persistencia remota aprobada | Listo en `orivia` | Ninguna del backend aislado |
 | Auditoría | Reutilización de `AuditRecord` inmutable | Prueba de auditoría de CAC001 | Listo | Ninguna |
-| Blockchain | Hash-chain de lotes y anclaje existente de pedidos | Verificación de eventos y pruebas de anclaje existentes | Listo para evidencia local | Proveedor público es decisión posterior |
-| IA | Fallback local read-only, cliente Ollama y credencial opcional para proveedor remoto | 80 pruebas pasan; servidor confirma Ollama no configurado, sin instalar el modelo pesado | Código listo; runtime externo pendiente | Requiere URL/modelo/credencial y capacidad suficiente |
-| Docker | Contratos y scripts de prueba documentados para `orivia` | Local: 80 tests, compileall y Ruff; remoto: health, ready, smoke y persistencia pasan | Listo en `orivia` con `b3bd044` | Repetir después de cada push |
+| Blockchain | Hash-chain de lotes, anclaje PostgreSQL y adaptador EVM real | Polygon Amoy, contrato desplegado, pedido sintético anclado, reintento idempotente y `verified=true` contra contrato | Listo en staging | Producción requiere política de custodia, red y rotación aprobada |
+| IA | Fallback local read-only y cliente Ollama Cloud autenticado | Pedido sintético analizado por `gpt-oss:120b`; respuesta `source=ollama:gpt-oss:120b`; fallback conservado | Listo en staging | Frontend consume el contrato; producción requiere límites/costos del proveedor |
+| Docker | Compose y scripts cargan configuración de API/PostgreSQL más blockchain/Ollama | Local: 80 tests, compileall y Ruff; remoto: health, ready, smoke, persistencia, EVM y Ollama pasan | Listo en `orivia` | Repetir después de cada push |
 | Handoff frontend | Contrato de rutas, sesión, permisos, visibilidad y errores | Revisión cruzada contra `API_CONTRACT_ORIVIA.md` y pruebas de autorización | Listo en `FRONTEND_HANDOFF_ORIVIA.md` | Ángel y Daniel deben conectar pantallas |
 | Blockchain EVM público | Script de despliegue, artefacto Solidity y adaptador EVM preparados | EVM local: contrato en bloque 1, anclaje en bloque 2, `isAnchored=true`; servidor no tiene RPC, wallet ni contrato | Código validado, red pública pendiente | Requiere RPC, wallet dedicada y fondos de testnet |
 
@@ -32,18 +32,20 @@ compileall app tests: OK
 orivia Docker: servicio API y PostgreSQL saludables
 orivia smoke: `/health`, `/ready` y frontera 401 aprobados
 orivia persistence: pedido, evento, anclaje y recreación de aplicación aprobados
-orivia runtime: `ORIVIA_ORDER_REPOSITORY=postgres`, `ORIVIA_BLOCKCHAIN_BACKEND=postgres`
-orivia runtime: Ollama no instalado/configurado; UFW activo y SSH limitado a `tailscale0`
-orivia deploy: commit `f5b8f72`, migraciones sin pendientes
+orivia runtime: `ORIVIA_ORDER_REPOSITORY=postgres`, `ORIVIA_BLOCKCHAIN_BACKEND=evm`
+orivia runtime: Polygon Amoy `chain_id=80002`, contrato EVM desplegado y verificado
+orivia runtime: Ollama Cloud `gpt-oss:120b` respondió; fallback local conservado
+orivia runtime: UFW activo y SSH limitado a `tailscale0`
+orivia deploy: API/PostgreSQL saludables, migraciones sin pendientes y persistencia aprobada
 ```
 
 ## Faltantes reales, separados del bloque de Sebas
 
 1. Frontend debe construir directorio, necesidades, conexión, confianza y
    timeline del lote.
-2. Activar blockchain público requiere RPC, wallet dedicada financiada, contrato y
-   `chain_id`; no se puede completar sin esas credenciales externas.
-3. Activar Ollama real requiere un proveedor/modelo accesible; `gpt-oss:120b`
-   no es viable para esta instancia de 1.9 GiB RAM sin un endpoint remoto.
-4. Frontend debe consumir el contrato de `backend/API_CONTRACT_ORIVIA.md` y
+2. Frontend debe consumir el contrato de `backend/API_CONTRACT_ORIVIA.md` y
    configurar su origen explícito en `ORIVIA_CORS_ORIGINS`.
+3. Kevin debe cerrar la verificación de usuarios, roles persistidos, migraciones
+   y módulos empresariales sin alterar las interfaces de Sebas.
+4. Antes de producción: HTTPS, backups/restores, rotación de secretos y política
+   de custodia para la cuenta blockchain.
