@@ -8,7 +8,7 @@ Repositorio del proyecto ORIVIA para la hackatón de agroindustria de la USCO.
 - `ARQUITECTURA_ORIVIA_HACKATON.md`: arquitectura, infraestructura y seguridad.
 - `RUTA_BACKEND_ORIVIA.md`: pasos de implementación del backend.
 - `ESTRUCTURA_BACKEND_ORIVIA.md`: carpetas, responsabilidades y contrato entre módulos.
-- `backend/TEAM_STRUCTURE.md`: documentos obligatorios y carpetas asignadas a Sebas, Kevin, Ángel y Daniel.
+- `TEAM_STRUCTURE.md`: documentos obligatorios y carpetas asignadas a Sebas, Kevin, Ángel y Daniel.
 
 ## Código
 

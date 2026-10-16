@@ -9,7 +9,7 @@ Todos deben leer primero:
 1. `README.md` — mapa general del repositorio.
 2. `PLAN_HACKATON_ORIVIA.md` — objetivo, flujo de demo, equipo y reglas.
 3. `ARQUITECTURA_ORIVIA_HACKATON.md` — arquitectura, seguridad y decisiones técnicas.
-4. `backend/TEAM_STRUCTURE.md` — esta matriz de carpetas y responsables.
+4. `TEAM_STRUCTURE.md` — esta matriz de carpetas y responsables.
 
 ### Sebas
 
@@ -27,7 +27,7 @@ Además de los documentos generales, trabaja bajo:
 - `ESTRUCTURA_BACKEND_ORIVIA.md` — usuarios, PostgreSQL, migraciones e integraciones.
 - `RUTA_BACKEND_ORIVIA.md` — fases del backend y puntos de integración.
 - `backend/README.md` — requisitos de integración con la API Flask.
-- `backend/TEAM_STRUCTURE.md` — sus carpetas y reglas de coordinación.
+- `TEAM_STRUCTURE.md` — sus carpetas y reglas de coordinación.
 
 ### Ángel
 
