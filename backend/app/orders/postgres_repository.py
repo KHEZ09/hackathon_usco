@@ -12,7 +12,6 @@ from ..database.connection import fetch_all, fetch_one, transaction
 from ..tracking.event_chain import TraceEvent
 from .repository import OrderRecord, OrderRepository
 from .service import create_transition
-from .states import InvalidOrderTransition
 
 
 def _iso(value: datetime) -> str:
@@ -105,7 +104,7 @@ class PostgresOrderRepository(OrderRepository):
     def _record_from_row(self, row: dict[str, Any]) -> OrderRecord:
         payload = row.get("order_payload") or {}
         if not isinstance(payload, dict):
-            raise RuntimeError("order_payload must be a JSON object")
+            raise TypeError("order_payload must be a JSON object")
         events = self._events(str(row["order_id"]))
         return OrderRecord(
             order_id=str(row["order_id"]),
@@ -304,7 +303,7 @@ class PostgresOrderRepository(OrderRepository):
                     event.previous_status,
                     event.new_status,
                     actor_uuid,
-                    datetime.fromisoformat(transition.occurred_at.replace("Z", "+00:00")),
+                    datetime.fromisoformat(transition.occurred_at),
                     Jsonb(payload),
                     event.payload_hash,
                     event.previous_event_hash,

@@ -14,6 +14,30 @@ el adaptador de persistencia de Kevin. Los endpoints de negocio requieren un
 Todas las respuestas incluyen `X-Request-ID`. El cliente puede enviar ese valor
 para correlacionar una operación; si no lo envía, la API lo genera.
 
+Las respuestas de rutas inexistentes o métodos no permitidos son JSON con los
+códigos `NOT_FOUND` (`404`) y `METHOD_NOT_ALLOWED` (`405`). Las rutas de
+autenticación envían `Cache-Control: no-store`.
+
+## CORS y límites de login
+
+El preflight `OPTIONS` no requiere token. CORS solo responde con los encabezados
+permitidos cuando el origen coincide exactamente con uno de los valores de
+`ORIVIA_CORS_ORIGINS`; el backend nunca refleja `*` ni orígenes desconocidos.
+
+Después de cinco fallos de login desde la misma IP o para el mismo identificador
+en una ventana de diez minutos, el backend responde:
+
+```json
+{
+  "error": "LOGIN_RATE_LIMITED",
+  "retry_after_seconds": 900
+}
+```
+
+El cliente debe respetar el encabezado `Retry-After`. El limitador es local al
+proceso de Gunicorn; para múltiples réplicas se debe añadir una regla
+equivalente en el proxy o un almacenamiento compartido antes de producción.
+
 ## Autenticación
 
 | Método | Ruta | Estado |

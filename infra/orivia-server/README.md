@@ -16,6 +16,9 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
 - Este paquete todavía no afirma que el despliegue haya sido ejecutado en el servidor.
 - Los secretos y el `.env` real nunca se suben a GitHub.
 - El acceso previsto es `ssh admin@orivia` por Tailscale.
+- CORS se configura con `ORIVIA_CORS_ORIGINS` usando orígenes explícitos; no se permite `*`.
+- El login tiene límite local por IP/identificador: 5 fallos en 10 minutos y bloqueo de 15 minutos.
+- La API registra método, ruta, código y `X-Request-ID`, sin registrar tokens ni cuerpos de solicitud.
 
 ## Servidor objetivo
 
@@ -66,6 +69,18 @@ chmod 600 infra/orivia-server/.env
 nano infra/orivia-server/.env
 openssl rand -hex 32
 ```
+
+Completa también el origen real del frontend cuando esté definido:
+
+```dotenv
+ORIVIA_CORS_ORIGINS=https://tu-frontend.example
+ORIVIA_LOGIN_RATE_LIMIT_ENABLED=true
+ORIVIA_LOGIN_RATE_LIMIT_MAX_FAILURES=5
+ORIVIA_LOGIN_RATE_LIMIT_WINDOW_SECONDS=600
+ORIVIA_LOGIN_RATE_LIMIT_BLOCK_SECONDS=900
+```
+
+No uses `*` en CORS y no copies el `.env` fuera del servidor.
 
 ## Flujo obligatorio de cambios
 
@@ -151,7 +166,8 @@ No usar `down -v` salvo que se haya respaldado y aprobado explícitamente la eli
 
 ## Pendientes antes de producción
 
-- Ejecutar una prueba de rotación de refresh tokens contra una base PostgreSQL real.
 - Definir el proveedor blockchain público, si aplica.
 - Configurar HTTPS mediante un proxy y dominio aprobado.
-- Añadir backups, restauración probada y alertas de presupuesto AWS.
+- Ejecutar backup y restauración en un entorno aislado; no restaurar sobre producción sin aprobación.
+- Rotar secretos y definir retención/alertas de backups.
+- Si se despliega más de un worker o réplica, mover el límite de login a un proxy o store compartido.

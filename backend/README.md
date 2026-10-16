@@ -17,6 +17,8 @@ Este backend pertenece al repositorio de la hackatón USCO y se prepara para des
 - Base de autenticación JWT.
 - Middleware para proteger rutas con `Authorization: Bearer <token>`.
 - Configuración por variables de entorno.
+- CORS explícito para el frontend, sin reflejar orígenes no autorizados.
+- Protección contra intentos repetidos de login y respuestas JSON consistentes.
 - Ejecución local con Flask.
 - Ejecución de producción con Gunicorn.
 - Docker Compose con PostgreSQL para desarrollo.
@@ -30,6 +32,17 @@ Los endpoints de IA funcionan sin servicios externos mediante un resumen local
 determinista. Ollama es opcional: al configurar `OLLAMA_BASE_URL`, se utiliza
 el modelo indicado en `OLLAMA_MODEL` y, si no responde, se conserva el fallback
 local de solo lectura.
+
+La API permite CORS únicamente para los orígenes definidos en
+`ORIVIA_CORS_ORIGINS`, separados por coma. En desarrollo se habilitan por
+defecto `http://localhost:3000` y `http://127.0.0.1:3000`; en producción no se
+asume ningún origen. Nunca se debe configurar `*`.
+
+El login tiene un limitador local por IP y por identificador: después de cinco
+fallos dentro de diez minutos bloquea quince minutos y devuelve `429` con
+`Retry-After`. Es una defensa sin servicio externo, adecuada para el staging y
+la demo; una producción distribuida debe duplicarla en el proxy o en un store
+compartido.
 
 Kevin integrará el módulo de usuarios y las migraciones. Este backend no crea una segunda base de usuarios.
 

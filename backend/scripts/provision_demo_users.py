@@ -14,7 +14,7 @@ import bcrypt
 # Allow direct execution from /app/scripts in the production image.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.config import Settings
+from app.config import Settings  # noqa
 from app.database.connection import init_pool, transaction
 
 

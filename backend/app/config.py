@@ -21,10 +21,27 @@ class Settings:
     order_repository_backend: str
     ollama_base_url: str | None
     ollama_model: str
+    cors_origins: tuple[str, ...]
+    login_rate_limit_enabled: bool
+    login_rate_limit_max_failures: int
+    login_rate_limit_window_seconds: int
+    login_rate_limit_block_seconds: int
 
     @classmethod
     def from_env(cls) -> Settings:
         environment = os.getenv("ORIVIA_ENV", "development")
+        environment_is_development = environment.lower() == "development"
+        origins_value = os.getenv(
+            "ORIVIA_CORS_ORIGINS",
+            "http://localhost:3000,http://127.0.0.1:3000"
+            if environment_is_development
+            else "",
+        )
+        cors_origins = tuple(
+            origin.strip().rstrip("/")
+            for origin in origins_value.split(",")
+            if origin.strip()
+        )
         settings = cls(
             environment=environment,
             host=os.getenv("ORIVIA_HOST", "127.0.0.1"),
@@ -49,6 +66,20 @@ class Settings:
             ).strip().lower(),
             ollama_base_url=os.getenv("OLLAMA_BASE_URL") or None,
             ollama_model=os.getenv("OLLAMA_MODEL", "gpt-oss:120b"),
+            cors_origins=cors_origins,
+            login_rate_limit_enabled=os.getenv(
+                "ORIVIA_LOGIN_RATE_LIMIT_ENABLED", "true"
+            ).lower()
+            in {"1", "true", "yes", "on"},
+            login_rate_limit_max_failures=int(
+                os.getenv("ORIVIA_LOGIN_RATE_LIMIT_MAX_FAILURES", "5")
+            ),
+            login_rate_limit_window_seconds=int(
+                os.getenv("ORIVIA_LOGIN_RATE_LIMIT_WINDOW_SECONDS", "600")
+            ),
+            login_rate_limit_block_seconds=int(
+                os.getenv("ORIVIA_LOGIN_RATE_LIMIT_BLOCK_SECONDS", "900")
+            ),
         )
         if settings.access_token_ttl_seconds <= 0:
             raise ConfigurationError("ORIVIA_ACCESS_TOKEN_TTL_SECONDS must be positive")
@@ -58,6 +89,24 @@ class Settings:
             raise ConfigurationError(
                 "ORIVIA_ORDER_REPOSITORY must be either memory or postgres"
             )
+
+        if any(
+            origin == "*"
+            or not origin.startswith(("http://", "https://"))
+            for origin in settings.cors_origins
+        ):
+            raise ConfigurationError(
+                "ORIVIA_CORS_ORIGINS must contain explicit http(s) origins; '*' is not allowed"
+            )
+        if any(
+            value <= 0
+            for value in (
+                settings.login_rate_limit_max_failures,
+                settings.login_rate_limit_window_seconds,
+                settings.login_rate_limit_block_seconds,
+            )
+        ):
+            raise ConfigurationError("Login rate-limit settings must be positive")
 
         if settings.environment.lower() == "production":
             secret = settings.jwt_secret_key

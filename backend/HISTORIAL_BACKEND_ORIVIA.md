@@ -330,3 +330,34 @@ en el servidor. Las contraseñas no se guardaron en GitHub.
 La prueba de autenticación real confirmó login, `/auth/me`, rotación del refresh
 token y rechazo del refresh token anterior.
 
+## 12. Endurecimiento autónomo de Sebas — 2026-10-16
+
+Después de validar el flujo persistente se revisó el trabajo que podía cerrarse
+sin depender de Kevin, Ángel ni Daniel. Se incorporaron únicamente cambios en
+la factoría Flask, configuración, autenticación, seguridad y pruebas propias:
+
+- CORS exacto y configurable por `ORIVIA_CORS_ORIGINS`; no se admite `*`.
+- Preflight `OPTIONS` sin autenticación, con métodos y encabezados explícitos.
+- Respuestas JSON uniformes para `404` y `405`.
+- `Cache-Control: no-store` en login y refresh.
+- Logging operativo de método, ruta, estado y request ID sin tokens ni cuerpos.
+- Limitador local por IP e identificador para fallos de login, con `429` y
+  `Retry-After`.
+- Pruebas específicas para CORS, orígenes no confiables, errores JSON,
+  anti-abuso y no-cache de credenciales.
+
+El limitador no requiere otro servicio y es suficiente para el staging de la
+hackatón. Como límite documentado, es local a cada proceso Gunicorn; si ORIVIA
+crece a múltiples réplicas, el mismo control debe trasladarse al proxy o a un
+almacenamiento compartido.
+
+## 13. Estado de cierre del alcance Sebas
+
+El MVP de backend que pertenece a Sebas queda validado para integración:
+autenticación, pedidos persistentes, trazabilidad, auditoría, anclaje durable
+local, IA con fallback, Docker, CORS, errores, anti-abuso y pruebas de salud.
+No se marca como producción definitiva lo que requiere una decisión externa:
+dominio/HTTPS, proveedor blockchain público, despliegue real de Ollama 120B,
+retención de backups, rotación operativa de secretos y reconciliación del stack
+independiente `/home/admin/backend`.
+

@@ -32,6 +32,26 @@ def _auth_repository() -> AuthRepository:
     return repository if repository is not None else AuthRepository()
 
 
+def _login_rate_limit_keys(login: str | None) -> tuple[str, ...]:
+    remote_address = request.remote_addr or "unknown"
+    keys = [f"ip:{remote_address}"]
+    if login:
+        keys.append(f"login:{login.casefold()}")
+    return tuple(keys)
+
+
+def _rate_limit_response(retry_after: int):
+    response = jsonify(
+        {
+            "error": "LOGIN_RATE_LIMITED",
+            "message": "Demasiados intentos de acceso. Intenta nuevamente más tarde.",
+            "retry_after_seconds": retry_after,
+        }
+    )
+    response.headers["Retry-After"] = str(retry_after)
+    return response, 429
+
+
 def _credentials() -> tuple[str, str] | None:
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
@@ -94,8 +114,25 @@ def login():
         )
 
     login_value, password = credentials
+    limiter = current_app.extensions["orivia_login_rate_limiter"]
+    rate_limit_keys = _login_rate_limit_keys(login_value)
+    if current_app.config["LOGIN_RATE_LIMIT_ENABLED"]:
+        for key in rate_limit_keys:
+            decision = limiter.check(key)
+            if not decision.allowed:
+                return _rate_limit_response(decision.retry_after_seconds)
+
     row = _user_repository().by_login(login_value)
     if row is None or not verify_password(password, row.get("password_hash", "")):
+        if current_app.config["LOGIN_RATE_LIMIT_ENABLED"]:
+            decisions = [limiter.record_failure(key) for key in rate_limit_keys]
+            blocked = [
+                decision.retry_after_seconds
+                for decision in decisions
+                if not decision.allowed
+            ]
+            if blocked:
+                return _rate_limit_response(max(blocked))
         return (
             jsonify(
                 {
@@ -105,6 +142,10 @@ def login():
             ),
             401,
         )
+
+    if current_app.config["LOGIN_RATE_LIMIT_ENABLED"]:
+        for key in rate_limit_keys:
+            limiter.clear(key)
 
     try:
         normalized_roles(row)

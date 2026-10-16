@@ -14,6 +14,7 @@ from .orders.postgres_repository import PostgresOrderRepository
 from .orders.repository import InMemoryOrderRepository
 from .orders.routes import orders_bp
 from .routes import health_bp
+from .security.rate_limit import LoginRateLimiter
 
 
 def create_app(settings: Settings | None = None) -> Flask:
@@ -32,7 +33,18 @@ def create_app(settings: Settings | None = None) -> Flask:
         ORDER_REPOSITORY_BACKEND=settings.order_repository_backend,
         OLLAMA_BASE_URL=settings.ollama_base_url,
         OLLAMA_MODEL=settings.ollama_model,
+        CORS_ORIGINS=settings.cors_origins,
+        LOGIN_RATE_LIMIT_ENABLED=settings.login_rate_limit_enabled,
+        LOGIN_RATE_LIMIT_MAX_FAILURES=settings.login_rate_limit_max_failures,
+        LOGIN_RATE_LIMIT_WINDOW_SECONDS=settings.login_rate_limit_window_seconds,
+        LOGIN_RATE_LIMIT_BLOCK_SECONDS=settings.login_rate_limit_block_seconds,
         MAX_CONTENT_LENGTH=1 * 1024 * 1024,
+    )
+
+    app.extensions["orivia_login_rate_limiter"] = LoginRateLimiter(
+        max_failures=settings.login_rate_limit_max_failures,
+        window_seconds=settings.login_rate_limit_window_seconds,
+        block_seconds=settings.login_rate_limit_block_seconds,
     )
 
     @app.before_request
@@ -42,6 +54,8 @@ def create_app(settings: Settings | None = None) -> Flask:
             character.isalnum() or character in "-_" for character in incoming
         )
         g.request_id = incoming if valid else str(uuid4())
+        if request.method == "OPTIONS":
+            return ("", 204)
 
     @app.after_request
     def apply_security_headers(response):
@@ -49,6 +63,27 @@ def create_app(settings: Settings | None = None) -> Flask:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
+        origin = request.headers.get("Origin")
+        if origin and origin in app.config["CORS_ORIGINS"]:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers[
+                "Access-Control-Allow-Headers"
+            ] = "Authorization, Content-Type, X-Request-ID"
+            response.headers[
+                "Access-Control-Allow-Methods"
+            ] = "GET, POST, PATCH, DELETE, OPTIONS"
+            response.headers["Access-Control-Max-Age"] = "600"
+            response.headers.add("Vary", "Origin")
+        if request.path.startswith("/api/v1/auth/"):
+            response.headers["Cache-Control"] = "no-store"
+        app.logger.info(
+            "request method=%s path=%s status=%s request_id=%s",
+            request.method,
+            request.path,
+            response.status_code,
+            getattr(g, "request_id", "-"),
+        )
         return response
 
     @app.errorhandler(413)
@@ -62,6 +97,32 @@ def create_app(settings: Settings | None = None) -> Flask:
                 }
             ),
             413,
+        )
+
+    @app.errorhandler(404)
+    def not_found(_error):
+        return (
+            jsonify(
+                {
+                    "error": "NOT_FOUND",
+                    "message": "La ruta solicitada no existe.",
+                    "request_id": getattr(g, "request_id", None),
+                }
+            ),
+            404,
+        )
+
+    @app.errorhandler(405)
+    def method_not_allowed(_error):
+        return (
+            jsonify(
+                {
+                    "error": "METHOD_NOT_ALLOWED",
+                    "message": "El método HTTP no está permitido para esta ruta.",
+                    "request_id": getattr(g, "request_id", None),
+                }
+            ),
+            405,
         )
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
