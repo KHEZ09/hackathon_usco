@@ -16,7 +16,8 @@ COPY app ./app
 COPY migrations ./migrations
 COPY scripts ./scripts
 COPY wsgi.py ./
-RUN chmod +x scripts/*.sh scripts/migrate.py
+RUN sed -i 's/\r$//' scripts/*.sh scripts/migrate.py \
+    && chmod +x scripts/*.sh scripts/migrate.py
 
 EXPOSE 8000
 
