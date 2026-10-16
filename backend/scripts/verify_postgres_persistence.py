@@ -81,8 +81,12 @@ def main() -> int:
                 "destination": "Neiva",
             },
         )
+        created_body = created.get_json(silent=True) or {}
+        created_order = created_body.get("order")
+        if isinstance(created_order, dict):
+            order_id = created_order.get("id")
         _assert(created.status_code == 201, f"create order: {created.status_code} {created.get_data(as_text=True)}")
-        order_id = created.get_json()["order"]["id"]
+        _assert(isinstance(order_id, str) and order_id, "create order did not return an id")
 
         changed = client.patch(
             f"/api/v1/orders/{order_id}/status",
