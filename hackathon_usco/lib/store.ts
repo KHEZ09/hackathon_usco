@@ -112,7 +112,7 @@ function load(): Datos {
   return seed();
 }
 
-function getSnapshot() {
+export function getSnapshot() {
   if (!cache) cache = load();
   return cache;
 }
@@ -174,7 +174,14 @@ export function inventario(d: Datos, loteId: string) {
   const recibido = lote?.recibidoKg ?? 0;
   const consumido = trs.reduce((a, t) => a + t.entradaKg, 0);
   const producido = trs.reduce((a, t) => a + t.salidaKg, 0);
-  return { recibido, consumido, disponible: round1(recibido - consumido), producido: round1(producido) };
+  // En una cadena agroindustrial (RF02/RF08):
+  // La materia disponible para procesar es lo recibido menos lo consumido inicialmente,
+  // más el producto vendible / disponible resultante de las transformaciones previas.
+  // Si la última transformación ya produjo cacao final vendible o etapa intermedia,
+  // el stock disponible neto refleja: recibido - consumido + producido (balance de masa).
+  // Para consumo de primera etapa o etapas subsiguientes:
+  const disponible = round1(Math.max(0, recibido - consumido + producido));
+  return { recibido, consumido, disponible, producido: round1(producido) };
 }
 
 export function merma(t: Pick<Transformacion, "entradaKg" | "salidaKg">) {
@@ -316,8 +323,11 @@ export function registrarTransformacion(
   };
 }
 
-export function cambiarEstado(loteId: string, estado: Estado, motivo: string, actor: Actor): Resultado {
+export function cambiarEstado(loteId: string, estado: Estado, motivo: string, actor: Actor & { role?: string }): Resultado {
   const d = getSnapshot();
+  if (actor.role && actor.role !== "administrador") {
+    return { ok: false, error: "Acceso denegado: solo el rol Administrador puede liberar o bloquear lotes (RF09)." };
+  }
   const lote = d.lotes.find((l) => l.id === loteId);
   if (!lote) return { ok: false, error: "Lote no encontrado." };
   if (lote.estado === estado) return { ok: false, error: `${loteId} ya está ${estado.toLowerCase()}.` };

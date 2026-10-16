@@ -51,7 +51,7 @@ export function AdminPanel() {
   const { notify } = useToast();
   const [sel, setSel] = useState("CAC001");
   const [dialogo, setDialogo] = useState<Dialogo>(null);
-  const actor = { email: session?.email ?? "admin@orivia.co" };
+  const actor = { email: session?.email ?? "admin@orivia.co", role: session?.role ?? "administrador" };
   const lista = alertas(datos);
 
   const kpis = useMemo(() => {
