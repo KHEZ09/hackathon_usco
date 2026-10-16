@@ -76,6 +76,24 @@ Los documentos generales del proyecto están en la raíz del repositorio: `PLAN_
 pytest
 ```
 
+## Datos, migraciones y respaldo
+
+Los módulos de datos de Kevin se registran desde `app.database.registration`. Para aplicar migraciones con checksum:
+
+```bash
+export ORIVIA_DATABASE_URL=postgresql://orivia:orivia_dev_password@localhost:5432/orivia
+python scripts/migrate.py
+```
+
+Scripts disponibles:
+
+- `scripts/bootstrap.sh`: crea el entorno virtual e instala dependencias.
+- `scripts/migrate.py`: aplica `migrations/` en orden y detecta cambios de checksum.
+- `scripts/backup.sh`: genera un backup custom de PostgreSQL.
+- `scripts/restore.sh`: restaura un backup previamente creado.
+
+Los endpoints de Kevin incluyen usuarios, catálogo, proveedores, clientes, inventario, costos, márgenes, alertas, reportes e integraciones. Las credenciales y hashes de contraseña no se versionan.
+
 ## Responsabilidades pendientes de integración
 
 - Conectar el repositorio de usuarios de PostgreSQL.

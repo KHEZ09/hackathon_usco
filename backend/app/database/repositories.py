@@ -74,6 +74,19 @@ class AccountingRepository:
         return fetch_all("""SELECT 'LOW_STOCK' alert_type, product_id, name, available_kg, min_stock_kg
           FROM orivia.v_inventory WHERE low_stock""")
 
+    def set_lot_cost(self, lot_id: UUID | str, total_cost: Any, cost_per_kg: Any) -> dict[str, Any] | None:
+        with transaction() as connection:
+            return connection.execute("""INSERT INTO orivia.lot_cost(lot_id,total_cost,cost_per_kg)
+                VALUES(%s,%s,%s) ON CONFLICT(lot_id) DO UPDATE SET total_cost=EXCLUDED.total_cost,
+                cost_per_kg=EXCLUDED.cost_per_kg,updated_at=now() RETURNING *""", (lot_id, total_cost, cost_per_kg)).fetchone()
+
+    def margins(self) -> list[dict[str, Any]]:
+        return fetch_all("""SELECT p.sku,p.name,p.sale_price,lc.cost_per_kg,
+            (p.sale_price-lc.cost_per_kg) margin_per_kg,
+            CASE WHEN p.sale_price > 0 THEN ((p.sale_price-lc.cost_per_kg)*100/p.sale_price) ELSE 0 END margin_pct
+            FROM orivia.lot_cost lc JOIN orivia.lot l USING(lot_id) JOIN orivia.product p USING(product_id)
+            ORDER BY margin_pct ASC""")
+
 
 class ReportRepository:
     def overview(self) -> dict[str, Any]:

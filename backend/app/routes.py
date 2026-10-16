@@ -1,5 +1,7 @@
 from flask import Blueprint, current_app, jsonify
 
+from .database.connection import database_is_ready
+
 health_bp = Blueprint("health", __name__)
 
 
@@ -18,14 +20,15 @@ def health():
 @health_bp.get("/ready")
 @health_bp.get("/api/v1/ready")
 def ready():
-    """Readiness is intentionally degraded until the DB adapter is integrated."""
+    """Readiness real de la API y PostgreSQL."""
+    database_status = "ok" if database_is_ready() else "unavailable"
     return (
         jsonify(
             {
-                "status": "degraded",
+                "status": "ready" if database_status == "ok" else "degraded",
                 "service": "orivia-backend",
-                "dependencies": {"database": "pending-integration"},
+                "dependencies": {"database": database_status},
             }
         ),
-        503,
+        200 if database_status == "ok" else 503,
     )

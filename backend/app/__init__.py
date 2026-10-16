@@ -6,6 +6,7 @@ from .auth_tokens.routes import auth_bp
 from .blockchain.adapter import MemoryBlockchainAnchor
 from .blockchain.routes import blockchain_bp
 from .config import Settings
+from .database.registration import register_kevin_modules
 from .orders.repository import InMemoryOrderRepository
 from .orders.routes import orders_bp
 from .routes import health_bp
@@ -36,5 +37,6 @@ def create_app(settings: Settings | None = None) -> Flask:
     app.register_blueprint(audit_bp, url_prefix="/api/v1/audit")
     app.register_blueprint(blockchain_bp, url_prefix="/api/v1/blockchain")
     app.register_blueprint(ai_bp, url_prefix="/api/v1/ai")
+    register_kevin_modules(app)
 
     return app
