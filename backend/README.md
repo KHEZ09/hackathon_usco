@@ -1,0 +1,68 @@
+# ORIVIA Backend
+
+Base inicial de la API de ORIVIA.
+
+Este backend pertenece al repositorio de la hackatón USCO y se prepara para desplegarse en la instancia Lightsail `orivia` (Debian 13), accesible administrativamente mediante Tailscale.
+
+## Alcance de esta primera versión
+
+- Aplicación Flask con factory pattern.
+- Endpoints de salud `/health` y `/ready`.
+- Base de autenticación JWT.
+- Middleware para proteger rutas con `Authorization: Bearer <token>`.
+- Configuración por variables de entorno.
+- Ejecución local con Flask.
+- Ejecución de producción con Gunicorn.
+- Docker Compose con PostgreSQL para desarrollo.
+
+El módulo de usuarios y las migraciones serán integrados por el responsable de PostgreSQL. Este backend no crea una segunda base de usuarios.
+
+## Ejecutar localmente
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+py -m pip install -r requirements-dev.txt
+Copy-Item .env.example .env
+flask --app wsgi:create_app run --debug
+```
+
+Comprobar:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:5000/health
+Invoke-RestMethod http://127.0.0.1:5000/ready
+```
+
+## Ejecutar con Docker
+
+```bash
+docker compose up --build
+```
+
+La API queda en `http://localhost:8000` y PostgreSQL únicamente dentro de la red del compose.
+
+## Despliegue objetivo
+
+```bash
+ssh admin@orivia
+cd backend
+docker compose up -d --build
+curl http://127.0.0.1:8000/health
+```
+
+Los documentos generales del proyecto están en la raíz del repositorio: `PLAN_HACKATON_ORIVIA.md`, `ARQUITECTURA_ORIVIA_HACKATON.md`, `RUTA_BACKEND_ORIVIA.md` y `ESTRUCTURA_BACKEND_ORIVIA.md`.
+
+## Pruebas
+
+```powershell
+pytest
+```
+
+## Responsabilidades pendientes de integración
+
+- Conectar el repositorio de usuarios de PostgreSQL.
+- Implementar `POST /api/v1/auth/login` usando ese repositorio.
+- Implementar refresh token persistido y revocable.
+- Añadir modelos y migraciones del módulo de usuarios.
+- Añadir pedidos, auditoría, blockchain y Ollama sobre esta base.

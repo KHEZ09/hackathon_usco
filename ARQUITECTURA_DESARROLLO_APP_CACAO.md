@@ -1,5 +1,7 @@
 # Arquitectura y plan general de desarrollo
 
+> **Documento histórico:** este archivo conserva decisiones anteriores de CACAO/TACAO y una propuesta basada en EC2. Para el plan vigente de la hackatón debe utilizarse `PLAN_HACKATON_ORIVIA.md`, `ARQUITECTURA_ORIVIA_HACKATON.md`, `RUTA_BACKEND_ORIVIA.md` y `ESTRUCTURA_BACKEND_ORIVIA.md`.
+
 ## ORIVIA
 
 Plataforma de trazabilidad agroindustrial, pedidos verificables y analítica asistida por IA para una asociación cacaotera del Huila.
