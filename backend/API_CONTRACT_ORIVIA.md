@@ -179,6 +179,8 @@ una prueba legal, financiera ni de identidad.
 
 | Método | Ruta | Permiso | Uso |
 | --- | --- | --- | --- |
+| POST | `/api/v1/lots` | `lots:create` | RF01: registrar recepción |
+| POST | `/api/v1/lots/{lot_id}/transformations` | `lots:transform` | RF02/RF08: transformar, calcular merma y actualizar disponible |
 | GET | `/api/v1/public/lots/{lot_id}` | No | Estado público, cadena de hashes y anclaje blockchain verificable |
 | GET | `/api/v1/lots/{lot_id}` | `lots:read` | Lote, cantidades, auditorías e integridad |
 | GET | `/api/v1/lots/{lot_id}/timeline` | `lots:read` | Cadena de eventos y auditorías |
@@ -191,6 +193,15 @@ privada incluye `history_verified` y `affected_quantities`; la respuesta
 pública incluye `history_verified`, una `timeline` sanitizada (sin actor ni
 payload privado) y, cuando existe, el certificado del anclaje EVM por evento.
 No expone razones, auditorías internas, actores ni claves.
+
+La recepción exige `lot_id`, `product`, `producer`, `origin`, `received_kg` y
+`received_at`. La cantidad debe ser positiva y el identificador único. Crea un
+evento `LOT_REGISTERED`, auditoría y anclaje blockchain.
+
+La transformación exige `operation_code`, `stage`, `responsible`, `input_kg`,
+`output_kg` e `incident`. El backend rechaza consumir más de lo disponible,
+actualiza el inventario, calcula merma y genera alerta cuando supera 15 %. La
+misma `operation_code` es idempotente: reintentarla no duplica el consumo.
 
 Regresión de la incidencia anunciada para la hora 12:
 

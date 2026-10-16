@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from math import isfinite
 from dataclasses import dataclass, field
 from threading import RLock
 
@@ -7,6 +8,7 @@ from ..audit.service import AuditRecord, create_audit_record
 from ..tracking.event_chain import TraceEvent
 
 LOT_STATUSES = frozenset({"PENDING", "LIBERATED", "BLOCKED"})
+MERMA_ALERT_THRESHOLD = 15.0
 ALLOWED_TRANSITIONS = {
     "PENDING": frozenset({"LIBERATED", "BLOCKED"}),
     "LIBERATED": frozenset({"BLOCKED"}),
@@ -16,6 +18,10 @@ ALLOWED_TRANSITIONS = {
 
 class LotTransitionError(ValueError):
     """The proposed lot status is invalid or lacks an explanation."""
+
+
+class LotValidationError(ValueError):
+    """Reception or transformation input cannot be accepted."""
 
 
 @dataclass
@@ -28,6 +34,7 @@ class LotRecord:
     available_kg: float
     status: str
     created_at: str
+    received_at: str | None = None
     events: list[TraceEvent] = field(default_factory=list)
     payloads: dict[str, dict[str, object]] = field(default_factory=dict)
     audits: list[AuditRecord] = field(default_factory=list)
@@ -86,6 +93,7 @@ class InMemoryLotRepository:
         available_kg: float,
         status: str,
         actor_id: str,
+        received_at: str | None = None,
     ) -> LotRecord:
         from ..cluster.models import utc_now
 
@@ -98,6 +106,7 @@ class InMemoryLotRepository:
             available_kg=available_kg,
             status=status,
             created_at=utc_now(),
+            received_at=received_at,
         )
         payload = {
             "lot_id": lot_id,
@@ -106,6 +115,7 @@ class InMemoryLotRepository:
             "producer": producer,
             "received_kg": received_kg,
             "available_kg": available_kg,
+            "received_at": received_at,
         }
         event = TraceEvent.create(
             order_id=lot_id,
@@ -122,6 +132,145 @@ class InMemoryLotRepository:
 
     def get(self, lot_id: str) -> LotRecord | None:
         return self._lots.get(lot_id)
+
+    def create(
+        self,
+        *,
+        lot_id: str,
+        product: str,
+        origin: str,
+        producer: str,
+        received_kg: float,
+        actor_id: str,
+        received_at: str | None = None,
+    ) -> LotRecord:
+        lot_id = lot_id.strip()
+        product = product.strip()
+        origin = origin.strip()
+        producer = producer.strip()
+        if not all((lot_id, product, origin, producer)):
+            raise LotValidationError("lot_id, product, origin and producer are required")
+        if len(lot_id) > 80:
+            raise LotValidationError("lot_id is too long")
+        try:
+            received_kg = float(received_kg)
+        except (TypeError, ValueError) as exc:
+            raise LotValidationError("received_kg must be numeric") from exc
+        if not isfinite(received_kg) or received_kg <= 0:
+            raise LotValidationError("received_kg must be finite and greater than zero")
+        with self._lock:
+            if lot_id in self._lots:
+                raise LotValidationError("lot_id already exists")
+            return self._register(
+                lot_id=lot_id,
+                product=product,
+                origin=origin,
+                producer=producer,
+                received_kg=received_kg,
+                available_kg=received_kg,
+                status="PENDING",
+                actor_id=actor_id,
+                received_at=received_at,
+            )
+
+    def transform(
+        self,
+        *,
+        lot_id: str,
+        operation_code: str,
+        stage: str,
+        responsible: str,
+        input_kg: float,
+        output_kg: float,
+        incident: str,
+        actor_id: str,
+    ) -> tuple[LotRecord, bool]:
+        operation_code = operation_code.strip()
+        stage = stage.strip()
+        responsible = responsible.strip()
+        incident = incident.strip()
+        if not operation_code or not stage or not responsible:
+            raise LotValidationError("operation_code, stage and responsible are required")
+        try:
+            input_kg = float(input_kg)
+            output_kg = float(output_kg)
+        except (TypeError, ValueError) as exc:
+            raise LotValidationError("input_kg and output_kg must be numeric") from exc
+        if not isfinite(input_kg) or input_kg <= 0:
+            raise LotValidationError("input_kg must be finite and greater than zero")
+        if not isfinite(output_kg) or output_kg < 0 or output_kg > input_kg:
+            raise LotValidationError("output_kg must be finite, non-negative and no greater than input_kg")
+        with self._lock:
+            for existing_lot in self._lots.values():
+                for payload in existing_lot.payloads.values():
+                    if payload.get("operation_code") == operation_code:
+                        if existing_lot.lot_id != lot_id:
+                            raise LotValidationError("operation_code already belongs to another lot")
+                        return existing_lot, False
+            lot = self.get(lot_id)
+            if lot is None:
+                raise KeyError(lot_id)
+            if lot.status == "BLOCKED":
+                raise LotValidationError("blocked lots cannot be transformed")
+            if input_kg > lot.available_kg:
+                raise LotValidationError("input_kg exceeds the available inventory")
+            available_before = lot.available_kg
+            available_after = available_before - input_kg + output_kg
+            merma_kg = input_kg - output_kg
+            merma_pct = (merma_kg * 100 / input_kg) if input_kg else 0
+            alert = (
+                {
+                    "type": "MERMA",
+                    "threshold_pct": MERMA_ALERT_THRESHOLD,
+                    "message": f"Merma {merma_pct:g}% supera el umbral de {MERMA_ALERT_THRESHOLD:g}%.",
+                }
+                if merma_pct > MERMA_ALERT_THRESHOLD
+                else None
+            )
+            payload = {
+                "lot_id": lot_id,
+                "operation_code": operation_code,
+                "stage": stage,
+                "responsible": responsible,
+                "input_kg": input_kg,
+                "output_kg": output_kg,
+                "merma_kg": merma_kg,
+                "merma_pct": merma_pct,
+                "alert": alert,
+                "incident": incident,
+                "available_before_kg": available_before,
+                "available_after_kg": available_after,
+            }
+            event = TraceEvent.create(
+                order_id=lot_id,
+                event_type="LOT_TRANSFORMED",
+                actor_id=actor_id,
+                previous_status=lot.status,
+                new_status=lot.status,
+                payload=payload,
+                previous_event_hash=lot.events[-1].event_hash if lot.events else None,
+            )
+            lot.available_kg = available_after
+            lot.events.append(event)
+            lot.payloads[event.event_id] = payload
+            lot.audits.append(
+                create_audit_record(
+                    actor_id=actor_id,
+                    action="LOT_TRANSFORMED",
+                    entity_type="lot",
+                    entity_id=lot_id,
+                    changes={
+                        "operation_code": operation_code,
+                        "stage": stage,
+                        "input_kg": input_kg,
+                        "output_kg": output_kg,
+                        "merma_pct": merma_pct,
+                        "available_before_kg": available_before,
+                        "available_after_kg": available_after,
+                    },
+                )
+            )
+            return lot, True
 
     def timeline(self, lot_id: str) -> list[TraceEvent]:
         lot = self.get(lot_id)

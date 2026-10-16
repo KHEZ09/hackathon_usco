@@ -299,6 +299,42 @@ export async function updateLotStatus(lotId: string, status: "PENDING" | "LIBERA
   });
 }
 
+export type ApiLotMutationResponse = {
+  lot: ApiPublicLot & Record<string, unknown>;
+  blockchain?: ApiBlockchainReceipt;
+  idempotent?: boolean;
+};
+
+export async function createLot(payload: {
+  lot_id: string;
+  product: string;
+  origin: string;
+  producer: string;
+  received_kg: number;
+  received_at?: string;
+}) {
+  return request<ApiLotMutationResponse>("/lots", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function transformLot(payload: {
+  lot_id: string;
+  operation_code: string;
+  stage: string;
+  responsible: string;
+  input_kg: number;
+  output_kg: number;
+  incident?: string;
+}) {
+  const { lot_id, ...body } = payload;
+  return request<ApiLotMutationResponse>(`/lots/${encodeURIComponent(lot_id)}/transformations`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function getPublicClusterActors() {
   const response = await request<{ actors: ApiClusterActor[] }>("/public/cluster/actors");
   return response.actors;

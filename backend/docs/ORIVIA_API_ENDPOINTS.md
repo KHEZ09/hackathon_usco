@@ -117,6 +117,8 @@ indica si respondió Ollama Cloud o el fallback local; la IA no modifica datos.
 
 | Método | Ruta | Auth/permisos | Uso |
 | --- | --- | --- | --- |
+| POST | /api/v1/lots | lots:create | RF01: registrar recepción de lote |
+| POST | /api/v1/lots/{lot_id}/transformations | lots:transform | RF02/RF08: transformar, calcular merma y descontar inventario |
 | GET | /api/v1/public/lots/{lot_id} | Público | Estado, cadena SHA y certificado blockchain público |
 | GET | /api/v1/lots/{lot_id} | lots:read | Lote, auditoría e integridad |
 | GET | /api/v1/lots/{lot_id}/timeline | lots:read | Eventos y auditorías |
@@ -124,6 +126,30 @@ indica si respondió Ollama Cloud o el fallback local; la IA no modifica datos.
 
 Estados válidos: PENDING, LIBERATED y BLOCKED. El cambio exige reason y crea
 evento, auditoría y anclaje. La incidencia de referencia es:
+
+La recepción acepta `lot_id`, `product`, `producer`, `origin`, `received_kg` y
+`received_at`; exige cantidad positiva y un identificador único. La respuesta
+crea el evento `LOT_REGISTERED`, deja el lote en `PENDING`, registra auditoría
+y ancla el hash. La transformación acepta `operation_code`, `stage`,
+`responsible`, `input_kg`, `output_kg` e `incident`. Rechaza consumir más de lo
+disponible, permite salida cero, calcula `merma_kg`/`merma_pct`, genera alerta
+cuando la merma supera 15 %, actualiza inventario y ancla `LOT_TRANSFORMED`.
+Repetir la misma `operation_code` devuelve el resultado sin duplicar consumo.
+
+    POST /api/v1/lots
+    Authorization: Bearer <operator-access-token>
+    Content-Type: application/json
+
+    {"lot_id":"CAC004","product":"Cacao seco","producer":"Finca Demo",
+     "origin":"Rivera, Huila","received_kg":100,"received_at":"2026-10-16"}
+
+    POST /api/v1/lots/CAC004/transformations
+    Authorization: Bearer <operator-access-token>
+    Content-Type: application/json
+
+    {"operation_code":"OP-CAC004-001","stage":"Fermentación y secado",
+     "responsible":"Operador de beneficio","input_kg":100,"output_kg":80,
+     "incident":"Lluvias durante el secado."}
 
     PATCH /api/v1/lots/CAC001/status
     Authorization: Bearer <admin-access-token>

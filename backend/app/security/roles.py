@@ -13,6 +13,8 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
             "needs:create",
             "trust:read",
             "lots:read",
+            "lots:create",
+            "lots:transform",
             "catalog:read",
         }
     ),

@@ -25,7 +25,7 @@ import { Button, Card, CardTitle, EstadoBadge, Field, Input, Kpi, Select, Table,
 import { PanelTabs } from "../PanelTabs";
 import { ClusterView } from "../cluster/ClusterView";
 import { cn } from "@/lib/cn";
-import { ApiOrder, createOrder, listOrders, transitionOrder } from "@/lib/orivia-api";
+import { ApiOrder, createLot, createOrder, hasApiSession, listOrders, transformLot, transitionOrder } from "@/lib/orivia-api";
 
 const newIdem = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 const hoy = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
@@ -209,24 +209,49 @@ function RecepcionForm() {
   const datos = useDatos();
   const session = useSession();
   const { notify } = useToast();
-  const [form, setForm] = useState({ id: "", productor: "", origen: "Rivera" as Origen, kg: "", fecha: hoy() });
+  const [form, setForm] = useState({ id: "", producto: "Cacao de montaña", productor: "", origen: "Rivera" as Origen, kg: "", fecha: hoy() });
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const sugerido = siguienteIdLote(datos);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
+    const id = form.id || sugerido;
+    setSaving(true);
+    if (hasApiSession()) {
+      try {
+        await createLot({
+          lot_id: id,
+          product: form.producto,
+          producer: form.productor,
+          origin: `${form.origen}, Huila`,
+          received_kg: Number(form.kg),
+          received_at: form.fecha,
+        });
+      } catch (remoteError) {
+        const message = remoteError instanceof Error ? remoteError.message : "No se pudo persistir la recepción en la API.";
+        setError(message);
+        notify("error", "Lote no registrado", message);
+        setSaving(false);
+        return;
+      }
+    }
     const r = crearLote(
-      { id: form.id || sugerido, productor: form.productor, origen: form.origen, recibidoKg: Number(form.kg), fecha: form.fecha },
+      { id, productor: form.productor, origen: form.origen, recibidoKg: Number(form.kg), fecha: form.fecha },
       { email: session?.email ?? "operador@orivia.co" },
     );
     if (!r.ok) {
-      setError(r.error);
-      notify("error", "Lote no registrado", r.error);
-      return;
+      if (!hasApiSession()) {
+        setError(r.error);
+        notify("error", "Lote no registrado", r.error);
+        setSaving(false);
+        return;
+      }
     }
     setError(null);
-    notify("exito", "Lote recibido", r.mensaje);
-    setForm({ id: "", productor: "", origen: form.origen, kg: "", fecha: hoy() });
+    notify("exito", "Lote recibido", hasApiSession() ? "Persistido en la API y reflejado en el panel." : r.ok ? r.mensaje : "Lote reflejado en el panel local.");
+    setForm({ id: "", producto: "Cacao de montaña", productor: "", origen: form.origen, kg: "", fecha: hoy() });
+    setSaving(false);
   };
 
   return (
@@ -238,6 +263,9 @@ function RecepcionForm() {
         </Field>
         <Field label="Nombre del productor">
           <Input value={form.productor} placeholder="Productor D" onChange={(e) => setForm({ ...form, productor: e.target.value })} />
+        </Field>
+        <Field label="Producto">
+          <Input value={form.producto} placeholder="Cacao de montaña" onChange={(e) => setForm({ ...form, producto: e.target.value })} />
         </Field>
         <Field label="Origen">
           <Select value={form.origen} onChange={(e) => setForm({ ...form, origen: e.target.value as Origen })}>
@@ -253,7 +281,7 @@ function RecepcionForm() {
           <Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} />
         </Field>
         <div className="flex items-end">
-          <Button type="submit" className="w-full py-3">
+          <Button type="submit" disabled={saving} className="w-full py-3">
             <ClipboardPlus className="size-4" /> Registrar lote
           </Button>
         </div>
@@ -275,6 +303,7 @@ function TransformacionForm() {
   const [idem, setIdem] = useState(newIdem);
   const [ultimo, setUltimo] = useState<Payload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const loteId = form.loteId || disponibles[0]?.id || "";
   const inv = loteId ? inventario(datos, loteId) : null;
@@ -282,11 +311,41 @@ function TransformacionForm() {
   const salida = Number(form.salida);
   const mermaPrevia = entrada > 0 && salida > 0 ? merma({ entradaKg: entrada, salidaKg: salida }) : null;
 
-  const enviar = (payload: Payload, reenvio = false) => {
+  const enviar = async (payload: Payload, reenvio = false) => {
+    setSaving(true);
+    if (hasApiSession()) {
+      try {
+        const remote = await transformLot({
+          lot_id: payload.loteId,
+          operation_code: payload.idem,
+          stage: payload.etapa,
+          responsible: payload.responsable,
+          input_kg: payload.entradaKg,
+          output_kg: payload.salidaKg,
+          incident: payload.incidencias,
+        });
+        const local = registrarTransformacion(payload, { email: session?.email ?? "operador@orivia.co" }, true);
+        if (!local.ok && !remote.idempotent) throw new Error(local.error);
+        setError(null);
+        notify("exito", remote.idempotent ? "Reenvío idempotente" : "Transformación registrada", remote.idempotent ? "La API no duplicó la operación." : "API persistida · merma calculada y trazabilidad actualizada.");
+        setUltimo(payload);
+        setIdem(newIdem());
+        setForm({ ...form, entrada: "", salida: "", incidencias: "" });
+        setSaving(false);
+        return;
+      } catch (remoteError) {
+        const message = remoteError instanceof Error ? remoteError.message : "No se pudo persistir la transformación en la API.";
+        setError(reenvio ? null : message);
+        notify(reenvio ? "info" : "error", reenvio ? "Reenvío bloqueado" : "Transformación rechazada", message);
+        setSaving(false);
+        return;
+      }
+    }
     const r = registrarTransformacion(payload, { email: session?.email ?? "operador@orivia.co" }, online);
     if (!r.ok) {
       setError(reenvio ? null : r.error);
       notify(reenvio ? "info" : "error", reenvio ? "Reenvío bloqueado" : "Transformación rechazada", r.error);
+      setSaving(false);
       return;
     }
     setError(null);
@@ -294,6 +353,7 @@ function TransformacionForm() {
     setUltimo(payload);
     setIdem(newIdem());
     setForm({ ...form, entrada: "", salida: "", incidencias: "" });
+    setSaving(false);
   };
 
   const submit = (e: FormEvent) => {
@@ -364,7 +424,7 @@ function TransformacionForm() {
           <ErrorLine error={error} />
           <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
             <p className="font-mono text-[0.62rem] text-ink-soft">clave de idempotencia · {idem.slice(0, 8)}</p>
-            <Button type="submit" className="px-6 py-3">
+            <Button type="submit" disabled={saving} className="px-6 py-3">
               <Factory className="size-4" /> Registrar transformación
             </Button>
           </div>

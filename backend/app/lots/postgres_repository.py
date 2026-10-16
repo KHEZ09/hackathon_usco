@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+from math import isfinite
 from typing import Any
 
 from ..audit.service import AuditRecord, create_audit_record
@@ -10,8 +11,10 @@ from ..tracking.event_chain import TraceEvent
 from .repository import (
     ALLOWED_TRANSITIONS,
     LOT_STATUSES,
+    MERMA_ALERT_THRESHOLD,
     LotRecord,
     LotTransitionError,
+    LotValidationError,
 )
 
 
@@ -159,6 +162,222 @@ class PostgresLotRepository:
     def get(self, lot_id: str) -> LotRecord | None:
         self._ensure_seed(lot_id)
         return self._load(lot_id)
+
+    def create(
+        self,
+        *,
+        lot_id: str,
+        product: str,
+        origin: str,
+        producer: str,
+        received_kg: float,
+        actor_id: str,
+        received_at: str | None = None,
+    ) -> LotRecord:
+        lot_id = lot_id.strip()
+        product = product.strip()
+        origin = origin.strip()
+        producer = producer.strip()
+        if not all((lot_id, product, origin, producer)):
+            raise LotValidationError("lot_id, product, origin and producer are required")
+        try:
+            received_kg = float(received_kg)
+        except (TypeError, ValueError) as exc:
+            raise LotValidationError("received_kg must be numeric") from exc
+        if not isfinite(received_kg) or received_kg <= 0:
+            raise LotValidationError("received_kg must be finite and greater than zero")
+        with transaction() as connection:
+            if connection.execute(
+                "SELECT 1 FROM orivia.trace_lot WHERE lot_id=%s", (lot_id,)
+            ).fetchone():
+                raise LotValidationError("lot_id already exists")
+            connection.execute(
+                """
+                INSERT INTO orivia.trace_lot(
+                  lot_id, product, origin, producer, received_kg, available_kg, status
+                ) VALUES(%s,%s,%s,%s,%s,%s,'PENDING')
+                """,
+                (lot_id, product, origin, producer, received_kg, received_kg),
+            )
+            payload = {
+                "lot_id": lot_id,
+                "product": product,
+                "origin": origin,
+                "producer": producer,
+                "received_kg": received_kg,
+                "available_kg": received_kg,
+                "received_at": received_at,
+            }
+            event = TraceEvent.create(
+                order_id=lot_id,
+                event_type="LOT_REGISTERED",
+                actor_id=actor_id,
+                previous_status=None,
+                new_status="PENDING",
+                payload=payload,
+            )
+            connection.execute(
+                """
+                INSERT INTO orivia.trace_lot_event(
+                  event_id, lot_id, event_type, actor_id, previous_status,
+                  new_status, occurred_at, payload, payload_hash,
+                  previous_event_hash, event_hash
+                ) VALUES(%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s)
+                """,
+                (
+                    event.event_id, lot_id, event.event_type, event.actor_id,
+                    event.previous_status, event.new_status, event.occurred_at,
+                    json.dumps(payload, ensure_ascii=False), event.payload_hash,
+                    event.previous_event_hash, event.event_hash,
+                ),
+            )
+        result = self._load(lot_id)
+        if result is None:
+            raise RuntimeError("lot disappeared after creation")
+        return result
+
+    def transform(
+        self,
+        *,
+        lot_id: str,
+        operation_code: str,
+        stage: str,
+        responsible: str,
+        input_kg: float,
+        output_kg: float,
+        incident: str,
+        actor_id: str,
+    ) -> tuple[LotRecord, bool]:
+        operation_code = operation_code.strip()
+        stage = stage.strip()
+        responsible = responsible.strip()
+        incident = incident.strip()
+        if not operation_code or not stage or not responsible:
+            raise LotValidationError("operation_code, stage and responsible are required")
+        try:
+            input_kg = float(input_kg)
+            output_kg = float(output_kg)
+        except (TypeError, ValueError) as exc:
+            raise LotValidationError("input_kg and output_kg must be numeric") from exc
+        if not isfinite(input_kg) or input_kg <= 0:
+            raise LotValidationError("input_kg must be finite and greater than zero")
+        if not isfinite(output_kg) or output_kg < 0 or output_kg > input_kg:
+            raise LotValidationError("output_kg must be finite, non-negative and no greater than input_kg")
+        with transaction() as connection:
+            existing = connection.execute(
+                "SELECT lot_id FROM orivia.trace_lot_event WHERE operation_code=%s",
+                (operation_code,),
+            ).fetchone()
+            if existing is not None:
+                if str(existing["lot_id"]) != lot_id:
+                    raise LotValidationError("operation_code already belongs to another lot")
+                result = self._load(lot_id)
+                if result is None:
+                    raise RuntimeError("idempotent transformation lot disappeared")
+                return result, False
+            row = connection.execute(
+                "SELECT * FROM orivia.trace_lot WHERE lot_id=%s FOR UPDATE",
+                (lot_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(lot_id)
+            current_status = str(row["status"])
+            if current_status == "BLOCKED":
+                raise LotValidationError("blocked lots cannot be transformed")
+            available_before = _number(row["available_kg"])
+            if input_kg > available_before:
+                raise LotValidationError("input_kg exceeds the available inventory")
+            available_after = available_before - input_kg + output_kg
+            merma_kg = input_kg - output_kg
+            merma_pct = (merma_kg * 100 / input_kg) if input_kg else 0
+            alert = (
+                {
+                    "type": "MERMA",
+                    "threshold_pct": MERMA_ALERT_THRESHOLD,
+                    "message": f"Merma {merma_pct:g}% supera el umbral de {MERMA_ALERT_THRESHOLD:g}%.",
+                }
+                if merma_pct > MERMA_ALERT_THRESHOLD
+                else None
+            )
+            payload = {
+                "lot_id": lot_id,
+                "operation_code": operation_code,
+                "stage": stage,
+                "responsible": responsible,
+                "input_kg": input_kg,
+                "output_kg": output_kg,
+                "merma_kg": merma_kg,
+                "merma_pct": merma_pct,
+                "alert": alert,
+                "incident": incident,
+                "available_before_kg": available_before,
+                "available_after_kg": available_after,
+            }
+            previous = connection.execute(
+                """
+                SELECT event_hash FROM orivia.trace_lot_event
+                WHERE lot_id=%s ORDER BY occurred_at DESC, event_id DESC LIMIT 1
+                """,
+                (lot_id,),
+            ).fetchone()
+            event = TraceEvent.create(
+                order_id=lot_id,
+                event_type="LOT_TRANSFORMED",
+                actor_id=actor_id,
+                previous_status=current_status,
+                new_status=current_status,
+                payload=payload,
+                previous_event_hash=previous["event_hash"] if previous else None,
+            )
+            connection.execute(
+                "UPDATE orivia.trace_lot SET available_kg=%s, updated_at=now() WHERE lot_id=%s",
+                (available_after, lot_id),
+            )
+            connection.execute(
+                """
+                INSERT INTO orivia.trace_lot_event(
+                  event_id, lot_id, event_type, operation_code, actor_id,
+                  previous_status, new_status, occurred_at, payload, payload_hash,
+                  previous_event_hash, event_hash
+                ) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s)
+                """,
+                (
+                    event.event_id, lot_id, event.event_type, operation_code,
+                    event.actor_id, event.previous_status, event.new_status,
+                    event.occurred_at, json.dumps(payload, ensure_ascii=False),
+                    event.payload_hash, event.previous_event_hash, event.event_hash,
+                ),
+            )
+            audit = create_audit_record(
+                actor_id=actor_id,
+                action="LOT_TRANSFORMED",
+                entity_type="lot",
+                entity_id=lot_id,
+                changes={
+                    "operation_code": operation_code,
+                    "stage": stage,
+                    "input_kg": input_kg,
+                    "output_kg": output_kg,
+                    "merma_pct": merma_pct,
+                    "available_before_kg": available_before,
+                    "available_after_kg": available_after,
+                },
+            )
+            connection.execute(
+                """
+                INSERT INTO orivia.trace_lot_audit(
+                  audit_id, lot_id, actor_id, action, entity_type, changes
+                ) VALUES(%s,%s,%s,%s,%s,%s::jsonb)
+                """,
+                (
+                    audit.audit_id, lot_id, audit.actor_id, audit.action,
+                    audit.entity_type, json.dumps(audit.changes, ensure_ascii=False),
+                ),
+            )
+        result = self._load(lot_id)
+        if result is None:
+            raise RuntimeError("lot disappeared after transformation")
+        return result, True
 
     def timeline(self, lot_id: str) -> list[TraceEvent]:
         lot = self.get(lot_id)
