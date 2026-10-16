@@ -11,24 +11,27 @@ import { clearAuthTokens, login as loginApi, OriviaApiError } from "@/lib/orivia
 type Props = {
   open: boolean;
   initialRole?: Role;
+  /** Correo recién registrado para precargar el formulario. */
+  initialEmail?: string;
+  onRegister?: () => void;
   onClose: () => void;
   onSuccess: (session: Session) => void;
 };
 
 const ROLE_ORDER: Role[] = ["operador", "administrador", "comprador"];
 
-export function LoginModal({ open, initialRole = "operador", onClose, onSuccess }: Props) {
+export function LoginModal({ open, initialRole = "operador", initialEmail, onRegister, onClose, onSuccess }: Props) {
   return (
     <AnimatePresence>
-      {open && <LoginDialog initialRole={initialRole} onClose={onClose} onSuccess={onSuccess} />}
+      {open && <LoginDialog key={initialEmail ?? "login"} initialRole={initialRole} initialEmail={initialEmail} onRegister={onRegister} onClose={onClose} onSuccess={onSuccess} />}
     </AnimatePresence>
   );
 }
 
 /** Se monta en cada apertura, así el formulario siempre arranca limpio. */
-function LoginDialog({ initialRole = "operador", onClose, onSuccess }: Omit<Props, "open">) {
+function LoginDialog({ initialRole = "operador", initialEmail, onRegister, onClose, onSuccess }: Omit<Props, "open">) {
   const [role, setRole] = useState<Role>(initialRole);
-  const [email, setEmail] = useState(ROLES[initialRole].email);
+  const [email, setEmail] = useState(initialEmail ?? ROLES[initialRole].email);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -270,6 +273,15 @@ function LoginDialog({ initialRole = "operador", onClose, onSuccess }: Omit<Prop
                     </>
                   )}
                 </button>
+
+                {onRegister && (
+                  <p className="text-center text-xs text-ink-soft">
+                    ¿No tienes cuenta?{" "}
+                    <button type="button" onClick={onRegister} className="font-semibold text-bosque underline-offset-2 hover:underline dark:text-bosque-300">
+                      Crear cuenta
+                    </button>
+                  </p>
+                )}
 
                 <p className="text-center text-[0.7rem] leading-relaxed text-ink-soft">
                   Modo demostración: usuarios sintéticos y validación local. La autenticación real se conecta al

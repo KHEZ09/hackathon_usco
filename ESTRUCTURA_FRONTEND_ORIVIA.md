@@ -72,10 +72,10 @@ La ruta principal `app/page.tsx` renderiza `components/landing/LandingPage.tsx`,
    5. QR verificable: tarjeta con sello «VERIFICADO», QR real hacia `/ficha/CAC001` y «Cada grano tiene una historia» escrito con el scroll.
 
    **Contenido editable:** textos, insignias, botones (`navigate`, `modal` o `scroll`), métricas y tramos de la secuencia de cada etapa están en `data/cacaoProcessData.ts` (`CACAO_STAGES`, `PROCESS_SEQUENCE`, interfaz `ProcessStage`). Los componentes de `components/landing/proceso/` solo los presentan:
-   - `ProcessSequence.tsx`: el recorrido completo del video (mazorca → apertura → cajón → bandeja → saco) como una sola secuencia continua de 152 cuadros WebP en Canvas 2D. Cada etapa recorre su tramo (`sequenceRange`); el avance se suaviza con un resorte de Framer Motion y los cuadros se funden solo en el instante del cambio para evitar doble imagen. Carga por prioridad cerca del cuadro actual y se pausa fuera de pantalla.
+   - `ProcessSequence.tsx`: el recorrido completo del video (mazorca → apertura → cajón → bandeja → saco) (mazorca → apertura → cajón → bandeja → saco → QR verificado) como una sola secuencia continua de 151 cuadros WebP en Canvas 2D; el video es solo el fondo y el stepper, textos, botones, métricas y barra de progreso se dibujan encima desde `data/cacaoProcessData.ts`. Cada etapa recorre su tramo (`sequenceRange`); el avance se suaviza con un resorte de Framer Motion y los cuadros se funden solo en el instante del cambio para evitar doble imagen. Carga por prioridad cerca del cuadro actual y se pausa fuera de pantalla.
    - `PodSection.tsx`: integra la secuencia con degradados y viñetas, partículas doradas, stepper, textos, métricas, flechas, progreso y la etapa final.
    - `AccionEtapa.tsx`: los modales «Registrar una etapa» y «Ver alertas» usan los datos reales del almacén local; «Verificar un producto» abre la verificación SHA-256 de CAC001.
-   - `EscenaQr.tsx` y `Caligrafia.tsx`: la etapa del QR verificable, que se conserva; el recorrido se oscurece y desenfoca detrás de la tarjeta.
+   - `Caligrafia.tsx`: texto de la etapa del QR verificable. El QR y el sello «VERIFICADO» vienen del propio video, por eso ya no se superpone `EscenaQr.tsx` (queda sin uso).
 6. **Trazabilidad — `TraceSection.tsx`:** selector de CAC001–CAC003, pasos de recepción, fermentación, secado y producto, cantidades, responsables, estados y alerta visual de merma.
 7. **Analítica — `AnalyticsSection.tsx`:** gráficas de muestra, asistente visual para explicar una alerta y tarjeta con costo unitario, margen y supuestos.
 8. **Historia de producto — `StoryBanner.tsx`:** frases de marca rotativas, gráfico de cosecha y bloque de verificación.
@@ -149,7 +149,7 @@ El tema también ofrece superficies, tarjetas, texto y bordes semánticos que se
 En `hackathon_usco/public/media/` se encuentran:
 
 - `hero/f000.jpg`–`hero/f072.jpg`: 73 cuadros (0–3,6 s, 20 fps) del video de referencia del cacaotal con la libélula.
-- `proceso/viaje/v000.webp`–`v151.webp`: recorrido continuo de `gemini_generated_video_dc3571d6.mp4` (0,4 s – 7,95 s a 20 fps). La interfaz impresa del video se recortó o se tapó: la barra superior, el texto lateral, las flechas, los puntos y el cursor. Los `.jpg` de la misma carpeta son el respaldo mientras carga.
+- `proceso/viaje/v000.webp`–`v150.webp`: recorrido continuo del video de fondo «WhatsApp Video 2026-10-16 at 07.31.39.mp4» (10 s, 1280×720, 15 fps), que no trae interfaz impresa. Tramos por etapa: cosecha 0–36, fermentación 36–67, secado 67–95, empaque 95–127 y QR verificable 127–150. Los `.jpg` de la misma carpeta son el respaldo mientras carga.
 - `proceso/cosecha.jpg`, `apertura.jpg`, `fermentacion.jpg`, `secado.jpg` y `empaque.jpg`: cinco recortes fijos de `gemini_generated_video_dc3571d6.mp4`, también proporcionado por el equipo. Se limpiaron el cursor y la interfaz impresos en el video; el video no se incluye en el repositorio. Los 35 cuadros anteriores de la mazorca (`mazorca/`) se eliminaron.
 - `hero-poster.jpg`, `cacaotal.jpg`, `cosecha-mano.jpg`, `mazorcas-arbol.jpg`, `paisaje-cacao.jpg` y `mazorca-abierta.jpg`: recortes fijos del mismo video.
 

@@ -5,6 +5,7 @@ from ..catalog.routes import catalog_bp
 from ..integrations.routes import integrations_bp
 from ..reports.routes import reports_bp
 from ..users.routes import users_bp
+from ..users.self_registration import registration_bp
 from .cluster_repositories import (
     ActorConnectionRepository,
     ActorNeedRepository,
@@ -30,6 +31,7 @@ def register_kevin_modules(app: Flask) -> None:
         "trust_signals": TrustSignalRepository(),
     }
     app.register_blueprint(users_bp, url_prefix="/api/v1")
+    app.register_blueprint(registration_bp, url_prefix="/api/v1")
     app.register_blueprint(catalog_bp, url_prefix="/api/v1")
     app.register_blueprint(accounting_bp, url_prefix="/api/v1")
     app.register_blueprint(reports_bp, url_prefix="/api/v1")

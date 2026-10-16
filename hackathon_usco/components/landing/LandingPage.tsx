@@ -15,6 +15,7 @@ import { ScrollCompanion } from "./ScrollCompanion";
 import { CacaoBranch, useWind } from "./Botanica";
 import { PodSection } from "./PodSection";
 import { LoginModal } from "@/components/auth/LoginModal";
+import { RegisterModal } from "@/components/auth/RegisterModal";
 import { ROLES, ROLE_HOME, useSession, writeSession, type Role, type Session } from "@/components/auth/roles";
 import { Toaster, useToast } from "@/components/ui/Toaster";
 import { clearAuthTokens } from "@/lib/orivia-api";
@@ -34,7 +35,8 @@ function Landing() {
   const mainRef = useRef<HTMLElement>(null);
   const session = useSession();
   const router = useRouter();
-  const [login, setLogin] = useState<{ open: boolean; role: Role }>({ open: false, role: "operador" });
+  const [login, setLogin] = useState<{ open: boolean; role: Role; email?: string }>({ open: false, role: "operador" });
+  const [registro, setRegistro] = useState(false);
 
   const openLogin = useCallback(
     (role?: Role) => {
@@ -48,6 +50,16 @@ function Landing() {
   );
 
   const closeLogin = useCallback(() => setLogin((l) => ({ ...l, open: false })), []);
+  const closeRegistro = useCallback(() => setRegistro(false), []);
+  const abrirRegistro = () => {
+    closeLogin();
+    setRegistro(true);
+  };
+  const onRegistered = (email: string, backendRole: string) => {
+    setRegistro(false);
+    notify("exito", "Cuenta creada", "Inicia sesión con tu nueva cuenta.");
+    setLogin({ open: true, role: backendRole === "OPERATOR" ? "operador" : "comprador", email });
+  };
 
   const onSuccess = (s: Session) => {
     writeSession(s);
@@ -96,7 +108,23 @@ function Landing() {
 
       <ScrollCompanion targetRef={mainRef} />
 
-      <LoginModal open={login.open} initialRole={login.role} onClose={closeLogin} onSuccess={onSuccess} />
+      <LoginModal
+        open={login.open}
+        initialRole={login.role}
+        initialEmail={login.email}
+        onRegister={abrirRegistro}
+        onClose={closeLogin}
+        onSuccess={onSuccess}
+      />
+      <RegisterModal
+        open={registro}
+        onClose={closeRegistro}
+        onRegistered={onRegistered}
+        onLogin={() => {
+          setRegistro(false);
+          setLogin({ open: true, role: "comprador" });
+        }}
+      />
     </>
   );
 }

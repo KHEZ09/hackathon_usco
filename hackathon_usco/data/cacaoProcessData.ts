@@ -30,12 +30,13 @@ export interface ProcessStage {
 }
 
 /**
- * Recorrido visual continuo (mazorca → apertura → cajón → bandeja → saco): 152 cuadros WebP
- * a 20 fps extraídos del video de referencia, sin la interfaz impresa.
+ * Recorrido visual continuo (mazorca → apertura → cajón → bandeja → saco → QR verificado):
+ * 151 cuadros WebP a 15 fps extraídos del video de fondo, sin interfaz; los textos y botones
+ * se dibujan encima desde este archivo.
  */
 export const PROCESS_SEQUENCE = {
   pattern: "/media/proceso/viaje/v{n}.webp",
-  frames: 152,
+  frames: 151,
   pad: 3,
   /** Punto del cuadro que se mantiene centrado al recortar (0→1). */
   focus: { x: 0.5, y: 0.5 },
@@ -72,7 +73,7 @@ export const CACAO_STAGES: ProcessStage[] = [
       imagePath: "/media/proceso/viaje/v036.webp",
       fallbackImage: "/media/proceso/fermentacion.jpg",
       particleEffect: "steam",
-      sequenceRange: [36, 78],
+      sequenceRange: [36, 67],
     },
   },
   {
@@ -86,10 +87,10 @@ export const CACAO_STAGES: ProcessStage[] = [
     actionButton: { label: "Ver alertas", actionType: "modal" },
     visualAsset: {
       type: "canvas-sequence",
-      imagePath: "/media/proceso/viaje/v078.webp",
+      imagePath: "/media/proceso/viaje/v067.webp",
       fallbackImage: "/media/proceso/secado.jpg",
       particleEffect: "humidity-meter",
-      sequenceRange: [78, 116],
+      sequenceRange: [67, 95],
     },
   },
   {
@@ -102,10 +103,10 @@ export const CACAO_STAGES: ProcessStage[] = [
     actionButton: { label: "Verificar un producto", actionType: "modal" },
     visualAsset: {
       type: "canvas-sequence",
-      imagePath: "/media/proceso/viaje/v116.webp",
+      imagePath: "/media/proceso/viaje/v095.webp",
       fallbackImage: "/media/proceso/empaque.jpg",
       particleEffect: "sparks",
-      sequenceRange: [116, 151],
+      sequenceRange: [95, 127],
     },
   },
   {
@@ -117,9 +118,11 @@ export const CACAO_STAGES: ProcessStage[] = [
     badgeText: "VERIFICADO",
     actionButton: { label: "Abrir ficha CAC001", url: "/ficha/CAC001", actionType: "navigate" },
     visualAsset: {
-      type: "layered-vector",
-      imagePath: "/media/proceso/apertura.jpg",
+      type: "canvas-sequence",
+      imagePath: "/media/proceso/viaje/v127.webp",
       fallbackImage: "/media/proceso/apertura.jpg",
+      particleEffect: "orbital-ring",
+      sequenceRange: [127, 150],
     },
   },
 ];

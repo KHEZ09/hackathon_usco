@@ -43,6 +43,8 @@ equivalente en el proxy o un almacenamiento compartido antes de producción.
 | Método | Ruta | Estado |
 | --- | --- | --- |
 | POST | `/api/v1/auth/login` | Disponible; valida bcrypt, emite access y refresh token |
+| GET | `/api/v1/auth/register/roles` | Disponible; roles de autoservicio permitidos (nunca ADMIN ni ACCOUNTING) |
+| POST | `/api/v1/auth/register` | Disponible; crea cuenta con hash bcrypt. Ver `docs/REGISTRO_CUENTAS.md` |
 | GET | `/api/v1/auth/me` | Disponible con access token |
 | POST | `/api/v1/auth/refresh` | Disponible; rota y revoca el refresh token anterior |
 

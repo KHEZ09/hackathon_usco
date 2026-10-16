@@ -6,7 +6,6 @@ import { Check, ChevronLeft, ChevronRight, Droplets, Leaf, Package, QrCode as Qr
 import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
 import { CACAO_STAGES, PROCESS_SEQUENCE, STAGE_RANGES, frameForProgress, type ProcessStage } from "@/data/cacaoProcessData";
 import { ProcessSequence } from "./proceso/ProcessSequence";
-import { EscenaQr } from "./proceso/EscenaQr";
 import { Caligrafia } from "./proceso/Caligrafia";
 import { AccionEtapa } from "./proceso/AccionEtapa";
 import { cn } from "@/lib/cn";
@@ -28,9 +27,9 @@ const MOTAS = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 /**
- * "Del grano al producto": el recorrido del video como una sola secuencia continua en Canvas
- * (mazorca → apertura → cajón → bandeja → saco) guiada por el scroll y suavizada con un resorte.
- * Encima va la interfaz real: stepper, textos y botones de data/cacaoProcessData.ts y el QR verificable.
+ * "Del grano al producto": el video de fondo como una sola secuencia continua en Canvas
+ * (mazorca → apertura → cajón → bandeja → saco → QR verificado) guiada por el scroll y suavizada
+ * con un resorte. Encima va la interfaz real: stepper, textos y botones de data/cacaoProcessData.ts.
  */
 export function PodSection() {
   const ref = useRef<HTMLElement>(null);
@@ -53,17 +52,13 @@ export function PodSection() {
     window.scrollTo({ top: top + recorrido * (STAGE_RANGES[destino][0] + 0.06), behavior: "smooth" });
   };
 
-  // En la etapa del QR el recorrido se oscurece y se desenfoca detrás de la tarjeta.
-  const [qa] = STAGE_RANGES[CACAO_STAGES.length - 1];
-  const velo = useTransform(p, [qa - 0.02, qa + 0.05], [0, 0.72]);
-  const desenfoque = useTransform(p, [qa - 0.02, qa + 0.05], ["blur(0px)", "blur(6px)"]);
   const entrada = useTransform(p, [0, 0.04], [1.06, 1]);
 
   return (
     <section ref={ref} id="proceso" aria-label="Del grano al producto" className="relative h-[620svh] px-3 sm:px-6">
       <div className="sticky top-3 h-[calc(100svh-1.5rem)] overflow-hidden rounded-[2.5rem] bg-[#121211] text-crema">
         {/* Recorrido continuo */}
-        <motion.div style={{ filter: desenfoque, scale: entrada }} className="absolute inset-x-0 top-0 bottom-[34%] lg:bottom-0">
+        <motion.div style={{ scale: entrada }} className="absolute inset-x-0 top-0 bottom-[34%] lg:bottom-0">
           <ProcessSequence sequence={PROCESS_SEQUENCE} frame={frame} fallback={CACAO_STAGES[0].visualAsset.fallbackImage} />
           {/* Integración: viñetas y degradados donde vive la interfaz */}
           <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,transparent_55%,rgba(18,18,17,0.65))]" />
@@ -72,7 +67,6 @@ export function PodSection() {
           <div aria-hidden="true" className="absolute inset-y-0 left-0 hidden w-[42%] bg-[linear-gradient(90deg,#121211_0%,rgba(18,18,17,0.92)_38%,transparent)] lg:block" />
           <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-[44%] bg-[linear-gradient(270deg,#121211_0%,rgba(18,18,17,0.88)_42%,transparent)] lg:block" />
         </motion.div>
-        <motion.div aria-hidden="true" style={{ opacity: velo }} className="pointer-events-none absolute inset-0 bg-[#121211]" />
 
         {/* Partículas doradas del video */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
@@ -83,11 +77,6 @@ export function PodSection() {
               style={{ left: `${m.left}%`, top: `${m.top}%`, width: m.size, height: m.size, animationDelay: `${-m.delay}s`, animationDuration: `${m.duration}s` }}
             />
           ))}
-        </div>
-
-        {/* QR verificable */}
-        <div className="absolute inset-x-0 top-28 bottom-[42%] lg:inset-y-0 lg:left-[24%] lg:right-[26%]">
-          <EscenaQr p={p} />
         </div>
 
         <button

@@ -1,0 +1,343 @@
+"use client";
+
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Check, Eye, EyeOff, Loader2, RotateCw, X } from "lucide-react";
+import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
+import { cn } from "@/lib/cn";
+import { getRegistrationRoles, OriviaApiError, register, type RegistrationRole } from "@/lib/orivia-api";
+import { fortaleza, limpiarTexto, requisitosPendientes, validarRegistro, type RegistroCampo, type RegistroDatos, type RegistroErrores } from "@/lib/registro";
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  /** Tras crear la cuenta: abrir el login actual con el correo ya escrito. */
+  onRegistered: (email: string, role: string) => void;
+  onLogin: () => void;
+};
+
+const CAMPO_DEL_ERROR: Record<string, RegistroCampo> = {
+  EMAIL_UNAVAILABLE: "correo",
+  WEAK_PASSWORD: "password",
+  PASSWORD_MISMATCH: "confirmacion",
+  ROLE_NOT_ALLOWED: "rol",
+};
+
+const NIVELES = ["", "Débil", "Regular", "Buena", "Segura"];
+
+export function RegisterModal({ open, ...props }: Props) {
+  return <AnimatePresence>{open && <RegisterDialog {...props} />}</AnimatePresence>;
+}
+
+/** Se monta en cada apertura: el formulario arranca limpio y no conserva contraseñas. */
+function RegisterDialog({ onClose, onRegistered, onLogin }: Omit<Props, "open">) {
+  const [datos, setDatos] = useState<RegistroDatos>({ nombre: "", correo: "", password: "", confirmacion: "", rol: "" });
+  const [errores, setErrores] = useState<RegistroErrores>({});
+  const [general, setGeneral] = useState<string | null>(null);
+  const [ver, setVer] = useState(false);
+  const [estado, setEstado] = useState<"idle" | "loading" | "ok">("idle");
+  const [roles, setRoles] = useState<RegistrationRole[] | null>(null);
+  const [rolesError, setRolesError] = useState(false);
+  const [intento, setIntento] = useState(0);
+  const nombreRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => nombreRef.current?.focus(), 250);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  // Los roles los define el backend; sin respuesta no se permite registrar.
+  useEffect(() => {
+    let vivo = true;
+    getRegistrationRoles()
+      .then((lista) => {
+        if (!vivo) return;
+        setRoles(lista);
+        setRolesError(false);
+        setDatos((d) => (lista.some((r) => r.role === d.rol) ? d : { ...d, rol: lista[0]?.role ?? "" }));
+      })
+      .catch(() => vivo && setRolesError(true));
+    return () => {
+      vivo = false;
+    };
+  }, [intento]);
+
+  const cambiar = (campo: RegistroCampo, valor: string) => {
+    setDatos((d) => ({ ...d, [campo]: valor }));
+    setErrores((e) => ({ ...e, [campo]: undefined }));
+    setGeneral(null);
+  };
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    const permitidos = roles?.map((r) => r.role) ?? [];
+    const encontrados = validarRegistro(datos, permitidos);
+    setErrores(encontrados);
+    if (Object.keys(encontrados).length) return;
+
+    setEstado("loading");
+    setGeneral(null);
+    const correo = limpiarTexto(datos.correo).toLowerCase();
+    try {
+      await register({
+        full_name: limpiarTexto(datos.nombre),
+        email: correo,
+        password: datos.password,
+        password_confirmation: datos.confirmacion,
+        role: datos.rol,
+      });
+      setDatos((d) => ({ ...d, password: "", confirmacion: "" }));
+      setEstado("ok");
+      const rol = datos.rol;
+      setTimeout(() => onRegistered(correo, rol), 1400);
+    } catch (cause) {
+      setEstado("idle");
+      if (cause instanceof OriviaApiError) {
+        const campo = cause.code ? CAMPO_DEL_ERROR[cause.code] : undefined;
+        if (campo) setErrores({ [campo]: cause.message });
+        else if (cause.status === 429) setGeneral(`Demasiados intentos de registro. Espera ${Math.ceil((cause.retryAfterSeconds ?? 3600) / 60)} minutos.`);
+        else if (cause.status === 0) setGeneral("No se pudo conectar con ORIVIA. Revisa tu conexión e inténtalo de nuevo.");
+        else setGeneral(cause.message);
+      } else {
+        setGeneral("No se pudo crear la cuenta. Inténtalo más tarde.");
+      }
+    }
+  };
+
+  const nivel = fortaleza(datos.password);
+  const faltan = requisitosPendientes(datos.password, datos.correo);
+
+  return (
+    <motion.div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <button aria-label="Cerrar" onClick={onClose} className="absolute inset-0 bg-bosque-950/70 backdrop-blur-md" />
+
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="registro-title"
+        initial={{ y: 40, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 30, opacity: 0, scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 260, damping: 28 }}
+        className="relative grid max-h-[94svh] w-full max-w-4xl overflow-hidden rounded-t-[2rem] bg-card shadow-2xl sm:rounded-[2rem] md:grid-cols-[0.9fr_1.1fr]"
+      >
+        <div className="relative hidden overflow-hidden md:block">
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url(/media/cosecha-mano.jpg)" }} />
+          <div className="absolute inset-0 bg-gradient-to-t from-bosque-950 via-bosque-950/55 to-bosque-950/10" />
+          <div className="relative flex h-full flex-col justify-between p-8 text-crema">
+            <OriviaIsotipo className="h-14" />
+            <div>
+              <p className="font-script text-5xl leading-tight">Únete a la red del cacao</p>
+              <p className="mt-4 text-[0.65rem] font-light tracking-[0.4em]">DEL ORIGEN AL MUNDO</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto p-6 sm:p-9">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 text-center">
+              <p className="text-[0.6rem] font-semibold tracking-[0.35em] text-tierra uppercase dark:text-tierra-300">Registro ORIVIA</p>
+              <h2 id="registro-title" className="mt-2 text-3xl leading-none font-bold tracking-tight text-ink">
+                Crea tu cuenta
+              </h2>
+              <div className="mx-auto mt-3 h-px w-10 rounded-full bg-bosque/30" />
+            </div>
+            <button onClick={onClose} className="shrink-0 rounded-full p-2 text-ink-soft transition hover:bg-surface-2 hover:text-ink" aria-label="Cerrar registro">
+              <X className="size-5" />
+            </button>
+          </div>
+
+          {estado === "ok" ? (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} role="status" className="mt-10 flex flex-col items-center gap-4 text-center">
+              <span className="grid size-14 place-items-center rounded-full bg-bosque text-crema shadow-lg shadow-bosque/30">
+                <Check className="size-7" />
+              </span>
+              <p className="text-lg font-semibold text-ink">Cuenta creada</p>
+              <p className="max-w-xs text-sm text-ink-soft">Ya puedes iniciar sesión con tu correo y la contraseña que acabas de crear.</p>
+            </motion.div>
+          ) : (
+            <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
+              <Campo etiqueta="Nombre completo" error={errores.nombre} id="reg-nombre">
+                <input
+                  ref={nombreRef}
+                  id="reg-nombre"
+                  autoComplete="name"
+                  maxLength={120}
+                  value={datos.nombre}
+                  onChange={(e) => cambiar("nombre", e.target.value)}
+                  aria-invalid={!!errores.nombre}
+                  aria-describedby={errores.nombre ? "reg-nombre-error" : undefined}
+                  className={entrada(!!errores.nombre)}
+                />
+              </Campo>
+
+              <Campo etiqueta="Correo" error={errores.correo} id="reg-correo">
+                <input
+                  id="reg-correo"
+                  type="email"
+                  autoComplete="email"
+                  maxLength={254}
+                  value={datos.correo}
+                  onChange={(e) => cambiar("correo", e.target.value)}
+                  aria-invalid={!!errores.correo}
+                  aria-describedby={errores.correo ? "reg-correo-error" : undefined}
+                  className={entrada(!!errores.correo)}
+                />
+              </Campo>
+
+              <Campo etiqueta="Contraseña" error={errores.password} id="reg-password">
+                <span className="relative block">
+                  <input
+                    id="reg-password"
+                    type={ver ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={datos.password}
+                    onChange={(e) => cambiar("password", e.target.value)}
+                    aria-invalid={!!errores.password}
+                    aria-describedby="reg-password-ayuda"
+                    className={cn(entrada(!!errores.password), "pr-12 [&::-ms-clear]:hidden [&::-ms-reveal]:hidden")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setVer((v) => !v)}
+                    className="absolute top-1/2 right-2 -translate-y-1/2 rounded-lg p-2 text-ink-soft hover:text-ink"
+                    aria-label={ver ? "Ocultar contraseñas" : "Mostrar contraseñas"}
+                  >
+                    {ver ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </span>
+                <span id="reg-password-ayuda" className="mt-2 block">
+                  <span className="flex gap-1" aria-hidden="true">
+                    {[1, 2, 3, 4].map((n) => (
+                      <span key={n} className={cn("h-1 flex-1 rounded-full transition-colors", n <= nivel ? (nivel >= 4 ? "bg-bosque-500" : nivel >= 3 ? "bg-[#d9a441]" : "bg-cereza") : "bg-line")} />
+                    ))}
+                  </span>
+                  <span className="mt-1 block text-[0.68rem] text-ink-soft">
+                    {datos.password ? `${NIVELES[nivel]}${faltan.length ? ` · falta ${faltan.join(", ")}` : ""}` : "Mínimo 10 caracteres con mayúscula, minúscula, número y símbolo."}
+                  </span>
+                </span>
+              </Campo>
+
+              <Campo etiqueta="Confirmar contraseña" error={errores.confirmacion} id="reg-confirmacion">
+                <input
+                  id="reg-confirmacion"
+                  type={ver ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={datos.confirmacion}
+                  onChange={(e) => cambiar("confirmacion", e.target.value)}
+                  onPaste={(e) => e.preventDefault()}
+                  aria-invalid={!!errores.confirmacion}
+                  aria-describedby={errores.confirmacion ? "reg-confirmacion-error" : undefined}
+                  className={entrada(!!errores.confirmacion)}
+                />
+              </Campo>
+
+              <fieldset>
+                <legend className="text-xs font-medium text-ink-soft">Tipo de cuenta</legend>
+                {roles === null && !rolesError && (
+                  <div className="mt-1.5 grid grid-cols-2 gap-2" aria-busy="true" aria-label="Cargando tipos de cuenta">
+                    {[0, 1].map((i) => (
+                      <span key={i} className="h-11 animate-pulse rounded-xl bg-surface-2" />
+                    ))}
+                  </div>
+                )}
+                {rolesError && (
+                  <p role="alert" className="mt-1.5 flex items-center justify-between gap-3 rounded-xl bg-cereza/10 px-4 py-2.5 text-xs font-medium text-cereza dark:text-[#f08a8c]">
+                    No se pudieron cargar los tipos de cuenta.
+                    <button type="button" onClick={() => { setRolesError(false); setIntento((n) => n + 1); }} className="flex items-center gap-1 underline">
+                      <RotateCw className="size-3" /> Reintentar
+                    </button>
+                  </p>
+                )}
+                {roles && (
+                  <div className="mt-1.5 grid grid-cols-2 gap-2">
+                    {roles.map((r) => (
+                      <label
+                        key={r.role}
+                        className={cn(
+                          "flex cursor-pointer items-center justify-center rounded-xl border px-3 py-3 text-xs font-semibold transition has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-bosque-500/20",
+                          datos.rol === r.role ? "border-bosque bg-bosque text-crema shadow-lg shadow-bosque/25" : "border-line bg-surface text-ink hover:border-bosque-300",
+                        )}
+                      >
+                        <input type="radio" name="rol" value={r.role} checked={datos.rol === r.role} onChange={() => cambiar("rol", r.role)} className="sr-only" />
+                        {r.label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {errores.rol && <p className="mt-1 text-[0.7rem] text-cereza dark:text-[#f08a8c]">{errores.rol}</p>}
+              </fieldset>
+
+              <AnimatePresence>
+                {general && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    role="alert"
+                    className="rounded-xl bg-cereza/10 px-4 py-2.5 text-xs font-medium text-cereza dark:text-[#f08a8c]"
+                  >
+                    {general}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
+              <button
+                type="submit"
+                disabled={estado !== "idle" || !roles}
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-bosque px-5 py-3.5 text-sm font-semibold text-crema shadow-lg transition hover:bg-bosque-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {estado === "loading" ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" /> Creando cuenta…
+                  </>
+                ) : (
+                  <>
+                    Crear cuenta <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />
+                  </>
+                )}
+              </button>
+
+              <p className="text-center text-xs text-ink-soft">
+                ¿Ya tienes cuenta?{" "}
+                <button type="button" onClick={onLogin} className="font-semibold text-bosque underline-offset-2 hover:underline dark:text-bosque-300">
+                  Inicia sesión
+                </button>
+              </p>
+            </form>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function entrada(conError: boolean) {
+  return cn(
+    "mt-1.5 w-full rounded-xl border bg-surface px-4 py-3 text-sm text-ink outline-none transition focus:ring-4",
+    conError ? "border-cereza focus:border-cereza focus:ring-cereza/15" : "border-line focus:border-bosque-500 focus:ring-bosque-500/15",
+  );
+}
+
+function Campo({ etiqueta, error, id, children }: { etiqueta: string; error?: string; id: string; children: ReactNode }) {
+  return (
+    <div>
+      <label htmlFor={id} className="text-xs font-medium text-ink-soft">
+        {etiqueta}
+      </label>
+      {children}
+      {error && (
+        <p id={`${id}-error`} className="mt-1 text-[0.7rem] text-cereza dark:text-[#f08a8c]">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}

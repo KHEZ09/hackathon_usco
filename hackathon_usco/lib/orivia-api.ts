@@ -169,6 +169,20 @@ export async function login(email: string, password: string) {
   return response;
 }
 
+export type RegistrationRole = { role: string; label: string };
+
+/** Roles que el backend permite elegir al crear una cuenta (nunca administrativos). */
+export async function getRegistrationRoles() {
+  const response = await request<{ data: RegistrationRole[] }>("/auth/register/roles", {}, false);
+  return response.data;
+}
+
+/** Crea la cuenta; la contraseña viaja solo en el cuerpo HTTPS y el backend guarda su hash. */
+export async function register(payload: { full_name: string; email: string; password: string; password_confirmation: string; role: string }) {
+  const response = await request<{ data: ApiUser }>("/auth/register", { method: "POST", body: JSON.stringify(payload) }, false);
+  return response.data;
+}
+
 export async function getReportOverview() {
   const response = await request<{ data: ReportOverview }>("/reports/overview");
   return response.data;
