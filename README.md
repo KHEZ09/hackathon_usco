@@ -15,4 +15,10 @@ Repositorio del proyecto ORIVIA para la hackatón de agroindustria de la USCO.
 - `backend/`: API Flask de ORIVIA.
 - `infra/orivia-server/`: despliegue versionado para Lightsail `orivia`, Compose, healthcheck, variables de ejemplo y firewall UFW.
 
+## Equipo
+
+- **Sebas:** backend de plataforma, seguridad, tokens, pedidos, blockchain e IA.
+- **Kevin:** usuarios, PostgreSQL, modelos, migraciones, contabilidad e integraciones.
+- **Ángel y Daniel:** UX, diseño visual y frontend.
+
 El backend se prepara para ejecutarse en la instancia Lightsail `orivia` con Debian 13. El acceso administrativo se realiza por Tailscale.

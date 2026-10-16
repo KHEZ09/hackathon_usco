@@ -4,6 +4,12 @@ Base inicial de la API de ORIVIA.
 
 Este backend pertenece al repositorio de la hackatón USCO y se prepara para desplegarse en la instancia Lightsail `orivia` (Debian 13), accesible administrativamente mediante Tailscale.
 
+## Responsables
+
+- **Sebas:** Flask, Gunicorn, seguridad, tokens, pedidos, trazabilidad, blockchain e IA.
+- **Kevin:** usuarios, PostgreSQL, modelos, migraciones, catálogo, contabilidad, reportes e integraciones.
+- **Ángel y Daniel:** UX, diseño y frontend; trabajan en `../hackathon_usco/design/`, `../hackathon_usco/components/`, `../hackathon_usco/styles/` y `../hackathon_usco/docs/ux/`.
+
 ## Alcance de esta primera versión
 
 - Aplicación Flask con factory pattern.
@@ -15,7 +21,7 @@ Este backend pertenece al repositorio de la hackatón USCO y se prepara para des
 - Ejecución de producción con Gunicorn.
 - Docker Compose con PostgreSQL para desarrollo.
 
-El módulo de usuarios y las migraciones serán integrados por el responsable de PostgreSQL. Este backend no crea una segunda base de usuarios.
+Kevin integrará el módulo de usuarios y las migraciones. Este backend no crea una segunda base de usuarios.
 
 ## Ejecutar localmente
 

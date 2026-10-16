@@ -47,6 +47,17 @@ PLAN_HACKATON_ORIVIA.md
 
 No se debe desarrollar este backend dentro de `app/` ni mezclarlo con el repositorio de Tobaru.
 
+## 3.1 Equipo y responsables
+
+| Persona | Responsabilidad principal | Ubicación de trabajo |
+|---|---|---|
+| Sebas | Flask/Gunicorn, seguridad, JWT, pedidos, trazabilidad, blockchain e IA | `backend/app/security/`, `auth_tokens/`, `orders/`, `tracking/`, `audit/`, `blockchain/`, `ai/` |
+| Kevin | Usuarios, PostgreSQL, modelos, migraciones, catálogo, contabilidad, reportes e integraciones externas | `backend/app/users/`, `database/`, `catalog/`, `accounting/`, `reports/`, `integrations/`, `backend/migrations/` |
+| Ángel | UX, flujos, wireframes, arquitectura de información y pruebas de usabilidad | `hackathon_usco/design/`, `hackathon_usco/docs/ux/` |
+| Daniel | Diseño visual, sistema de componentes, responsive, accesibilidad y frontend | `hackathon_usco/components/`, `hackathon_usco/app/`, `hackathon_usco/styles/` |
+
+Ángel y Daniel coordinan juntos la experiencia y el diseño. No deben modificar la lógica crítica del backend sin acordarlo con Sebas y Kevin.
+
 ## 4. Infraestructura oficial del MVP
 
 El backend se desarrollará, probará y preparará para desplegarse en la instancia recién creada:
@@ -77,7 +88,7 @@ La Raspberry Pi 5 queda como nodo de resiliencia y operación local para una seg
 
 ## 5. División del trabajo
 
-### Nosotros: plataforma y seguridad
+### Sebas: plataforma y seguridad
 
 Trabajamos en `backend/app/` sobre:
 
@@ -103,7 +114,7 @@ Responsabilidades:
 - Ollama/IA para resumen, analítica y auditoría asistida.
 - Pruebas de seguridad y acceso no autorizado.
 
-### Tu pana: usuarios, datos e integraciones
+### Kevin: usuarios, datos e integraciones
 
 Trabaja en:
 
@@ -132,9 +143,9 @@ Responsabilidades:
 
 El login es compartido:
 
-1. Tu pana administra la tabla y repositorio de usuarios.
-2. Nosotros implementamos `POST /api/v1/auth/login`.
-3. Nosotros verificamos la contraseña y emitimos JWT.
+1. Kevin administra la tabla y repositorio de usuarios.
+2. Sebas implementa `POST /api/v1/auth/login`.
+3. Sebas verifica la contraseña y emite JWT.
 4. El middleware valida tokens, estado de cuenta, rol y permisos.
 5. Los refresh tokens deben ser rotativos, revocables y almacenados como hash.
 

@@ -6,7 +6,16 @@ Este documento define cómo se organizará el backend de ORIVIA y quién es resp
 
 La regla principal es:
 
-> Tu pana es responsable de usuarios, PostgreSQL e integraciones externas. Nosotros somos responsables de seguridad avanzada, tokens, trazabilidad blockchain e inteligencia artificial.
+> Kevin es responsable de usuarios, PostgreSQL e integraciones externas. Sebas es responsable de seguridad avanzada, tokens, trazabilidad blockchain e inteligencia artificial.
+
+## Equipo completo
+
+- **Sebas:** plataforma Flask/Gunicorn, seguridad, JWT, pedidos, trazabilidad, auditoría, blockchain e IA.
+- **Kevin:** usuarios, PostgreSQL, modelos, migraciones, catálogo, contabilidad, reportes e integraciones externas.
+- **Ángel:** UX, arquitectura de información, flujos, wireframes y pruebas de usabilidad.
+- **Daniel:** diseño visual, componentes, responsive, accesibilidad y frontend.
+
+Ángel y Daniel trabajan sobre la experiencia visual y el frontend. Kevin y Sebas coordinan los contratos de API y datos antes de integrar pantallas nuevas.
 
 ## Ubicación física del backend
 
@@ -25,7 +34,7 @@ C:\Users\sebas\Documents\GitHub\hackathon_usco\backend\app\integrations\
 C:\Users\sebas\Documents\GitHub\hackathon_usco\backend\migrations\
 ```
 
-### Carpetas que debe usar tu pana
+### Carpetas que debe usar Kevin
 
 ```text
 backend/app/users/
@@ -37,7 +46,7 @@ backend/app/reports/
 backend/migrations/
 ```
 
-### Carpetas que manejamos nosotros
+### Carpetas que debe usar Sebas
 
 ```text
 backend/app/security/
@@ -47,6 +56,20 @@ backend/app/tracking/
 backend/app/audit/
 backend/app/blockchain/
 backend/app/ai/
+```
+
+### Carpetas de UX y diseño — Ángel y Daniel
+
+```text
+hackathon_usco/design/              # wireframes, flujos y decisiones UX
+hackathon_usco/design/tokens/       # colores, tipografías, espaciado y estados
+hackathon_usco/design/screens/      # referencias de pantallas
+hackathon_usco/components/          # sistema de componentes y UI
+hackathon_usco/components/orders/   # vistas de pedidos
+hackathon_usco/components/tracking/ # vistas de trazabilidad
+hackathon_usco/components/dashboard/# paneles y analítica visual
+hackathon_usco/styles/              # estilos globales y responsive
+hackathon_usco/docs/ux/             # criterios de accesibilidad y pruebas
 ```
 
 No se debe crear el backend Flask dentro de la raíz del repositorio ni mezclarlo con el frontend Next.js de `app/`. ORIVIA permanece aislado dentro de `backend/`.
@@ -79,20 +102,20 @@ Cliente web / móvil
         v
 API Flask de ORIVIA
         |
-        +--> Autenticación y autorización JWT        [Nosotros]
-        +--> Pedidos y trazabilidad                 [Nosotros]
-        +--> Auditoría y blockchain                 [Nosotros]
-        +--> IA con Ollama                          [Nosotros]
-        +--> Usuarios y PostgreSQL                   [Pana]
-        +--> Conectores a APIs externas              [Pana]
-        +--> Contabilidad y datos generales          [Pana]
+        +--> Autenticación y autorización JWT        [Sebas]
+        +--> Pedidos y trazabilidad                 [Sebas]
+        +--> Auditoría y blockchain                 [Sebas]
+        +--> IA con Ollama                          [Sebas]
+        +--> Usuarios y PostgreSQL                   [Kevin]
+        +--> Conectores a APIs externas              [Kevin]
+        +--> Contabilidad y datos generales          [Kevin]
 ```
 
 PostgreSQL será la fuente principal de datos. Blockchain no almacenará pedidos completos ni datos sensibles: únicamente hashes, identificadores de evento y comprobantes de integridad.
 
 ## División de responsabilidades
 
-### Nosotros: seguridad, operación, blockchain e IA
+### Sebas: seguridad, operación, blockchain e IA
 
 Responsables de:
 
@@ -132,14 +155,14 @@ La base técnica del backend queda bajo nuestra responsabilidad:
 Flask (desarrollo de la API)
         |
         +--> Blueprints y servicios de ORIVIA
-        +--> PostgreSQL mediante repositorios del pana
+        +--> PostgreSQL mediante repositorios de Kevin
         +--> Gunicorn (ejecución en producción)
         +--> Nginx o proxy HTTPS cuando se publique
 ```
 
-En desarrollo se podrá ejecutar con Flask y en el servidor se ejecutará con Gunicorn. Tu pana conectará sobre esta base sus modelos, migraciones, repositorios e integraciones sin crear otra aplicación Flask paralela.
+En desarrollo se podrá ejecutar con Flask y en el servidor se ejecutará con Gunicorn. Kevin conecta sobre esta base sus modelos, migraciones, repositorios e integraciones sin crear otra aplicación Flask paralela.
 
-### Tu pana: usuarios, base de datos e integraciones
+### Kevin: usuarios, base de datos e integraciones
 
 Responsable de:
 
@@ -171,7 +194,7 @@ migrations/
 
 El login no pertenece completamente a una sola persona. Se divide en dos capas:
 
-### Tu pana administra la identidad
+### Kevin administra la identidad
 
 - Tabla de usuarios.
 - Email o nombre de usuario.
@@ -180,7 +203,7 @@ El login no pertenece completamente a una sola persona. Se divide en dos capas:
 - Datos del perfil y roles asignados.
 - Repositorio para consultar un usuario por su identificador de acceso.
 
-### Nosotros administramos la autenticación
+### Sebas administra la autenticación
 
 - Endpoint `POST /api/v1/auth/login`.
 - Validación de entrada.
@@ -197,10 +220,10 @@ Flujo del login:
 ```text
 Cliente
   -> POST /api/v1/auth/login
-  -> Servicio de autenticación [nosotros]
-  -> Repositorio de usuarios [pana]
-  -> Verificación de contraseña [nosotros]
-  -> JWT + refresh token [nosotros]
+  -> Servicio de autenticación [Sebas]
+  -> Repositorio de usuarios [Kevin]
+  -> Verificación de contraseña [Sebas]
+  -> JWT + refresh token [Sebas]
   -> Cliente
 ```
 
@@ -216,78 +239,78 @@ backend/
 │   ├── extensions.py
 │   ├── routes.py
 │   │
-│   ├── security/                 # Nosotros
+│   ├── security/                 # Sebas
 │   │   ├── middleware.py
 │   │   ├── permissions.py
 │   │   ├── rate_limit.py
 │   │   └── validators.py
 │   │
-│   ├── auth_tokens/              # Nosotros
+│   ├── auth_tokens/              # Sebas
 │   │   ├── routes.py
 │   │   ├── service.py
 │   │   ├── jwt_service.py
 │   │   └── schemas.py
 │   │
-│   ├── orders/                   # Nosotros
+│   ├── orders/                   # Sebas
 │   │   ├── routes.py
 │   │   ├── service.py
 │   │   ├── schemas.py
 │   │   └── states.py
 │   │
-│   ├── tracking/                 # Nosotros
+│   ├── tracking/                 # Sebas
 │   │   ├── routes.py
 │   │   ├── service.py
 │   │   └── event_chain.py
 │   │
-│   ├── audit/                    # Nosotros
+│   ├── audit/                    # Sebas
 │   │   ├── routes.py
 │   │   ├── service.py
 │   │   └── hash_service.py
 │   │
-│   ├── blockchain/               # Nosotros
+│   ├── blockchain/               # Sebas
 │   │   ├── adapter.py
 │   │   ├── anchor_service.py
 │   │   └── schemas.py
 │   │
-│   ├── ai/                       # Nosotros
+│   ├── ai/                       # Sebas
 │   │   ├── routes.py
 │   │   ├── ollama_client.py
 │   │   ├── prompts.py
 │   │   └── service.py
 │   │
-│   ├── users/                    # Pana
+│   ├── users/                    # Kevin
 │   │   ├── models.py
 │   │   ├── routes.py
 │   │   ├── service.py
 │   │   └── schemas.py
 │   │
-│   ├── database/                 # Pana
+│   ├── database/                 # Kevin
 │   │   ├── connection.py
 │   │   ├── models.py
 │   │   ├── repositories.py
 │   │   └── unit_of_work.py
 │   │
-│   ├── catalog/                  # Pana
+│   ├── catalog/                  # Kevin
 │   │   ├── models.py
 │   │   ├── routes.py
 │   │   └── service.py
 │   │
-│   ├── accounting/               # Pana
+│   ├── accounting/               # Kevin
 │   │   ├── models.py
 │   │   ├── routes.py
 │   │   └── service.py
 │   │
-│   ├── integrations/             # Pana
+│   ├── integrations/             # Kevin
 │   │   ├── base_client.py
 │   │   ├── clients/
 │   │   ├── mappers/
 │   │   └── retry_policy.py
 │   │
-│   └── reports/                  # Pana
+│   └── reports/                  # Kevin
 │       ├── routes.py
 │       └── queries.py
 │
-├── migrations/                   # Pana; único dueño de migraciones
+├── migrations/                   # Kevin; único dueño de migraciones
 ├── tests/
 │   ├── unit/
 │   ├── integration/
@@ -323,7 +346,7 @@ El token debe transportar únicamente identificadores y permisos necesarios:
 }
 ```
 
-El módulo de usuarios no debe generar JWT directamente. Nosotros no debemos duplicar la tabla de usuarios ni crear otra fuente de verdad.
+El módulo de usuarios no debe generar JWT directamente. Sebas no debe duplicar la tabla de usuarios ni crear otra fuente de verdad.
 
 ### Acceso a datos
 
@@ -341,7 +364,7 @@ Reglas:
 
 ### Pedidos y eventos
 
-Nosotros definimos el flujo del pedido y tu pana implementa las migraciones necesarias.
+Sebas define el flujo del pedido y Kevin implementa las migraciones necesarias.
 
 Estados iniciales:
 
@@ -366,7 +389,7 @@ Cada cambio de estado debe producir un evento inmutable con:
 
 ### Integraciones externas
 
-Tu pana será dueño de los clientes HTTP y conectores externos. Nosotros consumiremos servicios internos estables, por ejemplo:
+Kevin será dueño de los clientes HTTP y conectores externos. Sebas consume servicios internos estables, por ejemplo:
 
 ```text
 IntegrationClient -> IntegrationService -> API externa
@@ -382,11 +405,11 @@ Todo conector debe tener:
 - pruebas con mocks;
 - variables de entorno documentadas.
 
-Nosotros no llamaremos directamente APIs externas desde las rutas de pedidos o blockchain.
+Sebas no llama directamente APIs externas desde las rutas de pedidos o blockchain.
 
 ## Endpoints iniciales
 
-### Seguridad y tokens — nosotros
+### Seguridad y tokens — Sebas
 
 ```text
 POST /api/v1/auth/login
@@ -396,7 +419,7 @@ POST /api/v1/auth/revoke
 GET  /api/v1/auth/me
 ```
 
-### Usuarios — pana
+### Usuarios — Kevin
 
 ```text
 GET    /api/v1/users
@@ -406,7 +429,7 @@ PATCH  /api/v1/users/{id}
 DELETE /api/v1/users/{id}
 ```
 
-### Pedidos — nosotros
+### Pedidos — Sebas
 
 ```text
 POST  /api/v1/orders
@@ -416,7 +439,7 @@ PATCH /api/v1/orders/{id}/status
 GET   /api/v1/orders/{id}/timeline
 ```
 
-### Auditoría y blockchain — nosotros
+### Auditoría y blockchain — Sebas
 
 ```text
 GET  /api/v1/audit/orders/{id}
@@ -425,7 +448,7 @@ POST /api/v1/blockchain/anchors
 GET  /api/v1/blockchain/anchors/{id}
 ```
 
-### IA — nosotros
+### IA — Sebas
 
 ```text
 POST /api/v1/ai/orders/{id}/summary
@@ -433,7 +456,7 @@ POST /api/v1/ai/orders/{id}/audit
 POST /api/v1/ai/analytics
 ```
 
-### APIs externas y datos generales — pana
+### APIs externas y datos generales — Kevin
 
 ```text
 GET  /api/v1/catalog/products
@@ -542,20 +565,20 @@ Cada Pull Request debe indicar:
 
 ### Fase 2 — Usuarios y seguridad
 
-- El pana crea usuarios, roles y migraciones.
-- Nosotros implementamos login, JWT, refresh y revocación.
+- Kevin crea usuarios, roles y migraciones.
+- Sebas implementa login, JWT, refresh y revocación.
 - Probar acceso permitido y denegado.
 
 ### Fase 3 — Pedidos y trazabilidad
 
-- Nosotros implementamos pedidos y transiciones.
-- El pana crea las tablas y relaciones en PostgreSQL.
+- Sebas implementa pedidos y transiciones.
+- Kevin crea las tablas y relaciones en PostgreSQL.
 - Registrar todos los eventos de estado.
 
 ### Fase 4 — Integraciones
 
-- El pana implementa clientes para APIs externas.
-- Nosotros consumimos sus servicios internos.
+- Kevin implementa clientes para APIs externas.
+- Sebas consume sus servicios internos.
 - Agregar timeouts, reintentos y mocks.
 
 ### Fase 5 — Blockchain e IA
@@ -591,7 +614,7 @@ Un módulo se considera terminado cuando:
 
 ## Primera división práctica
 
-### Nosotros empezamos con
+### Sebas empieza con
 
 1. Contrato JWT y roles.
 2. Middleware de autorización.
@@ -599,7 +622,7 @@ Un módulo se considera terminado cuando:
 4. Registro de eventos de trazabilidad.
 5. Diseño del hash y auditoría.
 
-### Tu pana empieza con
+### Kevin empieza con
 
 1. Docker Compose de PostgreSQL.
 2. Modelos de usuarios y roles.

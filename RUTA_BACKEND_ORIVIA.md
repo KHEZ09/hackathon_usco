@@ -33,7 +33,7 @@ La carpeta `backend/` ya contiene:
 
 ## Fase 1 — Base de API
 
-Nosotros mantenemos:
+Sebas mantiene:
 
 ```text
 backend/app/__init__.py
@@ -50,7 +50,7 @@ La API debe iniciar localmente antes de integrar usuarios.
 
 ## Fase 2 — Usuarios y login
 
-Tu pana crea:
+Kevin crea:
 
 ```text
 backend/app/users/
@@ -58,7 +58,7 @@ backend/app/database/
 backend/migrations/
 ```
 
-Nosotros conectamos:
+Sebas conecta:
 
 ```text
 POST /api/v1/auth/login
@@ -71,7 +71,7 @@ El repositorio de usuarios debe entregar un usuario activo, su hash de contrase�
 
 ## Fase 3 — Pedidos
 
-Nosotros implementamos:
+Sebas implementa:
 
 ```text
 backend/app/orders/
@@ -129,7 +129,7 @@ La IA recibe datos filtrados y no puede modificar directamente pedidos, inventar
 
 ## Fase 6 — Integraciones externas
 
-Tu pana crea:
+Kevin crea:
 
 ```text
 backend/app/integrations/

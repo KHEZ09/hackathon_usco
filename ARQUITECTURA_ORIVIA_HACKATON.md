@@ -1,5 +1,13 @@
 # ORIVIA — Arquitectura para la hackatón
 
+## Responsables de la arquitectura
+
+- **Sebas:** API Flask, seguridad, JWT, pedidos, trazabilidad, blockchain e IA.
+- **Kevin:** PostgreSQL, usuarios, modelos, migraciones, contabilidad, reportes e integraciones.
+- **Ángel y Daniel:** UX, diseño visual, componentes y frontend.
+
+Los contratos de API y datos se acuerdan entre Sebas y Kevin antes de que Ángel y Daniel conecten nuevas pantallas.
+
 ## Arquitectura de alto nivel
 
 ```text

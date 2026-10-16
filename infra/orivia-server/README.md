@@ -2,6 +2,14 @@
 
 Configuración versionada para desplegar el backend de ORIVIA en la instancia Lightsail `orivia`.
 
+## Responsables dentro del servidor
+
+- **Sebas:** mantiene `backend/app/security/`, `auth_tokens/`, `orders/`, `tracking/`, `audit/`, `blockchain/` y `ai/`.
+- **Kevin:** mantiene `backend/app/users/`, `database/`, `catalog/`, `accounting/`, `reports/`, `integrations/` y `backend/migrations/`.
+- **Ángel y Daniel:** mantienen la referencia visual y el frontend en `hackathon_usco/design/`, `components/`, `styles/` y `docs/ux/`.
+
+Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despliegue real.
+
 ## Estado
 
 - El backend está en `../../backend/`.
