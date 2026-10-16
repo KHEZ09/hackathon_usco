@@ -11,40 +11,17 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { RealisticDragonfly } from "./RealisticDragonfly";
-import { CacaoBean, CacaoLeaf, CacaoPod, useWind } from "./Botanica";
+import { CacaoLeaf, CacaoPod, useWind } from "./Botanica";
 
 // Ruta de la libélula: se detiene en los márgenes y cruza rápido entre secciones.
 const PATH_P = [0, 0.12, 0.2, 0.32, 0.4, 0.52, 0.6, 0.74, 0.82, 1];
 const PATH_X = ["92vw", "93vw", "7vw", "6vw", "93vw", "94vw", "7vw", "6vw", "92vw", "50vw"];
 const PATH_Y = ["70vh", "26vh", "38vh", "30vh", "22vh", "48vh", "28vh", "40vh", "24vh", "30vh"];
 
-// 1) Los 14 granos originales (se mantienen exactamente como estaban antes)
-const ORIGINAL_BEANS = Array.from({ length: 14 }, (_, i) => ({
-  left: i % 2 ? 2 + ((i * 7) % 9) : 89 + ((i * 5) % 9),
-  top: (i * 71) % 100,
-  depth: (i % 3) + 1,
-  size: 14 + (i % 3) * 10,
-  delay: -(i * 1.7),
-  variant: ((i % 3) + 1) as 1 | 2 | 3,
-  isRecent: false,
-}));
-
-// 2) Los granos recientes (implementados para cubrir el recorrido hacia Trazabilidad/Productos con el ajuste exterior para no tocar el texto)
-const RECENT_BEANS = Array.from({ length: 14 }, (_, i) => ({
-  left: i % 2 ? 0.8 + ((i * 3) % 2.8) : 95.2 + ((i * 3) % 2.8),
-  top: 70 + ((i * 32) % 150),
-  depth: (i % 2) + 2,
-  size: 16 + (i % 4) * 4,
-  delay: -(i * 1.6),
-  variant: ((i % 3) + 1) as 1 | 2 | 3,
-  isRecent: true,
-}));
-
-const BEANS = [...ORIGINAL_BEANS, ...RECENT_BEANS];
-
 /**
- * Capa "scroll world" de la página principal: libélula que acompaña el recorrido,
- * ramas de cacao a los costados que se mecen con el viento y granos flotando en parallax.
+ * Capa "scroll world" de la página principal: libélula que acompaña el recorrido y ramas de
+ * cacao a los costados que se mecen con el viento. Los granos viven en GranosRodantes, solo en
+ * los márgenes libres de las secciones claras.
  */
 export function ScrollCompanion({ targetRef }: { targetRef: RefObject<HTMLElement | null> }) {
   const reduce = useReducedMotion();
@@ -72,10 +49,6 @@ export function ScrollCompanion({ targetRef }: { targetRef: RefObject<HTMLElemen
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-30 overflow-hidden">
       <motion.div style={{ opacity: visible }} className="absolute inset-0">
-        {BEANS.map((b, i) => (
-          <Bean key={i} bean={b} progress={scrollYProgress} />
-        ))}
-
         <motion.div style={{ y: leftY }} className="absolute top-[14%] -left-28 hidden w-72 xl:block">
           <SideCluster wind={wind} />
         </motion.div>
@@ -92,36 +65,6 @@ export function ScrollCompanion({ targetRef }: { targetRef: RefObject<HTMLElemen
         </motion.div>
       </motion.div>
     </div>
-  );
-}
-
-function Bean({ bean, progress }: { bean: (typeof BEANS)[number]; progress: MotionValue<number> }) {
-  const y = useTransform(
-    progress,
-    [0, 1],
-    ["0vh", bean.isRecent ? `${-85 * bean.depth}vh` : `${-60 * bean.depth}vh`]
-  );
-
-  return (
-    <motion.div
-      style={{
-        y,
-        left: `${bean.left}%`,
-        top: bean.isRecent ? `${bean.top}vh` : `${bean.top}%`,
-        width: bean.size,
-      }}
-      className="absolute hidden md:block"
-    >
-      <div
-        className="animate-drift"
-        style={{
-          animationDelay: `${bean.delay}s`,
-          opacity: 0.92,
-        }}
-      >
-        <CacaoBean className="w-full" variant={bean.variant} />
-      </div>
-    </motion.div>
   );
 }
 

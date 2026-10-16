@@ -12,6 +12,7 @@ import { StoryBanner } from "./StoryBanner";
 import { BlockchainSection } from "./BlockchainSection";
 import { SiteFooter } from "./SiteFooter";
 import { ScrollCompanion } from "./ScrollCompanion";
+import { GranosRodantes } from "./GranosRodantes";
 import { CacaoBranch, useWind } from "./Botanica";
 import { PodSection } from "./PodSection";
 import { LoginModal } from "@/components/auth/LoginModal";
@@ -103,6 +104,8 @@ function Landing() {
         ref={mainRef}
         className="relative -mt-[100svh] rounded-t-[2.5rem] bg-surface shadow-[0_-30px_60px_-20px_rgba(0,0,0,0.45)] sm:rounded-t-[3.5rem]"
       >
+        <GranosRodantes mainRef={mainRef} />
+
         <motion.div
           aria-hidden="true"
           style={{ y: branchY, rotate: branchRotate }}
