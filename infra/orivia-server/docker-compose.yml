@@ -57,6 +57,8 @@ services:
   frontend:
     build:
       context: ../../frontend
+      args:
+        NEXT_PUBLIC_ORIVIA_API_URL: https://oriviaurlapi.tobaru.xyz/api/v1
     environment:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
