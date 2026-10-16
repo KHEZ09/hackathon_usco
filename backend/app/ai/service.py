@@ -13,6 +13,27 @@ class AiInsight:
     source: str
 
 
+def build_local_insight(facts: dict[str, Any], kind: str) -> AiInsight:
+    """Provide a deterministic explanation when no local model is available."""
+    if kind == "analytics":
+        text = (
+            f"Se analizaron {facts['order_count']} pedidos. "
+            f"Estados observados: {', '.join(facts['statuses']) or 'ninguno'}."
+        )
+    elif kind == "audit":
+        integrity = "verificada" if facts["integrity_verified"] else "no verificada"
+        text = (
+            f"La integridad de la trazabilidad está {integrity}. "
+            f"Se encontraron {facts['event_count']} eventos registrados."
+        )
+    else:
+        text = (
+            f"El pedido está en estado {facts['status']} y tiene "
+            f"{facts['event_count']} eventos de trazabilidad."
+        )
+    return AiInsight(kind=kind, text=text, source="local-rules")
+
+
 def build_read_only_prompt(facts: dict[str, Any]) -> str:
     serialized = json.dumps(facts, ensure_ascii=False, sort_keys=True)
     return (

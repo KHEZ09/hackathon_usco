@@ -27,6 +27,11 @@ producción: Kevin lo reemplazará por PostgreSQL mediante el mismo contrato.
 Los registros de auditoría y comprobantes blockchain de esta fase también son
 temporales y se pierden al reiniciar el proceso.
 
+Los endpoints de IA funcionan sin servicios externos mediante un resumen local
+determinista. Ollama es opcional: al configurar `OLLAMA_BASE_URL`, se utiliza
+el modelo indicado en `OLLAMA_MODEL` y, si no responde, se conserva el fallback
+local de solo lectura.
+
 Kevin integrará el módulo de usuarios y las migraciones. Este backend no crea una segunda base de usuarios.
 
 ## Ejecutar localmente

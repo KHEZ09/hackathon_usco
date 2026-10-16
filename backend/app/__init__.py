@@ -1,5 +1,6 @@
 from flask import Flask
 
+from .ai.routes import ai_bp
 from .audit.routes import audit_bp
 from .auth_tokens.routes import auth_bp
 from .blockchain.adapter import MemoryBlockchainAnchor
@@ -22,6 +23,8 @@ def create_app(settings: Settings | None = None) -> Flask:
         JWT_ISSUER=settings.jwt_issuer,
         ACCESS_TOKEN_TTL_SECONDS=settings.access_token_ttl_seconds,
         DATABASE_URL=settings.database_url,
+        OLLAMA_BASE_URL=settings.ollama_base_url,
+        OLLAMA_MODEL=settings.ollama_model,
     )
     app.extensions["orivia_order_repository"] = InMemoryOrderRepository()
     app.extensions["orivia_blockchain_anchor"] = MemoryBlockchainAnchor()
@@ -32,5 +35,6 @@ def create_app(settings: Settings | None = None) -> Flask:
     app.register_blueprint(orders_bp, url_prefix="/api/v1/orders")
     app.register_blueprint(audit_bp, url_prefix="/api/v1/audit")
     app.register_blueprint(blockchain_bp, url_prefix="/api/v1/blockchain")
+    app.register_blueprint(ai_bp, url_prefix="/api/v1/ai")
 
     return app

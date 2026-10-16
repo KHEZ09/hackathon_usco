@@ -17,6 +17,8 @@ class Settings:
     jwt_issuer: str
     access_token_ttl_seconds: int
     database_url: str
+    ollama_base_url: str | None
+    ollama_model: str
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -35,6 +37,8 @@ class Settings:
                 "ORIVIA_DATABASE_URL",
                 "postgresql://orivia:orivia_dev_password@localhost:5432/orivia",
             ),
+            ollama_base_url=os.getenv("OLLAMA_BASE_URL") or None,
+            ollama_model=os.getenv("OLLAMA_MODEL", "gpt-oss:120b"),
         )
         if settings.access_token_ttl_seconds <= 0:
             raise ConfigurationError("ORIVIA_ACCESS_TOKEN_TTL_SECONDS must be positive")
