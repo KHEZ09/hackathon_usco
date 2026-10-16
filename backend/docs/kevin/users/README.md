@@ -18,6 +18,14 @@ Todas requieren `Authorization: Bearer <access_token>`.
 
 El servicio recibe `full_name`, `email`, `password_hash`, `roles` y opcionalmente `phone` y `municipality`. La contraseña debe llegar ya convertida en hash por la capa de autenticación. Kevin no genera JWT ni verifica contraseñas.
 
+## Roles persistidos
+
+Los roles `OPERATOR`, `ADMIN`, `ACCOUNTING`, `BUYER` y `VIEWER` se guardan en
+`orivia.app_user_role`. Al iniciar sesión, el backend los transforma en
+permisos server-side; el frontend nunca puede asignar permisos directamente.
+La migración `009_expand_user_roles.sql` mantiene el enum PostgreSQL alineado
+con este contrato.
+
 ## Estados
 
 Los estados admitidos son `ACTIVE`, `BLOCKED` y `SUSPENDED`. El borrado lógico conserva la trazabilidad del usuario.

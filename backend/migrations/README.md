@@ -15,6 +15,7 @@ debe editar una migración que ya haya sido aplicada; se debe crear otra.
 006_seed_cluster_synthetic.sql
 007_lot_traceability.sql
 008_blockchain_registry.sql
+009_expand_user_roles.sql
 ```
 
 `001_initial.sql` crea usuarios, roles, proveedores, clientes, productos,
@@ -45,6 +46,10 @@ evento de registro de cada lote de forma idempotente al consultarlo.
 `008_blockchain_registry.sql` vuelve genérica la tabla de anclajes y agrega el
 metadato de red, transacción, bloque y contrato necesario para registrar
 pruebas en una red EVM real sin guardar datos personales en cadena.
+
+`009_expand_user_roles.sql` agrega los roles persistidos `ACCOUNTING` y `VIEWER`
+que ya soporta el mapa de permisos del backend. No modifica ni elimina los
+roles existentes.
 
 ## Aplicar migraciones
 

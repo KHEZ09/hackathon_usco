@@ -28,7 +28,7 @@ def validate_user_payload(data: dict, *, require_password_hash: bool = True) -> 
     if not isinstance(raw_roles, (list, tuple)) or not raw_roles:
         raise ValueError("roles debe ser una lista no vacía")
     roles = [str(role).upper() for role in raw_roles]
-    invalid = set(roles) - {"OPERATOR", "ADMIN", "BUYER"}
+    invalid = set(roles) - {"OPERATOR", "ADMIN", "ACCOUNTING", "BUYER", "VIEWER"}
     if invalid:
         raise ValueError(f"Roles inválidos: {', '.join(sorted(invalid))}")
     for field in ("phone", "municipality"):

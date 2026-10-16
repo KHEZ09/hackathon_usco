@@ -6,6 +6,7 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
             "orders:read",
             "orders:create",
             "orders:update",
+            "orders:transition",
             "tracking:read",
             "tracking:write",
             "cluster:read",

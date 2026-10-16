@@ -27,6 +27,7 @@ def _headers(app, permissions, subject="cluster-user"):
 def test_cluster_permissions_are_explicit_and_role_owned():
     assert "cluster:read" in permissions_for_role("operator")
     assert "needs:create" in permissions_for_role("operator")
+    assert "orders:transition" in permissions_for_role("operator")
     assert "connections:create" in permissions_for_role("buyer")
     assert "trust:read" in permissions_for_role("viewer")
     assert "lots:status" not in permissions_for_role("operator")

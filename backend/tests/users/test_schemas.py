@@ -25,3 +25,16 @@ def test_user_payload_rejects_invalid_email():
                 "password_hash": hash_password("correct-password"),
             }
         )
+
+
+def test_user_payload_accepts_persisted_accounting_and_viewer_roles():
+    for role in ("accounting", "viewer"):
+        data = validate_user_payload(
+            {
+                "full_name": "Demo",
+                "email": f"{role}@test.co",
+                "password_hash": hash_password("correct-password"),
+                "roles": [role],
+            }
+        )
+        assert data["roles"] == [role.upper()]
