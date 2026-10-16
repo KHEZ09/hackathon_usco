@@ -42,10 +42,19 @@ import { Button, Card, CardTitle, EstadoBadge, Field, Input, Kpi, Select, Table,
 import { ProvenanceGraph } from "./ProvenanceGraph";
 import { AiAssistant } from "./AiAssistant";
 import { cn } from "@/lib/cn";
+import { PanelTabs } from "../PanelTabs";
+import { ClusterView } from "../cluster/ClusterView";
+import { ASOCIACION_ID, useCluster } from "@/lib/cluster";
 
 type Dialogo = { tipo: "bloquear" | "liberar"; lote: Lote } | { tipo: "reset" } | null;
 
 export function AdminPanel() {
+  const cluster = useCluster();
+  const pendientes = cluster.conexiones.filter((x) => x.destinoId === ASOCIACION_ID && x.estado === "REQUESTED").length;
+  return <PanelTabs operacion={<OperacionAdmin />} cluster={<ClusterView rol="administrador" />} badge={pendientes} />;
+}
+
+function OperacionAdmin() {
   const datos = useDatos();
   const session = useSession();
   const { notify } = useToast();

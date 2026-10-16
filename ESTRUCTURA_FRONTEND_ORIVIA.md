@@ -79,6 +79,23 @@ La ruta principal `app/page.tsx` renderiza `components/landing/LandingPage.tsx`,
 | `/admin` | Administrador (tema carbón) | Alertas automáticas de merma y margen (RF04); KPIs de yield, merma, costo y margen; grafo 3D de procedencia en Canvas (rota, hover y clic); asistente de explicación con hechos separados de la interpretación; bloqueo/liberación con motivo y auditoría (RF09/RF10); balance económico con fórmulas y supuestos editables y auditados (RF05/RF12); tabla de lotes con filtros y exportación CSV (RF11). |
 | `/ficha/[lote]` | Comprador (pública, móvil) | Origen, línea de tiempo del proceso y estado, sin costos ni márgenes (RF06); QR generado localmente; verificación de la cadena SHA-256 con simulación de alteración; solicitud de pedido solo para lotes liberados. |
 
+### Red del clúster en los paneles internos
+
+Siguiendo `REQUERIMIENTOS_LANDING_CLUSTER_ORIVIA.md`, la red del clúster se implementó **solo en los paneles de operador y administrador**, en la pestaña «Red del clúster» (`components/panels/PanelTabs.tsx` y `components/panels/cluster/`). La landing pública no cambió.
+
+| Capacidad | Operador | Administrador |
+|---|---|---|
+| Ciclo de relación (descubrir → ficha → solicitar → aceptación humana → compartir) e indicadores | Sí | Sí |
+| Mapa del ecosistema por tipo de actor con conexiones aceptadas, pendientes y rechazadas | Solo actores activos y no privados | Todos, incluidos en verificación |
+| Explorar actores, necesidades y ofertas con búsqueda y filtros (tipo, municipio, categoría) | Sí | Sí |
+| Ficha de actor con confianza `trust-v1` explicada | Contacto oculto hasta que se acepta una conexión | Contacto y notas internas (privado) |
+| Coincidencias sugeridas por reglas (categoría, cobertura, confianza) | Consulta; la solicitud queda en manos del administrador | Puede solicitar la conexión |
+| Publicar, pausar y cerrar necesidades de la asociación | Sí | Sí |
+| Responder solicitudes (aceptar / rechazar con motivo), cancelar las enviadas y simular la respuesta de la contraparte (demo) | No | Sí |
+| Moderar actores (activar, suspender, bloquear con motivo) y registrar señales de confianza append-only | No | Sí |
+
+`lib/cluster.ts` replica el contrato del backend (`backend/app/cluster`, migraciones `005`/`006`): tipos, estados, visibilidad pública/compartida/privada y la fórmula `trust-v1`, con los mismos actores sintéticos de la semilla más productores vinculados a CAC001–CAC003. Los permisos siguen `backend/app/security/roles.py`: el operador no tiene `connections:create`. Las ofertas de cacao se derivan de los lotes `LIBERADO`; un lote pendiente o bloqueado nunca aparece como oferta. Cada cambio queda en la auditoría común. Los datos son sintéticos y se guardan en `localStorage` hasta integrar `/api/v1/cluster`; las pruebas están en `lib/cluster.test.ts` (`npm test`).
+
 Los paneles comparten `components/panels/PanelShell.tsx` (cabecera, conectividad y control de acceso por rol) y `components/panels/ui.tsx`. El estado operativo vive en `lib/store.ts` y persiste en `localStorage` (RF07); la cadena de evidencia está en `lib/evidence.ts` y el generador QR en `lib/qr.ts` (adaptación del algoritmo de Project Nayuki, licencia MIT), verificado decodificando códigos de prueba con jsQR.
 
 Componentes de apoyo:

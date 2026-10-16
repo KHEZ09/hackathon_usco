@@ -378,6 +378,12 @@ export function restablecerDemo() {
   commit(seed());
 }
 
+/** Registra en la auditoría común un cambio hecho en otro módulo (p. ej. la red del clúster). */
+export function registrarAuditoria(e: Omit<EventoAuditoria, "id" | "cuando">) {
+  const d = getSnapshot();
+  commit({ ...d, auditoria: [...d.auditoria, audit(d, e)] });
+}
+
 export function exportarCsv(d: Datos) {
   const head = ["lote", "producto", "productor", "origen", "finca", "estado", "recibido_kg", "consumido_kg", "disponible_kg", "producido_kg", "merma_pct", "costo_total_cop", "costo_unitario_cop_kg", "precio_venta_cop_kg", "margen_pct"];
   const esc = (v: string | number) => {

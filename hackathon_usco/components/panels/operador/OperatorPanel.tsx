@@ -22,12 +22,18 @@ import {
   type Origen,
 } from "@/lib/store";
 import { Button, Card, CardTitle, EstadoBadge, Field, Input, Kpi, Select, Table, Td, Textarea } from "../ui";
+import { PanelTabs } from "../PanelTabs";
+import { ClusterView } from "../cluster/ClusterView";
 import { cn } from "@/lib/cn";
 
 const newIdem = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 const hoy = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
 
 export function OperatorPanel() {
+  return <PanelTabs operacion={<OperacionOperador />} cluster={<ClusterView rol="operador" />} />;
+}
+
+function OperacionOperador() {
   const datos = useDatos();
   const totales = useMemo(() => {
     const inv = datos.lotes.map((l) => inventario(datos, l.id));

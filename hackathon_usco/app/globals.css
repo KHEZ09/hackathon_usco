@@ -144,3 +144,8 @@ body {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Conexiones pendientes del mapa del clúster: trazo en movimiento */
+@keyframes dash {
+  to { stroke-dashoffset: -24; }
+}
