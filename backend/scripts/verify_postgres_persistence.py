@@ -101,7 +101,12 @@ def main() -> int:
         anchored = client.post(
             "/api/v1/blockchain/anchors", headers=headers, json={"order_id": order_id}
         )
-        _assert(anchored.status_code == 201, f"anchor: {anchored.status_code} {anchored.get_data(as_text=True)}")
+        # Order creation and status transitions anchor their latest event
+        # automatically. The explicit endpoint must therefore be idempotent.
+        _assert(
+            anchored.status_code in {200, 201},
+            f"anchor: {anchored.status_code} {anchored.get_data(as_text=True)}",
+        )
         event_hash = anchored.get_json()["anchor"]["event_hash"]
 
         fresh_app = create_app()
