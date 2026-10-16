@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify
 
-from ..orders.repository import InMemoryOrderRepository, audit_to_dict
+from ..orders.repository import OrderRepository, audit_to_dict
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
 
 audit_bp = Blueprint("audit", __name__)
 
 
-def _repository() -> InMemoryOrderRepository:
+def _repository() -> OrderRepository:
     return current_app.extensions["orivia_order_repository"]
 
 

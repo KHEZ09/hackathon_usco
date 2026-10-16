@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from math import isfinite
 from threading import RLock
-from typing import Any
+from typing import Any, Protocol
 from uuid import uuid4
 
 from ..audit.service import AuditRecord, create_audit_record
@@ -26,6 +26,34 @@ class OrderRecord:
     events: list[TraceEvent] = field(default_factory=list)
     audits: list[AuditRecord] = field(default_factory=list)
     payloads: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+
+class OrderRepository(Protocol):
+    """Contract shared by the demo store and Kevin's PostgreSQL adapter."""
+
+    def create(
+        self,
+        *,
+        actor_id: str,
+        product: str,
+        quantity: float,
+        origin: str,
+        destination: str,
+    ) -> OrderRecord: ...
+
+    def list(self) -> list[OrderRecord]: ...
+
+    def get(self, order_id: str) -> OrderRecord | None: ...
+
+    def transition(
+        self, *, order_id: str, actor_id: str, next_state: str
+    ) -> OrderRecord: ...
+
+    def timeline(self, order_id: str) -> list[TraceEvent]: ...
+
+    def audits(self, order_id: str) -> list[AuditRecord]: ...
+
+    def verify_timeline(self, order_id: str) -> bool: ...
 
 
 class InMemoryOrderRepository:

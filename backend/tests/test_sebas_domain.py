@@ -48,6 +48,37 @@ def test_order_repository_rejects_non_finite_quantity():
         )
 
 
+def test_order_repository_rejects_rehashed_invalid_transition():
+    repository = InMemoryOrderRepository()
+    order = repository.create(
+        actor_id="user-1",
+        product="Cacao",
+        quantity=10,
+        origin="Huila",
+        destination="Neiva",
+    )
+    repository.transition(
+        order_id=order.order_id,
+        actor_id="user-1",
+        next_state="CONFIRMED",
+    )
+    original = order.events[1]
+    tampered = TraceEvent.create(
+        order_id=order.order_id,
+        event_type="STATUS_CHANGED",
+        actor_id=original.actor_id,
+        previous_status="CREATED",
+        new_status="DELIVERED",
+        payload={"from": "CREATED", "to": "DELIVERED"},
+        previous_event_hash=order.events[0].event_hash,
+        occurred_at=original.occurred_at,
+    )
+    order.events[1] = tampered
+    order.payloads[tampered.event_id] = {"from": "CREATED", "to": "DELIVERED"}
+
+    assert repository.verify_timeline(order.order_id) is False
+
+
 def test_trace_event_detects_payload_tampering():
     event = TraceEvent.create(
         order_id="order-1",

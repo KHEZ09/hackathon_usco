@@ -1,6 +1,7 @@
 import jwt
 
 from app import create_app
+from app.ai.service import OllamaClient
 
 
 def _headers(app, *, subject: str, role: str, permissions: list[str]) -> dict[str, str]:
@@ -105,3 +106,52 @@ def test_ai_audit_requires_audit_permission_and_missing_order_is_404():
 
     assert forbidden.status_code == 403
     assert missing.status_code == 404
+
+
+def test_ai_falls_back_to_local_rules_when_ollama_is_unavailable(monkeypatch):
+    app = create_app()
+    app.config["OLLAMA_BASE_URL"] = "http://ollama.invalid"
+    client = app.test_client()
+    order_id = _create_order(app, suffix="-fallback")
+
+    def unavailable(*_args, **_kwargs):
+        raise OSError("Ollama unavailable")
+
+    monkeypatch.setattr("app.ai.routes.OllamaClient.summarize", unavailable)
+    response = client.post(
+        f"/api/v1/ai/orders/{order_id}/summary",
+        headers=_headers(
+            app,
+            subject="viewer-fallback",
+            role="viewer",
+            permissions=["orders:read"],
+        ),
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["insight"]["source"] == "local-rules"
+
+
+def test_ollama_preserves_analysis_kind(monkeypatch):
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return b'{"response":"Auditoria lista"}'
+
+    monkeypatch.setattr(
+        "app.ai.service.request.urlopen",
+        lambda *_args, **_kwargs: FakeResponse(),
+    )
+
+    insight = OllamaClient(
+        base_url="http://ollama.test",
+        model="gpt-oss:120b",
+    ).summarize({"order_id": "order-1"}, kind="audit")
+
+    assert insight.kind == "audit"
+    assert insight.source == "ollama:gpt-oss:120b"

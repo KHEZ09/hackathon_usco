@@ -6,13 +6,13 @@ from flask import Blueprint, current_app, g, jsonify, request
 
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
-from .repository import InMemoryOrderRepository, event_to_dict, order_to_dict
+from .repository import OrderRepository, event_to_dict, order_to_dict
 from .states import InvalidOrderTransition
 
 orders_bp = Blueprint("orders", __name__)
 
 
-def _repository() -> InMemoryOrderRepository:
+def _repository() -> OrderRepository:
     return current_app.extensions["orivia_order_repository"]
 
 

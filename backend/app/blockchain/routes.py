@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify, request
 
-from ..orders.repository import InMemoryOrderRepository
+from ..orders.repository import OrderRepository
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
 
 blockchain_bp = Blueprint("blockchain", __name__)
 
 
-def _repository() -> InMemoryOrderRepository:
+def _repository() -> OrderRepository:
     return current_app.extensions["orivia_order_repository"]
 
 

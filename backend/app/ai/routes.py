@@ -4,7 +4,7 @@ from typing import Any
 
 from flask import Blueprint, current_app, jsonify
 
-from ..orders.repository import InMemoryOrderRepository
+from ..orders.repository import OrderRepository
 from ..security.middleware import require_access_token
 from ..security.permissions import require_permissions
 from .service import AiInsight, OllamaClient, build_local_insight
@@ -12,7 +12,7 @@ from .service import AiInsight, OllamaClient, build_local_insight
 ai_bp = Blueprint("ai", __name__)
 
 
-def _repository() -> InMemoryOrderRepository:
+def _repository() -> OrderRepository:
     return current_app.extensions["orivia_order_repository"]
 
 

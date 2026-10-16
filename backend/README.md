@@ -70,6 +70,8 @@ curl http://127.0.0.1:8000/health
 
 Los documentos generales del proyecto están en la raíz del repositorio: `PLAN_HACKATON_ORIVIA.md`, `ARQUITECTURA_ORIVIA_HACKATON.md`, `RUTA_BACKEND_ORIVIA.md` y `ESTRUCTURA_BACKEND_ORIVIA.md`.
 
+El contrato operativo de nuestras rutas está en `API_CONTRACT_ORIVIA.md`.
+
 ## Pruebas
 
 ```powershell

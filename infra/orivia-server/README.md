@@ -88,6 +88,12 @@ bash infra/orivia-server/scripts/deploy.sh
 bash infra/orivia-server/scripts/healthcheck.sh
 ```
 
+Después de un despliegue, ejecutar también el smoke test, que no crea datos:
+
+```bash
+bash infra/orivia-server/scripts/smoke_test.sh
+```
+
 No se debe desplegar un cambio que no haya pasado `test.sh`.
 
 ## Despliegue inicial

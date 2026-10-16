@@ -1,4 +1,6 @@
-from flask import Flask
+from uuid import uuid4
+
+from flask import Flask, g, jsonify, request
 
 from .ai.routes import ai_bp
 from .audit.routes import audit_bp
@@ -26,7 +28,37 @@ def create_app(settings: Settings | None = None) -> Flask:
         DATABASE_URL=settings.database_url,
         OLLAMA_BASE_URL=settings.ollama_base_url,
         OLLAMA_MODEL=settings.ollama_model,
+        MAX_CONTENT_LENGTH=1 * 1024 * 1024,
     )
+
+    @app.before_request
+    def assign_request_id() -> None:
+        incoming = request.headers.get("X-Request-ID", "").strip()
+        valid = incoming and len(incoming) <= 80 and all(
+            character.isalnum() or character in "-_" for character in incoming
+        )
+        g.request_id = incoming if valid else str(uuid4())
+
+    @app.after_request
+    def apply_security_headers(response):
+        response.headers["X-Request-ID"] = getattr(g, "request_id", str(uuid4()))
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        return response
+
+    @app.errorhandler(413)
+    def payload_too_large(_error):
+        return (
+            jsonify(
+                {
+                    "error": "PAYLOAD_TOO_LARGE",
+                    "message": "El cuerpo de la solicitud supera el límite permitido.",
+                    "request_id": getattr(g, "request_id", None),
+                }
+            ),
+            413,
+        )
     app.extensions["orivia_order_repository"] = InMemoryOrderRepository()
     app.extensions["orivia_blockchain_anchor"] = MemoryBlockchainAnchor()
     app.extensions["orivia_anchor_receipts"] = {}
