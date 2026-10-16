@@ -190,6 +190,7 @@ Para la declaración E08 del reto, el equipo debe conservar esta distinción y c
 5. Se agregaron `clsx` y `tailwind-merge` al manifiesto y lockfile; existe el helper `cn()`.
 6. La interfaz evolucionó a una landing con hero de cuadros por scroll, relato de origen, trazabilidad, analítica, story banner, tarjetas de producto y modales de demostración.
 7. El documento actual consolida el estado visual y registra los límites de demo frente a la rúbrica.
+8. En atención a `OPERACION_PRUEBA_FUEGO_ORIVIA.md`, se resolvió la fórmula de disponibilidad de inventario para soportar procesos multietapa, se blindó la autorización de cambio de estado a nivel de tienda y se incorporó la suite de pruebas automatizadas ejecutables con `npm test` (`lib/store.test.ts`), cubriendo los casos OP-01 a OP-19.
 
 ## 11. Fuentes del repositorio y referencias del reto
 

@@ -10,6 +10,8 @@ Repositorio del proyecto ORIVIA para la hackatón de agroindustria de la USCO.
 - `ESTRUCTURA_BACKEND_ORIVIA.md`: carpetas, responsabilidades y contrato entre módulos.
 - `TEAM_STRUCTURE.md`: documentos obligatorios y carpetas asignadas a Sebas, Kevin, Ángel y Daniel.
 - `ESTRUCTURA_FRONTEND_ORIVIA.md`: registro del diseño frontend, herramientas, componentes y límites de demostración frente al reto.
+- `OPERACION_PRUEBA_FUEGO_ORIVIA.md`: especificación operativa del software, criterios de éxito RF01–RF12, guion de prueba de fuego y casos OP-01–OP-19.
+- `REQUERIMIENTOS_LANDING_CLUSTER_ORIVIA.md`: matriz de requerimientos y roles del clúster cacaotero.
 
 ## Código
 
