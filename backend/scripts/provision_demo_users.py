@@ -6,8 +6,13 @@ Passwords are supplied through environment variables and are never committed.
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
 
 import bcrypt
+
+# Allow direct execution from /app/scripts in the production image.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.database.connection import transaction
 
