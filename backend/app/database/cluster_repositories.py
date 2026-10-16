@@ -6,7 +6,6 @@ from uuid import UUID
 
 from .connection import fetch_all, fetch_one, transaction
 
-
 ACTOR_TYPES = {
     "PRODUCER",
     "ASSOCIATION",

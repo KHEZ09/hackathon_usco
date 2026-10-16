@@ -1,7 +1,7 @@
 import pytest
 
 from app import create_app
-from app.database.cluster_repositories import ActorRepository, ActorNeedRepository
+from app.database.cluster_repositories import ActorNeedRepository, ActorRepository
 
 
 def test_cluster_repositories_are_registered_in_factory():

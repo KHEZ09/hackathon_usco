@@ -74,7 +74,6 @@ def test_accounting_cost_validates_non_negative_values(monkeypatch):
     def fail_if_called(*args):
         nonlocal called
         called = True
-        return None
 
     monkeypatch.setattr(
         "app.accounting.routes.accounting_repo.set_lot_cost", fail_if_called
