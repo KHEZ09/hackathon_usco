@@ -82,7 +82,7 @@ function Landing() {
 
   return (
     <>
-      <Navbar session={session} onLogin={openLogin} onLogout={logout} />
+      <Navbar session={session} onLogin={openLogin} onRegister={abrirRegistro} onLogout={logout} />
       <HeroScrollWorld />
 
       <main

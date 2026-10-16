@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, LayoutDashboard, LogOut, Menu, QrCode, Search, UserRound, X } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, Menu, QrCode, Search, UserPlus, UserRound, X } from "lucide-react";
 import { OriviaLogo } from "@/components/brand/OriviaLogo";
 import { ROLES, ROLE_HOME, type Role, type Session } from "@/components/auth/roles";
 import { cn } from "@/lib/cn";
@@ -22,10 +22,11 @@ const ROLE_ORDER: Role[] = ["operador", "administrador", "comprador"];
 type Props = {
   session: Session | null;
   onLogin: (role?: Role) => void;
+  onRegister: () => void;
   onLogout: () => void;
 };
 
-export function Navbar({ session, onLogin, onLogout }: Props) {
+export function Navbar({ session, onLogin, onRegister, onLogout }: Props) {
   const [solid, setSolid] = useState(false);
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -107,6 +108,16 @@ export function Navbar({ session, onLogin, onLogout }: Props) {
               </button>
             </div>
           ) : (
+            <>
+            <button
+              onClick={onRegister}
+              className={cn(
+                "hidden items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition sm:inline-flex sm:px-5 sm:py-2.5",
+                solid ? "border-bosque/40 text-bosque hover:bg-bosque/10 dark:text-bosque-300" : "border-crema/40 text-crema backdrop-blur hover:bg-crema/10",
+              )}
+            >
+              <UserPlus className="size-3.5" /> Crear cuenta
+            </button>
             <div ref={menuRef} className="relative">
               <button
                 onClick={() => setMenu((v) => !v)}
@@ -164,6 +175,7 @@ export function Navbar({ session, onLogin, onLogout }: Props) {
                 )}
               </AnimatePresence>
             </div>
+            </>
           )}
           <button
             onClick={() => setOpen((v) => !v)}
@@ -206,9 +218,20 @@ export function Navbar({ session, onLogin, onLogout }: Props) {
                   </button>
                 </>
               ) : (
-                <Link href="/ficha/CAC002" onClick={() => setOpen(false)} className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface-2">
-                  <QrCode className="size-4" /> Ver una ficha QR
-                </Link>
+                <>
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      onRegister();
+                    }}
+                    className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface-2"
+                  >
+                    <UserPlus className="size-4" /> Crear cuenta
+                  </button>
+                  <Link href="/ficha/CAC002" onClick={() => setOpen(false)} className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold hover:bg-surface-2">
+                    <QrCode className="size-4" /> Ver una ficha QR
+                  </Link>
+                </>
               )}
             </div>
           </motion.div>
