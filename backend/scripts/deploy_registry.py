@@ -9,7 +9,6 @@ from pathlib import Path
 from eth_account import Account
 from web3 import Web3
 
-
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT = ROOT / "app" / "blockchain" / "contract_artifact.json"
 
