@@ -10,10 +10,10 @@ def test_health_endpoint():
     assert response.get_json()["status"] == "ok"
 
 
-def test_ready_reports_pending_database_integration():
+def test_ready_reports_unavailable_database():
     client = create_app().test_client()
 
     response = client.get("/ready")
 
     assert response.status_code == 503
-    assert response.get_json()["dependencies"]["database"] == "pending-integration"
+    assert response.get_json()["dependencies"]["database"] == "unavailable"
