@@ -46,6 +46,17 @@ Los repositorios exponen consultas `list_public` que aplican explícitamente
 visibilidad y estado activo. Sebas decidirá el acceso a las consultas privadas
 y compartidas.
 
+La consulta pública de señales limita la respuesta a señales `PUBLIC` y
+`CONFIRMED`, asociadas a un actor `ACTIVE` y `PUBLIC`. Las señales pendientes,
+disputadas, revocadas o de actores no públicos quedan fuera de esa consulta;
+la consulta interna puede solicitarse con la opción privada del repositorio y
+debe seguir protegida por los permisos de Sebas.
+
+Los repositorios también rechazan antes de abrir una transacción los estados,
+categorías, cantidades, puntajes y contextos de conexión evidentemente
+inválidos. La base de datos conserva la validación definitiva mediante enums,
+checks, claves foráneas e índices únicos.
+
 ## Errores de dominio acordados
 
 Las rutas futuras deben conservar estos códigos:

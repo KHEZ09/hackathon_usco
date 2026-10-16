@@ -105,3 +105,22 @@ def test_trust_repository_validates_score_and_explanation_before_database():
                 "explanation": "no",
             }
         )
+
+
+def test_public_trust_repository_requires_confirmed_public_actor(monkeypatch):
+    calls = {}
+
+    def fake_fetch_all(query, params=()):
+        calls["query"] = query
+        calls["params"] = params
+        return []
+
+    monkeypatch.setattr("app.database.cluster_repositories.fetch_all", fake_fetch_all)
+
+    TrustSignalRepository().list_for_actor("actor-id")
+
+    assert "JOIN orivia.actors" in calls["query"]
+    assert "s.visibility='PUBLIC'" in calls["query"]
+    assert "s.status='CONFIRMED'" in calls["query"]
+    assert "a.status='ACTIVE'" in calls["query"]
+    assert calls["params"] == ("actor-id",)
