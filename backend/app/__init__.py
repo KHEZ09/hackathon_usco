@@ -20,6 +20,7 @@ from .lots.routes import lots_bp, public_lots_bp
 from .orders.postgres_repository import PostgresOrderRepository
 from .orders.repository import InMemoryOrderRepository
 from .orders.routes import orders_bp
+from .public_live.routes import public_live_bp
 from .routes import health_bp
 from .security.rate_limit import LoginRateLimiter
 
@@ -171,6 +172,7 @@ def create_app(settings: Settings | None = None) -> Flask:
     app.register_blueprint(public_cluster_bp, url_prefix="/api/v1/public/cluster")
     app.register_blueprint(lots_bp, url_prefix="/api/v1/lots")
     app.register_blueprint(public_lots_bp, url_prefix="/api/v1/public/lots")
+    app.register_blueprint(public_live_bp, url_prefix="/api/v1/public")
     register_kevin_modules(app)
 
     if settings.order_repository_backend == "postgres":

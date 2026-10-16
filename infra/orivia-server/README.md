@@ -23,6 +23,8 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
   ambos archivos si el segundo existe; ninguno se versiona.
 - El login tiene límite local por IP/identificador: 5 fallos en 10 minutos y bloqueo de 15 minutos.
 - La API registra método, ruta, código y `X-Request-ID`, sin registrar tokens ni cuerpos de solicitud.
+- El servicio `web` publica el tablero agregado de salud en `oriviahealth.tobaru.xyz`; solo
+  expone métricas y eventos sin PII. PostgreSQL continúa privado dentro de Docker.
 - El stack canónico es únicamente `/opt/orivia/repo` (`orivia-server`), con API
   local en `127.0.0.1:8000` y PostgreSQL privado en Docker.
 - El stack legado `/home/admin/backend` estaba aislado en otra red, con otra
@@ -50,6 +52,22 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
 | PostgreSQL | Solo red privada de Docker |
 
 ## Preparación y despliegue
+
+### DNS del tablero público
+
+El DNS debe tener este registro antes de que Caddy pueda emitir HTTPS:
+
+```text
+Tipo: A
+Nombre: oriviahealth
+Valor: IP pública actual del VPS
+TTL: 300
+```
+
+Después de propagar el registro, Caddy obtiene y renueva el certificado de
+`https://oriviahealth.tobaru.xyz` automáticamente. No se debe abrir el puerto
+5432: el HTML consulta únicamente `/api/v1/public/live`, una proyección
+agregada y de solo lectura.
 
 En el servidor, instalar las dependencias base y Docker según la documentación oficial de Debian:
 

@@ -25,4 +25,11 @@ if [[ "$unauth_status" != "401" ]]; then
   exit 1
 fi
 
+echo "[4/4] public live snapshot"
+live_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/api/v1/public/live")"
+if [[ "$live_status" != "200" ]]; then
+  echo "La vista pública en vivo respondió HTTP $live_status." >&2
+  exit 1
+fi
+
 echo "Smoke test completado correctamente."

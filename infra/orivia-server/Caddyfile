@@ -1,0 +1,20 @@
+oriviahealth.tobaru.xyz {
+    encode gzip
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Content-Security-Policy "default-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
+        Cache-Control "no-store"
+    }
+
+    route {
+        @live path /api/v1/public/live
+        reverse_proxy @live api:8000
+
+        root * /srv
+        file_server
+    }
+}
