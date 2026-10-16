@@ -105,6 +105,18 @@ La prueba crea un pedido sintético, cambia su estado, verifica la cadena,
 ancla el último evento, recrea la aplicación y confirma que todo sigue legible;
 finalmente elimina únicamente los datos de prueba.
 
+Para verificar autenticación real sin exponer tokens:
+
+```bash
+docker compose --env-file infra/orivia-server/.env -f infra/orivia-server/docker-compose.yml exec -T \
+  -e ORIVIA_TEST_LOGIN_EMAIL=operador@orivia.test \
+  -e ORIVIA_TEST_LOGIN_PASSWORD='password-demo-no-versionada' api \
+  python scripts/verify_auth_postgres.py
+```
+
+Las cuentas demo se provisionan con `scripts/provision_demo_users.py`; sus
+contraseñas deben entregarse por un canal seguro y nunca versionarse.
+
 No se debe desplegar un cambio que no haya pasado `test.sh`.
 
 ## Despliegue inicial

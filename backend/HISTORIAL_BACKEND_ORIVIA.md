@@ -12,7 +12,7 @@ Historial técnico y operativo del desarrollo del backend de ORIVIA dentro del r
 - **Ruta del backend:** `backend/`.
 - **Modelo utilizado por Sebas y Kevin durante el acompañamiento técnico:** **GPT 5.6 Luna**.
 - **Servidor de staging/pruebas:** instancia AWS Lightsail `orivia` con Debian 13.
-- **Estado de referencia del repositorio al crear este historial:** `bd1cceb`.
+- **Última verificación técnica registrada:** `433c0c0`.
 
 ## 1. Objetivo del backend
 
@@ -62,7 +62,7 @@ Kevin se encargó de la capa de datos y de los módulos empresariales generales,
 - incorporación de comprobación de PostgreSQL en `/ready`;
 - documentación del despliegue y de los módulos de datos.
 
-La integración de Kevin quedó preparada para reemplazar progresivamente los repositorios en memoria del núcleo de pedidos. En el estado actual todavía debe completarse ese reemplazo para que los pedidos y sus eventos se persistan en PostgreSQL de forma definitiva.
+La integración de Kevin proporcionó las tablas y conexiones compartidas. Sobre ese contrato se incorporó el adaptador persistente de pedidos de Sebas sin reemplazar los módulos generales de Kevin.
 
 ### GPT 5.6 Luna — acompañamiento técnico compartido
 
@@ -116,9 +116,9 @@ PostgreSQL 16 en red privada de Docker
 
 - `GET /health`: salud básica del proceso.
 - `GET /ready`: readiness y comprobación de PostgreSQL.
-- `POST /api/v1/auth/login`: contrato inicial de login; la persistencia real de usuarios continúa pendiente.
+- `POST /api/v1/auth/login`: login real con bcrypt contra usuarios de PostgreSQL.
 - `GET /api/v1/auth/me`: identidad del usuario autenticado.
-- `POST /api/v1/auth/refresh`: contrato de refresh; requiere persistencia de refresh tokens.
+- `POST /api/v1/auth/refresh`: rota y revoca refresh tokens persistidos en PostgreSQL.
 - `POST /api/v1/orders`: registrar pedido.
 - `GET /api/v1/orders`: listar pedidos.
 - `GET /api/v1/orders/<id>`: consultar pedido.
@@ -258,7 +258,7 @@ La operación normal del equipo es:
   - health `200`;
   - readiness `200` con PostgreSQL `ok`;
   - petición no autenticada a pedidos rechazada con `401`.
-- El servidor quedó sincronizado con `bd1cceb`; el último commit posterior a la validación de código (`bd1cceb`) fue documental y no requirió reinicio del runtime.
+- El servidor quedó sincronizado con `433c0c0`; el stack oficial fue reconstruido y validado después de los cambios.
 
 ## 8. Estado actual
 
@@ -268,10 +268,10 @@ La operación normal del equipo es:
 - JWT, roles, permisos y middleware de seguridad base.
 - Login real con bcrypt y repositorio de usuarios de PostgreSQL.
 - Refresh tokens opacos persistidos, expirables, rotables y revocables.
-- Flujo de pedidos y transiciones.
-- Trazabilidad con cadena hash.
-- Auditoría y verificación.
-- Adaptador inicial de blockchain.
+- Flujo de pedidos y transiciones persistido en PostgreSQL en producción.
+- Trazabilidad con cadena hash persistida y verificable después de reiniciar la aplicación.
+- Auditoría persistida en `audit_log` y verificación de integridad.
+- Anclaje durable local en `blockchain_anchor`, idempotente y verificable.
 - IA local/fallback y frontera opcional con Ollama.
 - Docker Compose para API y PostgreSQL.
 - Scripts de prueba, despliegue, healthcheck y smoke test.
@@ -281,18 +281,15 @@ La operación normal del equipo es:
 
 ### Pendiente
 
-- Reemplazar completamente `InMemoryOrderRepository` por el repositorio persistente de PostgreSQL.
-- Persistir en PostgreSQL los eventos/timeline de pedidos.
 - Definir el esquema final compartido entre pedidos, usuarios, inventario y contabilidad.
-- Elegir el proveedor blockchain definitivo y sustituir el adaptador de memoria cuando el alcance lo requiera.
+- Elegir el proveedor blockchain público definitivo, si la evaluación lo exige; el anclaje local ya funciona como respaldo durable.
 - Instalar/configurar el modelo Ollama real `gpt-oss:120b` solo si la capacidad del servidor y el costo lo permiten.
-- Completar pruebas de integración con todos los repositorios persistentes.
 - Reforzar observabilidad, rotación de secretos, backups probados y recuperación ante fallos antes de producción.
 
 ## 9. Límites actuales y decisiones de seguridad
 
-- El backend no debe presentarse como plenamente persistente mientras el flujo de pedidos continúe usando el repositorio en memoria.
-- El blockchain actual demuestra el contrato de anclaje y verificación, pero no equivale todavía a una red blockchain externa en producción.
+- El entorno de desarrollo conserva el repositorio en memoria para pruebas rápidas; producción usa PostgreSQL.
+- El blockchain actual es un anclaje durable local y no equivale todavía a una red blockchain externa.
 - Ollama no debe bloquear el registro ni la consulta de pedidos.
 - No se deben subir `.env`, llaves privadas, tokens, dumps reales ni credenciales.
 - El servidor `orivia` es staging/prueba; no debe conectarse a datos reales sin una autorización y un diseño de migración explícitos.
@@ -300,10 +297,36 @@ La operación normal del equipo es:
 
 ## 10. Próximo orden de trabajo
 
-1. Diseñar y migrar el esquema persistente de pedidos y eventos.
-2. Implementar el adaptador PostgreSQL de pedidos respetando el `OrderRepository` definido por Sebas.
-3. Ejecutar pruebas completas con PostgreSQL real dentro de Docker.
-4. Confirmar el proveedor blockchain y conservar la verificación local como respaldo.
-5. Probar Ollama de forma aislada, con timeout y fallback.
-6. Desplegar en `orivia`, ejecutar health/readiness/smoke y registrar el resultado en este historial.
+1. Coordinar con Kevin el destino del stack adicional `/home/admin/backend` sin borrar su volumen.
+2. Integrar frontend con login, pedidos, timeline, auditoría, blockchain e IA.
+3. Confirmar el proveedor blockchain público si el alcance final lo requiere.
+4. Probar Ollama de forma aislada, con timeout y fallback.
+5. Reforzar observabilidad, backups, restore y HTTPS antes de producción.
+
+## 11. Verificación final del flujo persistente — 2026-10-16
+
+Se aplicó y validó la migración `004_orders_traceability_persistence.sql`, que
+agrega `sales_order.order_payload` y `order_event.event_hash` sin reemplazar
+las tablas compartidas de Kevin.
+
+El entorno de producción selecciona automáticamente PostgreSQL cuando
+`ORIVIA_ENV=production`. El flujo validado fue:
+
+1. Crear un pedido autenticado.
+2. Cambiarlo de `CREATED` a `CONFIRMED`.
+3. Leer dos eventos encadenados.
+4. Verificar la integridad de la cadena.
+5. Consultar la auditoría persistida.
+6. Crear y consultar un anclaje durable en PostgreSQL.
+7. Recrear la aplicación y comprobar que el pedido y el anclaje siguen disponibles.
+8. Limpiar únicamente los datos sintéticos de la prueba.
+
+Resultado: `40 passed`, health correcto, readiness con PostgreSQL `ok`, smoke
+test correcto y verificación de persistencia correcta.
+
+También se provisionaron las tres cuentas sintéticas con bcrypt directamente
+en el servidor. Las contraseñas no se guardaron en GitHub.
+
+La prueba de autenticación real confirmó login, `/auth/me`, rotación del refresh
+token y rechazo del refresh token anterior.
 

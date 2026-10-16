@@ -145,17 +145,17 @@ Antes de borrar cualquier cosa se debe confirmar con Kevin si necesita conservar
 | Docker y despliegue | Sebas | Scripts en `infra/orivia-server` | Stack oficial activo | Completo | No |
 | Flask/Gunicorn | Sebas | Aplicación y configuración | API oficial funcionando | Completo | No |
 | SSH, Tailscale y firewall | Sebas | Documentación operativa | Servidor operativo, stack extra pendiente de reconciliar | Parcial | No |
-| Login, JWT y refresh tokens | Sebas | Implementado en `2b126c6` | Desplegado y probado | Funcional | Solo integración |
+| Login, JWT y refresh tokens | Sebas | `2b126c6` + verificador `433c0c0` | Login, `/me` y refresh rotation probados | Completo | Solo integración |
 | Usuarios, roles y permisos | Kevin + Sebas | Repositorios y módulos de datos | PostgreSQL conectado | Parcial | Sí para pantallas |
 | PostgreSQL y migraciones | Kevin | Migraciones, seeds y scripts | Base oficial saludable | Parcial | No |
 | Catálogo y contabilidad | Kevin | Módulos y herramientas | Preparado para integración | Parcial | Sí para vistas |
-| Pedidos | Sebas | Flujo protegido implementado | Actualmente con repositorio en memoria | MVP funcional | Sí para formularios |
-| Persistencia de pedidos | Sebas + Kevin | Tablas creadas | Adaptador de escritura pendiente | Pendiente | No |
-| Eventos y trazabilidad | Sebas | Hash-chain y rutas | Persistencia pendiente | Parcial | Sí para timeline |
-| Auditoría | Sebas + Kevin | Rutas y tablas | Conexión definitiva pendiente | Parcial | Sí para consulta |
-| Blockchain | Sebas | Adaptador temporal en memoria | Anclaje persistente pendiente | Parcial | Sí para evidencia |
+| Pedidos | Sebas | Flujo protegido + `PostgresOrderRepository` | Persistencia validada después de recrear la app | Completo backend | Sí para formularios |
+| Persistencia de pedidos | Sebas + Kevin | Migración `004` sobre tablas compartidas | Adaptador desplegado en producción | Completo backend | No |
+| Eventos y trazabilidad | Sebas | Hash-chain y rutas | Eventos persistidos y verificados | Completo backend | Sí para timeline |
+| Auditoría | Sebas + Kevin | Rutas y tablas | Registros persistidos en `audit_log` | Completo backend | Sí para consulta |
+| Blockchain | Sebas | Adaptador local durable | Anclaje PostgreSQL idempotente y verificable | Completo MVP; proveedor público pendiente | Sí para evidencia |
 | IA y Ollama | Sebas | Fallback local y rutas opcionales | Integración real opcional | MVP listo | Sí para mostrar resultados |
-| Pruebas y smoke tests | Sebas + Kevin | Suites y scripts | `38 passed`, health y smoke correctos | Completo | No |
+| Pruebas y smoke tests | Sebas + Kevin | Suites y verificadores | `40 passed`, persistencia y auth real correctas | Completo | No |
 | Frontend y UX | Ángel + Daniel | Estructura y avances documentados | No aplica todavía | En curso | Sí |
 
 ## Trabajo realizado
@@ -170,10 +170,15 @@ Antes de borrar cualquier cosa se debe confirmar con Kevin si necesita conservar
 - Refresh tokens opacos, rotación y revocación.
 - Flujo protegido de pedidos.
 - Hash-chain para trazabilidad.
+- Adaptador PostgreSQL para pedidos y transiciones.
+- Migración incremental `004_orders_traceability_persistence.sql`.
+- Persistencia de eventos, auditorías y anclajes.
 - Rutas de auditoría.
-- Adaptador inicial de blockchain.
+- Anclaje PostgreSQL durable e idempotente.
 - IA local con fallback y conexión opcional a Ollama.
 - Pruebas unitarias, de integración y smoke tests.
+- Verificación real de persistencia después de recrear la aplicación.
+- Provisionamiento bcrypt de cuentas demo fuera de GitHub.
 - Despliegue y validación en el servidor oficial.
 
 ### Backend de Kevin
@@ -198,20 +203,12 @@ Antes de borrar cualquier cosa se debe confirmar con Kevin si necesita conservar
 
 ## Pendientes puramente backend
 
-1. Confirmar el propietario y propósito de `/home/admin/backend`.
-2. Reconciliar o detener el stack adicional sin borrar inicialmente su volumen.
-3. Dejar `/opt/orivia/repo` como único entorno oficial.
-4. Provisionar credenciales sintéticas reales para usuarios demo.
-5. Conectar pedidos con PostgreSQL.
-6. Persistir eventos de pedidos.
-7. Persistir auditorías.
-8. Persistir anclajes blockchain.
-9. Añadir pruebas de reinicio y recuperación de datos.
-10. Definir el proveedor blockchain definitivo.
-11. Completar la integración real con Ollama.
-12. Verificar backups y restauración.
-13. Configurar HTTPS, logs y observabilidad final.
-14. Añadir pruebas de integración entre autenticación, usuarios y PostgreSQL.
+1. Confirmar con Kevin el propietario y propósito de `/home/admin/backend`.
+2. Detener el stack adicional si Kevin confirma que ya no lo necesita, sin borrar inicialmente su volumen.
+3. Definir el proveedor blockchain público definitivo si la evaluación lo exige.
+4. Probar Ollama real si la capacidad y el tiempo lo permiten.
+5. Verificar backups y restauración.
+6. Configurar HTTPS, logs y observabilidad final.
 
 ## Pendientes que requieren frontend
 
@@ -239,6 +236,13 @@ Antes de borrar cualquier cosa se debe confirmar con Kevin si necesita conservar
 
 ## Conclusión
 
-El backend oficial de ORIVIA está saludable y alineado con GitHub. La mayor inconsistencia es el stack adicional de `/home/admin/backend`, que no está bajo Git, usa otra base y expone el puerto `8001`. Puede ser de Kevin, pero no se debe afirmarlo sin confirmación.
+El backend oficial de ORIVIA está saludable, alineado con GitHub y validado con
+PostgreSQL real. La mayor inconsistencia restante es el stack adicional de
+`/home/admin/backend`, que no está bajo Git, usa otra base y expone el puerto
+`8001`. Puede ser de Kevin, pero no se debe afirmarlo sin confirmación ni
+detenerlo unilateralmente.
 
-La prioridad inmediata es coordinar la propiedad de ese stack. Después, el trabajo backend pendiente es conectar los pedidos, eventos, auditorías y blockchain con PostgreSQL. El frontend puede avanzar en paralelo consumiendo los contratos ya definidos, pero necesitará esos endpoints persistentes para cerrar la demostración completa.
+La integración frontend ya puede comenzar sobre pedidos persistentes,
+trazabilidad, auditoría, blockchain local, IA y autenticación real. El único
+pendiente de coordinación del backend es decidir el destino seguro del stack
+adicional y completar las mejoras de operación antes de producción.

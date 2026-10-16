@@ -101,6 +101,9 @@ Scripts disponibles:
 
 - `scripts/bootstrap.sh`: crea el entorno virtual e instala dependencias.
 - `scripts/migrate.py`: aplica `migrations/` en orden y detecta cambios de checksum.
+- `scripts/verify_postgres_persistence.py`: prueba pedido, eventos, auditoría y anclaje después de recrear la app.
+- `scripts/verify_auth_postgres.py`: prueba login, `/me`, rotación y revocación de refresh tokens.
+- `scripts/provision_demo_users.py`: provisiona hashes bcrypt demo desde variables efímeras.
 - `scripts/backup.sh`: genera un backup custom de PostgreSQL.
 - `scripts/restore.sh`: restaura un backup previamente creado.
 
