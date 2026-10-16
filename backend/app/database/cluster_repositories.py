@@ -17,6 +17,7 @@ ACTOR_TYPES = {
     "INSTITUTION",
 }
 ACTOR_STATUSES = {"ACTIVE", "PENDING", "SUSPENDED", "BLOCKED", "INACTIVE"}
+NEED_STATUSES = {"OPEN", "MATCHED", "PAUSED", "CLOSED", "CANCELLED"}
 NEED_CATEGORIES = {
     "RAW_MATERIAL",
     "INPUTS",
@@ -36,6 +37,7 @@ OFFER_CATEGORIES = {
     "FINANCING",
     "OTHER",
 }
+OFFER_STATUSES = {"DRAFT", "PUBLISHED", "PAUSED", "CLOSED"}
 VISIBILITIES = {"PUBLIC", "SHARED", "PRIVATE"}
 CONNECTION_TYPES = {"NEED_MATCH", "OFFER_MATCH", "DIRECT"}
 CONNECTION_STATUSES = {"REQUESTED", "ACCEPTED", "REJECTED", "BLOCKED", "CANCELLED"}
@@ -157,7 +159,7 @@ class ActorNeedRepository:
 
     def create(self, data: dict[str, Any]) -> dict[str, Any]:
         category = _enum(data["category"], NEED_CATEGORIES, "category")
-        status = _enum(data.get("status", "OPEN"), {"OPEN", "MATCHED", "PAUSED", "CLOSED", "CANCELLED"}, "status")
+        status = _enum(data.get("status", "OPEN"), NEED_STATUSES, "status")
         visibility = _enum(data.get("visibility", "PUBLIC"), VISIBILITIES, "visibility")
         with transaction() as connection:
             return connection.execute(
@@ -203,7 +205,7 @@ class ActorOfferRepository:
 
     def create(self, data: dict[str, Any]) -> dict[str, Any]:
         category = _enum(data["category"], OFFER_CATEGORIES, "category")
-        status = _enum(data.get("status", "DRAFT"), {"DRAFT", "PUBLISHED", "PAUSED", "CLOSED"}, "status")
+        status = _enum(data.get("status", "DRAFT"), OFFER_STATUSES, "status")
         visibility = _enum(data.get("visibility", "PUBLIC"), VISIBILITIES, "visibility")
         with transaction() as connection:
             return connection.execute(
@@ -236,6 +238,18 @@ class ActorConnectionRepository:
     def create_request(self, data: dict[str, Any]) -> dict[str, Any]:
         connection_type = _enum(data["connection_type"], CONNECTION_TYPES, "connection_type")
         visibility = _enum(data.get("visibility", "SHARED"), VISIBILITIES, "visibility")
+        requester_actor_id = data["requester_actor_id"]
+        target_actor_id = data["target_actor_id"]
+        if requester_actor_id == target_actor_id:
+            raise ValueError("un actor no puede conectarse consigo mismo")
+        need_id = data.get("need_id")
+        offer_id = data.get("offer_id")
+        if connection_type == "NEED_MATCH" and not need_id:
+            raise ValueError("need_id requerido para NEED_MATCH")
+        if connection_type == "OFFER_MATCH" and not offer_id:
+            raise ValueError("offer_id requerido para OFFER_MATCH")
+        if connection_type == "DIRECT" and (need_id or offer_id):
+            raise ValueError("DIRECT no admite need_id ni offer_id")
         with transaction() as connection:
             return connection.execute(
                 """
@@ -247,9 +261,8 @@ class ActorConnectionRepository:
                 RETURNING *
                 """,
                 (
-                    data["requester_actor_id"], data["target_actor_id"],
-                    connection_type, visibility, data.get("need_id"),
-                    data.get("offer_id"), data.get("message"), data.get("requested_by"),
+                    requester_actor_id, target_actor_id, connection_type, visibility,
+                    need_id, offer_id, data.get("message"), data.get("requested_by"),
                 ),
             ).fetchone()
 
@@ -271,15 +284,21 @@ class TrustSignalRepository:
     def list_for_actor(
         self, actor_id: UUID | str, public_only: bool = True
     ) -> list[dict[str, Any]]:
-        visibility_clause = "AND visibility='PUBLIC'" if public_only else ""
+        visibility_clause = "" if not public_only else """
+            AND s.visibility='PUBLIC'
+            AND s.status='CONFIRMED'
+            AND a.status='ACTIVE'
+            AND a.visibility='PUBLIC'
+        """
         return fetch_all(
             f"""
-            SELECT trust_signal_id, actor_id, connection_id, signal_type, status,
-                   source, visibility, score, explanation, evidence_ref,
-                   occurred_at, expires_at
-            FROM orivia.trust_signals
-            WHERE actor_id=%s {visibility_clause}
-            ORDER BY occurred_at DESC, trust_signal_id
+            SELECT s.trust_signal_id, s.actor_id, s.connection_id, s.signal_type,
+                   s.status, s.source, s.visibility, s.score, s.explanation,
+                   s.evidence_ref, s.occurred_at, s.expires_at
+            FROM orivia.trust_signals s
+            JOIN orivia.actors a USING(actor_id)
+            WHERE s.actor_id=%s {visibility_clause}
+            ORDER BY s.occurred_at DESC, s.trust_signal_id
             """,
             (actor_id,),
         )
@@ -289,6 +308,16 @@ class TrustSignalRepository:
         status = _enum(data.get("status", "PENDING"), TRUST_SIGNAL_STATUSES, "status")
         source = _enum(data.get("source", "SYSTEM"), TRUST_SIGNAL_SOURCES, "source")
         visibility = _enum(data.get("visibility", "SHARED"), VISIBILITIES, "visibility")
+        score = data.get("score")
+        if score is not None:
+            try:
+                if not 0 <= Decimal(str(score)) <= 100:
+                    raise ValueError("score debe estar entre 0 y 100")
+            except (InvalidOperation, TypeError) as exc:
+                raise ValueError("score debe ser numérico") from exc
+        explanation = str(data["explanation"]).strip()
+        if len(explanation) < 5:
+            raise ValueError("explanation debe tener al menos 5 caracteres")
         with transaction() as connection:
             return connection.execute(
                 """
@@ -303,7 +332,7 @@ class TrustSignalRepository:
                 """,
                 (
                     data["actor_id"], data.get("connection_id"), signal_type, status,
-                    source, visibility, data.get("score"), data["explanation"],
+                    source, visibility, score, explanation,
                     data.get("evidence_ref"), data.get("issued_by"),
                     data.get("occurred_at"), data.get("expires_at"),
                 ),
