@@ -120,7 +120,7 @@ export function OriviaEmblema({ className }: { className?: string }) {
       <span className="mt-4 text-4xl font-light tracking-[0.32em] text-crema [text-shadow:0_0_24px_rgba(226,184,110,0.55)] sm:text-6xl">
         ORIVIA
       </span>
-      <span className="mt-3 text-[0.62rem] font-light tracking-[0.42em] text-crema/85 sm:text-xs">DEL ORIGEN AL MUNDO</span>
+      <span className="mt-3 text-[0.68rem] font-normal tracking-[0.45em] text-crema/95 sm:text-xs [text-shadow:0_1px_8px_rgba(0,0,0,0.55),0_0_12px_rgba(226,184,110,0.25)]">DEL ORIGEN AL MUNDO</span>
     </span>
   );
 }

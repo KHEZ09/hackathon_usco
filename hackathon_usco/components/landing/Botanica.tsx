@@ -118,21 +118,81 @@ export function CacaoPod({ className, tone = "roja" }: { className?: string; ton
   );
 }
 
-/** Grano de cacao (semilla) con su hendidura. */
-export function CacaoBean({ className }: { className?: string }) {
+/** Grano de cacao (semilla) realista: forma de almendra gruesa, textura de cascarilla con estrías longitudinales suaves (sin hendidura de café) y gradiente cálido de chocolate. */
+export function CacaoBean({ className, variant = 1 }: { className?: string; variant?: 1 | 2 | 3 }) {
   const id = useId();
+
+  if (variant === 2) {
+    return (
+      <svg viewBox="0 0 50 64" className={cn("drop-shadow-[0_8px_14px_rgba(20,8,4,0.38)]", className)} aria-hidden="true">
+        <defs>
+          <radialGradient id={`${id}-g2`} cx="42%" cy="30%" r="72%">
+            <stop offset="0%" stopColor="#a3572a" />
+            <stop offset="28%" stopColor="#76391a" />
+            <stop offset="68%" stopColor="#48200f" />
+            <stop offset="100%" stopColor="#1e0b04" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="25" cy="58" rx="15" ry="4" fill="#140602" opacity="0.3" filter="blur(3px)" />
+        <path
+          d="M 22 4 C 33 5, 46 17, 46 35 C 46 51, 37 60, 24 61 C 13 61, 4 52, 4 37 C 4 21, 11 7, 22 4 Z"
+          fill={`url(#${id}-g2)`}
+        />
+        <path d="M 17 11 C 11 23, 12 43, 20 54" fill="none" stroke="#bd703c" strokeOpacity="0.3" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M 19 12 C 13 24, 14 44, 22 55" fill="none" stroke="#1b0803" strokeOpacity="0.4" strokeWidth="1.1" strokeLinecap="round" />
+        <path d="M 31 13 C 36 26, 35 44, 29 53" fill="none" stroke="#1b0803" strokeOpacity="0.32" strokeWidth="1" strokeLinecap="round" />
+        <path d="M 30 13 C 35 26, 34 44, 28 53" fill="none" stroke="#ac6132" strokeOpacity="0.22" strokeWidth="1" strokeLinecap="round" />
+        <ellipse cx="16" cy="24" rx="4" ry="12" fill="#fff" opacity="0.14" transform="rotate(-14 16 24)" />
+      </svg>
+    );
+  }
+
+  if (variant === 3) {
+    return (
+      <svg viewBox="0 0 46 66" className={cn("drop-shadow-[0_8px_14px_rgba(20,8,4,0.38)]", className)} aria-hidden="true">
+        <defs>
+          <radialGradient id={`${id}-g3`} cx="36%" cy="34%" r="70%">
+            <stop offset="0%" stopColor="#944d24" />
+            <stop offset="32%" stopColor="#683115" />
+            <stop offset="72%" stopColor="#3e1a0b" />
+            <stop offset="100%" stopColor="#1a0803" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="23" cy="60" rx="13" ry="4" fill="#140602" opacity="0.3" filter="blur(3px)" />
+        <path
+          d="M 23 3 C 33 8, 42 20, 42 38 C 42 53, 34 62, 23 63 C 12 62, 5 52, 5 37 C 5 19, 13 6, 23 3 Z"
+          fill={`url(#${id}-g3)`}
+        />
+        <path d="M 18 9 C 14 21, 14 43, 20 56" fill="none" stroke="#b86937" strokeOpacity="0.34" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M 20 10 C 16 22, 16 44, 22 57" fill="none" stroke="#1a0803" strokeOpacity="0.45" strokeWidth="1.1" strokeLinecap="round" />
+        <path d="M 27 11 C 31 23, 32 43, 26 54" fill="none" stroke="#1a0803" strokeOpacity="0.32" strokeWidth="1" strokeLinecap="round" />
+        <ellipse cx="15" cy="23" rx="4" ry="11" fill="#fff" opacity="0.12" transform="rotate(-15 15 23)" />
+      </svg>
+    );
+  }
+
+  // Variant 1 (default)
   return (
-    <svg viewBox="0 0 40 56" className={className} aria-hidden="true">
+    <svg viewBox="0 0 46 64" className={cn("drop-shadow-[0_8px_14px_rgba(20,8,4,0.38)]", className)} aria-hidden="true">
       <defs>
-        <radialGradient id={`${id}-g`} cx="0.35" cy="0.3" r="0.8">
-          <stop offset="0" stopColor="#b77a4c" />
-          <stop offset="0.55" stopColor="#7a4526" />
-          <stop offset="1" stopColor="#3d1f10" />
+        <radialGradient id={`${id}-g1`} cx="38%" cy="32%" r="68%">
+          <stop offset="0%" stopColor="#9a5228" />
+          <stop offset="30%" stopColor="#703619" />
+          <stop offset="70%" stopColor="#441e0d" />
+          <stop offset="100%" stopColor="#220d05" />
         </radialGradient>
       </defs>
-      <ellipse cx="20" cy="28" rx="16" ry="25" fill={`url(#${id}-g)`} />
-      <path d="M20 6 C 16 20, 24 36, 20 50" fill="none" stroke="#2c140a" strokeOpacity="0.55" strokeWidth="1.6" />
-      <ellipse cx="13" cy="18" rx="3" ry="7" fill="#fff" opacity="0.2" />
+      <ellipse cx="23" cy="58" rx="14" ry="4" fill="#140602" opacity="0.3" filter="blur(3px)" />
+      <path
+        d="M 23 4 C 33 7, 43 18, 43 36 C 43 51, 35 60, 23 61 C 12 60, 4 50, 4 35 C 4 19, 13 6, 23 4 Z"
+        fill={`url(#${id}-g1)`}
+      />
+      <path d="M 18 10 C 13 22, 13 42, 19 54" fill="none" stroke="#b66a38" strokeOpacity="0.32" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M 20 11 C 15 23, 15 43, 21 55" fill="none" stroke="#1f0a04" strokeOpacity="0.45" strokeWidth="1.1" strokeLinecap="round" />
+      <path d="M 28 12 C 33 24, 33 42, 27 52" fill="none" stroke="#1f0a04" strokeOpacity="0.35" strokeWidth="1" strokeLinecap="round" />
+      <path d="M 27 12 C 32 24, 32 42, 26 52" fill="none" stroke="#a85d2f" strokeOpacity="0.25" strokeWidth="1" strokeLinecap="round" />
+      <path d="M 24 16 C 22 28, 23 40, 24 48" fill="none" stroke="#d0844d" strokeOpacity="0.18" strokeWidth="1.4" strokeLinecap="round" />
+      <ellipse cx="16" cy="22" rx="4.5" ry="11" fill="#fff" opacity="0.13" transform="rotate(-16 16 22)" />
     </svg>
   );
 }

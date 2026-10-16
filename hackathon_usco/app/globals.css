@@ -33,6 +33,8 @@
   --animate-logo-glow: logo-glow 4s ease-in-out infinite;
   --animate-sway: sway 5s ease-in-out infinite;
   --animate-drift: drift 18s ease-in-out infinite;
+  --animate-ken-burns: ken-burns 22s ease-in-out infinite alternate;
+  --animate-sun-sweep: sun-sweep 18s ease-in-out infinite alternate;
 
   @keyframes glow {
     0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.96); }
@@ -64,6 +66,21 @@
   @keyframes hover {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
+  }
+  /* Ken Burns: zoom suave + paneo leve de izquierda a derecha, estilo documental */
+  @keyframes ken-burns {
+    0%   { transform: scale(1)    translateX(0%)   translateY(0%); }
+    40%  { transform: scale(1.04) translateX(-1.2%) translateY(0.4%); }
+    70%  { transform: scale(1.06) translateX(-2.2%) translateY(-0.6%); }
+    100% { transform: scale(1.04) translateX(-1%)   translateY(0.2%); }
+  }
+  /* Sun-sweep: haz de luz cálida que atraviesa el cacaotal como el sol entre hojas */
+  @keyframes sun-sweep {
+    0%   { transform: translateX(-55%) skewX(-18deg); opacity: 0; }
+    15%  { opacity: 0.13; }
+    50%  { transform: translateX(10%)  skewX(-18deg); opacity: 0.18; }
+    85%  { opacity: 0.11; }
+    100% { transform: translateX(70%)  skewX(-18deg); opacity: 0; }
   }
 }
 

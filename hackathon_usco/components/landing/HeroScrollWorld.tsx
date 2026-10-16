@@ -54,11 +54,31 @@ export function HeroScrollWorld() {
           style={{ scale: frameScale, y: frameY }}
           className="@container absolute top-1/2 left-1/2 aspect-video w-[max(100vw,177.78svh)] -translate-x-1/2 -translate-y-1/2 max-sm:w-[280vw]"
         >
+          {/* Ken Burns: zoom y paneo lentísimo estilo documental */}
           <div
             role="img"
             aria-label="Cacaotal en el Huila, agricultor sosteniendo un fruto de cacao rojo maduro"
-            className="absolute inset-0 size-full bg-cover bg-center"
+            className="absolute inset-0 size-full bg-cover bg-center animate-[ken-burns_22s_ease-in-out_infinite_alternate]"
             style={{ backgroundImage: "url(/media/hero-clean.jpg)" }}
+          />
+          {/* Haz de luz solar 1: barre de izquierda a derecha como sol entre hojas */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 w-[200%] -left-1/2"
+            style={{
+              background: "linear-gradient(105deg, transparent 30%, rgba(226,184,110,0.22) 48%, rgba(245,236,180,0.12) 52%, transparent 70%)",
+              animation: "sun-sweep 18s ease-in-out infinite alternate",
+            }}
+          />
+          {/* Haz de luz solar 2: más suave, desfasado, para volumen */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 w-[200%] -left-1/2"
+            style={{
+              background: "linear-gradient(100deg, transparent 35%, rgba(210,168,90,0.10) 50%, transparent 65%)",
+              animation: "sun-sweep 26s ease-in-out infinite alternate-reverse",
+              animationDelay: "-9s",
+            }}
           />
           {/* Suave viñeta perimetral transparente y homogénea */}
           <div className="absolute inset-0 bg-gradient-to-t from-bosque-950/60 via-transparent to-black/25" />
@@ -83,7 +103,7 @@ export function HeroScrollWorld() {
             <span className="mt-4 text-4xl font-light tracking-[0.32em] text-crema [text-shadow:0_0_28px_rgba(226,184,110,0.55)] sm:text-6xl lg:text-7xl">
               ORIVIA
             </span>
-            <span className="mt-3 text-[0.62rem] font-light tracking-[0.42em] text-crema/85 sm:text-xs">
+            <span className="mt-3 text-[0.68rem] font-normal tracking-[0.45em] text-crema/95 sm:text-xs [text-shadow:0_1px_8px_rgba(0,0,0,0.55),0_0_12px_rgba(226,184,110,0.25)]">
               DEL ORIGEN AL MUNDO
             </span>
           </motion.div>

@@ -108,18 +108,19 @@ function LoginDialog({ initialRole = "operador", onClose, onSuccess }: Omit<Prop
 
             {/* Formulario */}
             <div className="overflow-y-auto p-6 sm:p-9">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-tierra uppercase dark:text-tierra-300">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 text-center">
+                  <p className="text-[0.6rem] font-semibold tracking-[0.35em] text-tierra uppercase dark:text-tierra-300">
                     Acceso ORIVIA
                   </p>
-                  <h2 id="login-title" className="mt-2 text-2xl font-semibold text-ink">
+                  <h2 id="login-title" className="mt-2 text-3xl font-bold tracking-tight text-ink leading-none">
                     Inicia sesión
                   </h2>
+                  <div className="mx-auto mt-3 h-px w-10 rounded-full bg-bosque/30" />
                 </div>
                 <button
                   onClick={onClose}
-                  className="rounded-full p-2 text-ink-soft transition hover:bg-surface-2 hover:text-ink"
+                  className="shrink-0 rounded-full p-2 text-ink-soft transition hover:bg-surface-2 hover:text-ink"
                   aria-label="Cerrar inicio de sesión"
                 >
                   <X className="size-5" />
@@ -185,7 +186,7 @@ function LoginDialog({ initialRole = "operador", onClose, onSuccess }: Omit<Prop
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Mínimo 6 caracteres"
-                      className="w-full rounded-xl border border-line bg-surface px-4 py-3 pr-12 text-sm text-ink outline-none transition placeholder:text-ink-soft/60 focus:border-bosque-500 focus:ring-4 focus:ring-bosque-500/15"
+                      className="w-full rounded-xl border border-line bg-surface px-4 py-3 pr-12 text-sm text-ink outline-none transition placeholder:text-ink-soft/60 focus:border-bosque-500 focus:ring-4 focus:ring-bosque-500/15 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                     />
                     <button
                       type="button"
