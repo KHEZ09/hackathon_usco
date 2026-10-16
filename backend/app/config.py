@@ -16,6 +16,7 @@ class Settings:
     jwt_secret_key: str
     jwt_issuer: str
     access_token_ttl_seconds: int
+    refresh_token_ttl_seconds: int
     database_url: str
     ollama_base_url: str | None
     ollama_model: str
@@ -33,6 +34,9 @@ class Settings:
             access_token_ttl_seconds=int(
                 os.getenv("ORIVIA_ACCESS_TOKEN_TTL_SECONDS", "3600")
             ),
+            refresh_token_ttl_seconds=int(
+                os.getenv("ORIVIA_REFRESH_TOKEN_TTL_SECONDS", "2592000")
+            ),
             database_url=os.getenv(
                 "ORIVIA_DATABASE_URL",
                 "postgresql://orivia:orivia_dev_password@localhost:5432/orivia",
@@ -42,6 +46,8 @@ class Settings:
         )
         if settings.access_token_ttl_seconds <= 0:
             raise ConfigurationError("ORIVIA_ACCESS_TOKEN_TTL_SECONDS must be positive")
+        if settings.refresh_token_ttl_seconds <= 0:
+            raise ConfigurationError("ORIVIA_REFRESH_TOKEN_TTL_SECONDS must be positive")
 
         if settings.environment.lower() == "production":
             secret = settings.jwt_secret_key

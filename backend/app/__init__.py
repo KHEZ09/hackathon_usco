@@ -25,6 +25,7 @@ def create_app(settings: Settings | None = None) -> Flask:
         JWT_SECRET_KEY=settings.jwt_secret_key,
         JWT_ISSUER=settings.jwt_issuer,
         ACCESS_TOKEN_TTL_SECONDS=settings.access_token_ttl_seconds,
+        REFRESH_TOKEN_TTL_SECONDS=settings.refresh_token_ttl_seconds,
         DATABASE_URL=settings.database_url,
         OLLAMA_BASE_URL=settings.ollama_base_url,
         OLLAMA_MODEL=settings.ollama_model,

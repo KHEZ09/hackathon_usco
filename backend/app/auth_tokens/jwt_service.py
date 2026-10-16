@@ -28,6 +28,7 @@ class TokenService:
         subject: str,
         role: str,
         permissions: list[str] | None = None,
+        roles: list[str] | None = None,
     ) -> str:
         if not subject or not role:
             raise TokenError("subject and role are required")
@@ -36,11 +37,15 @@ class TokenService:
             for permission in permissions
         ):
             raise TokenError("permissions must contain non-empty strings")
+        normalized_roles = roles or [role]
+        if any(not isinstance(item, str) or not item for item in normalized_roles):
+            raise TokenError("roles must contain non-empty strings")
 
         now = datetime.now(UTC)
         payload: dict[str, Any] = {
             "sub": subject,
             "role": role,
+            "roles": normalized_roles,
             "permissions": permissions or [],
             "iat": now,
             "exp": now + timedelta(seconds=self._access_ttl_seconds),
@@ -88,4 +93,9 @@ class TokenService:
             for permission in permissions
         ):
             raise TokenError("token permissions must be a list of non-empty strings")
+        roles = payload.get("roles", [payload["role"]])
+        if not isinstance(roles, list) or any(
+            not isinstance(item, str) or not item for item in roles
+        ):
+            raise TokenError("token roles must be a list of non-empty strings")
         return payload

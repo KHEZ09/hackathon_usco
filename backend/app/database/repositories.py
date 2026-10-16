@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -76,6 +77,60 @@ class UserRepository:
                 f"UPDATE orivia.app_user SET {assignments} WHERE user_id=%s RETURNING user_id,full_name,email,account_status,phone,municipality,created_at",
                 (*values.values(), user_id),
             ).fetchone()
+
+
+class AuthRepository:
+    def insert_refresh_token(
+        self, user_id: UUID | str, token_hash: str, ttl_seconds: int
+    ) -> None:
+        expires_at = datetime.now(UTC) + timedelta(seconds=ttl_seconds)
+        with transaction() as connection:
+            connection.execute(
+                """INSERT INTO orivia.refresh_token(user_id,token_hash,expires_at)
+                VALUES(%s,%s,%s)""",
+                (user_id, token_hash, expires_at),
+            )
+
+    def rotate_refresh_token(
+        self, token_hash: str, replacement_hash: str, ttl_seconds: int
+    ) -> dict[str, Any] | None:
+        expires_at = datetime.now(UTC) + timedelta(seconds=ttl_seconds)
+        with transaction() as connection:
+            token = connection.execute(
+                """SELECT refresh_token_id,user_id FROM orivia.refresh_token
+                WHERE token_hash=%s AND revoked_at IS NULL AND expires_at > now()
+                FOR UPDATE""",
+                (token_hash,),
+            ).fetchone()
+            if token is None:
+                return None
+
+            user = connection.execute(
+                """SELECT u.*, array_agg(ur.role::text)
+                    FILTER (WHERE ur.role IS NOT NULL) AS roles
+                FROM orivia.app_user u
+                LEFT JOIN orivia.app_user_role ur USING(user_id)
+                WHERE u.user_id=%s AND u.account_status='ACTIVE'
+                GROUP BY u.user_id""",
+                (token["user_id"],),
+            ).fetchone()
+            if user is None:
+                connection.execute(
+                    "UPDATE orivia.refresh_token SET revoked_at=now() WHERE refresh_token_id=%s",
+                    (token["refresh_token_id"],),
+                )
+                return None
+
+            connection.execute(
+                "UPDATE orivia.refresh_token SET revoked_at=now() WHERE refresh_token_id=%s",
+                (token["refresh_token_id"],),
+            )
+            connection.execute(
+                """INSERT INTO orivia.refresh_token(user_id,token_hash,expires_at)
+                VALUES(%s,%s,%s)""",
+                (token["user_id"], replacement_hash, expires_at),
+            )
+            return user
 
 
 class CatalogRepository:

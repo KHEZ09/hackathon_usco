@@ -18,12 +18,27 @@ para correlacionar una operación; si no lo envía, la API lo genera.
 
 | Método | Ruta | Estado |
 | --- | --- | --- |
-| POST | `/api/v1/auth/login` | Pendiente de conectar el repositorio de usuarios |
+| POST | `/api/v1/auth/login` | Disponible; valida bcrypt, emite access y refresh token |
 | GET | `/api/v1/auth/me` | Disponible con access token |
-| POST | `/api/v1/auth/refresh` | Pendiente de persistencia de refresh tokens |
+| POST | `/api/v1/auth/refresh` | Disponible; rota y revoca el refresh token anterior |
 
-El token debe contener `sub`, `role`, `permissions`, `iat`, `exp`, `iss`, `jti` y
-`type=access`. La autorización se decide por los permisos del token.
+Login recibe `email` (o `login`) y `password`:
+
+```json
+{
+  "email": "operador@orivia.test",
+  "password": "la-contraseña-del-usuario"
+}
+```
+
+La respuesta contiene `access_token`, `refresh_token`, `token_type`, `expires_in`
+y un resumen público del usuario. Las contraseñas se verifican contra hashes
+bcrypt; nunca se devuelven al cliente.
+
+El access token debe contener `sub`, `role`, `roles`, `permissions`, `iat`, `exp`,
+`iss`, `jti` y `type=access`. La autorización se decide por los permisos del
+token. El refresh token es opaco, se almacena únicamente como SHA-256 en
+PostgreSQL, tiene expiración y se revoca al rotarlo.
 
 ## Pedidos y trazabilidad
 

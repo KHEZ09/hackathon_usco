@@ -96,11 +96,14 @@ Scripts disponibles:
 
 Los endpoints de Kevin incluyen usuarios, catálogo, proveedores, clientes, inventario, costos, márgenes, alertas, reportes e integraciones. Las credenciales y hashes de contraseña no se versionan.
 
+## Integración completada
+
+- Login real conectado al repositorio de usuarios de PostgreSQL.
+- Hash y verificación de contraseñas con bcrypt.
+- Access tokens JWT con roles y permisos derivados del usuario.
+- Refresh tokens opacos persistidos, expirables, rotables y revocables.
+
 ## Responsabilidades pendientes de integración
 
-- Conectar el repositorio de usuarios de PostgreSQL.
-- Implementar `POST /api/v1/auth/login` usando ese repositorio.
-- Implementar refresh token persistido y revocable.
-- Añadir modelos y migraciones del módulo de usuarios.
 - Conectar los fundamentos de pedidos, auditoría, blockchain e IA a rutas Flask y persistencia.
 - Añadir pruebas integrales del flujo pedido → trazabilidad → verificación → resumen.
