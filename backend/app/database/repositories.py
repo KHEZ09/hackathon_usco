@@ -84,7 +84,7 @@ class CatalogRepository:
     ) -> list[dict[str, Any]]:
         return fetch_all(
             """SELECT product_id,sku,name,kind,unit,sale_price,max_cost_per_kg,min_stock_kg,is_public,is_active
-            FROM orivia.product WHERE is_active AND (%s IS NULL OR name ILIKE '%%'||%s||'%%' OR sku ILIKE '%%'||%s||'%%')
+            FROM orivia.product WHERE is_active AND (%s::text IS NULL OR name ILIKE '%%'||%s::text||'%%' OR sku ILIKE '%%'||%s::text||'%%')
             AND (%s=false OR is_public) ORDER BY name""",
             (query, query, query, public_only),
         )
@@ -104,8 +104,8 @@ class CatalogRepository:
     ) -> list[dict[str, Any]]:
         return fetch_all(
             """SELECT * FROM orivia.v_public_traceability
-            WHERE (%s IS NULL OR lot_code ILIKE '%%'||%s||'%%' OR product_name ILIKE '%%'||%s||'%%' OR supplier_name ILIKE '%%'||%s||'%%')
-            AND (%s IS NULL OR municipality=%s) ORDER BY received_at DESC""",
+            WHERE (%s::text IS NULL OR lot_code ILIKE '%%'||%s::text||'%%' OR product_name ILIKE '%%'||%s::text||'%%' OR supplier_name ILIKE '%%'||%s::text||'%%')
+            AND (%s::text IS NULL OR municipality=%s::text) ORDER BY received_at DESC""",
             (query, query, query, query, municipality, municipality),
         )
 
