@@ -78,9 +78,10 @@ recurso no visible o inexistente, `409` conflicto de transición/integridad,
 
 ## CORS y entrega
 
-Ángel y Daniel deben comunicar el origen final del frontend para que se agregue
-exactamente a `ORIVIA_CORS_ORIGINS` en el `.env` privado de `orivia`. Nunca se
-debe usar `*`. La integración se prueba primero localmente y después contra
-`https://oriviaurlapi.tobaru.xyz/api/v1` mediante HTTPS. Kevin debe configurar
-esa URL como `NEXT_PUBLIC_ORIVIA_API_URL` en el entorno de producción del
-frontend, sin subir secretos al repositorio.
+El origen de producción del frontend es `https://orivia.tobaru.xyz` y debe
+estar configurado exactamente en `ORIVIA_CORS_ORIGINS` junto a los orígenes
+locales de desarrollo. Nunca se debe usar `*`. La integración se prueba
+primero localmente y después contra `https://oriviaurlapi.tobaru.xyz/api/v1`
+mediante HTTPS. Kevin debe configurar esa URL como
+`NEXT_PUBLIC_ORIVIA_API_URL` en el entorno de producción del frontend, sin
+subir secretos al repositorio.
