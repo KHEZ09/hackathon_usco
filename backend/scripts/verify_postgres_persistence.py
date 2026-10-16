@@ -52,7 +52,11 @@ def _cleanup(order_id: str) -> None:
 
 
 def main() -> int:
-    if os.getenv("ORIVIA_ORDER_REPOSITORY") != "postgres":
+    repository_backend = os.getenv(
+        "ORIVIA_ORDER_REPOSITORY",
+        "postgres" if os.getenv("ORIVIA_ENV", "development").lower() == "production" else "memory",
+    )
+    if repository_backend != "postgres":
         raise SystemExit("ORIVIA_ORDER_REPOSITORY=postgres es obligatorio")
 
     operator = fetch_one(
