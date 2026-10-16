@@ -59,13 +59,13 @@ def main() -> int:
     if repository_backend != "postgres":
         raise SystemExit("ORIVIA_ORDER_REPOSITORY=postgres es obligatorio")
 
+    app = create_app()
     operator = fetch_one(
         "SELECT user_id FROM orivia.app_user WHERE email='operador@orivia.test' AND account_status='ACTIVE'"
     )
     if operator is None:
         raise SystemExit("No existe el usuario sintético operador@orivia.test")
     subject = str(UUID(str(operator["user_id"])))
-    app = create_app()
     headers = {"Authorization": f"Bearer {_token(app, subject)}"}
     order_id: str | None = None
 
