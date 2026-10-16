@@ -63,10 +63,10 @@ class PostgresBlockchainAnchor(BlockchainAnchor):
         with transaction() as connection:
             event = connection.execute(
                 """
-                SELECT event_id, order_id AS entity_id, event_type
+                SELECT event_id, order_id::text AS entity_id, event_type
                 FROM orivia.order_event WHERE event_hash=%s
                 UNION ALL
-                SELECT event_id, lot_id AS entity_id, event_type
+                SELECT event_id, lot_id::text AS entity_id, event_type
                 FROM orivia.trace_lot_event WHERE event_hash=%s
                 LIMIT 1
                 """,
