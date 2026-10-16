@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 import { Eyebrow, Reveal } from "./Reveal";
 import { cn } from "@/lib/cn";
 
 const STORIES = [
-  { img: "/media/cosecha-mano.jpg", tag: "Cosecha", title: "Cosecha a mano, fruto por fruto de cacao", lugar: "Rivera, Huila", lote: "CAC001" },
-  { img: "/media/mazorcas-arbol.jpg", tag: "Cultivo", title: "Frutos de cacao que nacen del tronco", lugar: "Algeciras, Huila", lote: "CAC003" },
-  { img: "/media/paisaje-cacao.jpg", tag: "Origen", title: "Cacaotales entre la neblina", lugar: "Campoalegre, Huila", lote: "CAC002" },
-  { img: "/media/mazorca-abierta.jpg", tag: "Beneficio", title: "Granos frescos listos para fermentar", lugar: "Rivera, Huila", lote: "CAC001" },
-  { img: "/media/cacaotal.jpg", tag: "Territorio", title: "Sombra, montaña y suelo vivo", lugar: "Algeciras, Huila", lote: "CAC003" },
+  { img: "/media/cacao/finca-cosecha.jpg", tag: "Cosecha", title: "Cada mazorca se corta en su punto", lugar: "Rivera, Huila", lote: "CAC001" },
+  { img: "/media/cacao/finca-flor.jpg", tag: "Floración", title: "Flores que nacen del tronco y anuncian la cosecha", lugar: "Algeciras, Huila", lote: "CAC003" },
+  { img: "/media/cacao/finca-origen.jpg", tag: "Origen", title: "Fincas familiares entre montaña y neblina", lugar: "Campoalegre, Huila", lote: "CAC002" },
+  { img: "/media/cacao/finca-fermentacion.jpg", tag: "Fermentación", title: "Cajones de madera donde nace el sabor", lugar: "Rivera, Huila", lote: "CAC001" },
+  { img: "/media/cacao/finca-secado.jpg", tag: "Secado", title: "Secado solar bajo marquesina", lugar: "Algeciras, Huila", lote: "CAC003" },
 ];
 const N = STORIES.length;
+const INTERVALO = 4.8;
 
 /** Distancia circular más corta entre la tarjeta i y la activa. */
 const offsetOf = (i: number, active: number) => {
@@ -28,15 +29,21 @@ export function OriginSection() {
   const [paused, setPaused] = useState(false);
   const reduce = useReducedMotion();
   const go = (n: number) => setActive((a) => (a + n + N) % N);
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const textoY = useTransform(scrollYProgress, [0, 1], [40, -40]);
+  const carruselY = useTransform(scrollYProgress, [0, 1], [70, -50]);
+  const carruselRot = useTransform(scrollYProgress, [0, 0.45, 1], [6, 0, -4]);
 
   useEffect(() => {
     if (paused || reduce) return;
-    const t = setInterval(() => setActive((a) => (a + 1) % N), 4800);
+    const t = setInterval(() => setActive((a) => (a + 1) % N), INTERVALO * 1000);
     return () => clearInterval(t);
   }, [paused, reduce]);
 
   return (
-    <section id="origen" className="relative mx-auto grid max-w-6xl scroll-mt-6 sm:scroll-mt-8 lg:scroll-mt-10 items-center gap-10 px-5 pt-20 pb-20 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:pt-24 lg:pb-24">
+    <section ref={ref} id="origen" className="relative mx-auto grid max-w-6xl scroll-mt-6 sm:scroll-mt-8 lg:scroll-mt-10 items-center gap-10 px-5 pt-20 pb-20 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:pt-24 lg:pb-24">
+      <motion.div style={{ y: textoY }}>
       <Reveal className="flex flex-col items-center text-center lg:items-start lg:text-left">
         <Eyebrow>Cacao del Huila</Eyebrow>
         <h2 className="mt-5 max-w-sm text-4xl leading-[1.08] font-semibold tracking-tight text-ink sm:text-5xl">
@@ -58,9 +65,11 @@ export function OriginSection() {
           </span>
         </div>
       </Reveal>
+      </motion.div>
 
       <Reveal delay={0.15} className="min-w-0">
-        <div
+        <motion.div
+          style={{ y: carruselY, rotateX: carruselRot }}
           className="relative h-[420px] select-none [perspective:1400px] sm:h-[480px]"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
@@ -116,18 +125,40 @@ export function OriginSection() {
                       d === 0 ? "opacity-100" : "opacity-0",
                     )}
                   />
+                  <span className="absolute top-5 right-5 font-mono text-[0.6rem] tracking-widest text-crema/70">
+                    {String(i + 1).padStart(2, "0")} / {String(N).padStart(2, "0")}
+                  </span>
                   <div className="absolute inset-x-0 bottom-0 p-6 text-crema">
-                    <span className="rounded-full bg-crema/15 px-2.5 py-1 text-[0.6rem] font-semibold tracking-[0.2em] uppercase backdrop-blur">{s.tag}</span>
-                    <h3 className="mt-3 text-lg leading-snug font-semibold">{s.title}</h3>
-                    <p className="mt-1.5 flex items-center gap-1 text-[0.72rem] text-crema/75">
-                      <MapPin className="size-3" /> {s.lugar} · Lote {s.lote}
-                    </p>
+                    <motion.div
+                      key={d === 0 ? `on-${active}` : "off"}
+                      initial={d === 0 ? { opacity: 0, y: 14 } : false}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <span className="rounded-full bg-crema/15 px-2.5 py-1 text-[0.6rem] font-semibold tracking-[0.2em] uppercase backdrop-blur">{s.tag}</span>
+                      <h3 className="mt-3 text-lg leading-snug font-semibold">{s.title}</h3>
+                      <p className="mt-1.5 flex items-center gap-1 text-[0.72rem] text-crema/75">
+                        <MapPin className="size-3" /> {s.lugar} · Lote {s.lote}
+                      </p>
+                    </motion.div>
+                    {/* Tiempo hasta la siguiente historia */}
+                    {d === 0 && (
+                      <div className="mt-4 h-0.5 overflow-hidden rounded-full bg-crema/20">
+                        <motion.div
+                          key={`barra-${active}-${paused}`}
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: paused || reduce ? 0 : 1 }}
+                          transition={{ duration: INTERVALO, ease: "linear" }}
+                          className="h-full origin-left bg-[#e2b86e]"
+                        />
+                      </div>
+                    )}
                   </div>
                 </motion.article>
               );
             })}
           </motion.div>
-        </div>
+        </motion.div>
 
         <div className="mt-6 flex items-center justify-between">
           <div className="flex gap-1.5" role="tablist" aria-label="Historias">

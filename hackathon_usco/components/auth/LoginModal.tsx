@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, Eye, EyeOff, Loader2, X } from "lucide-react";
-import { OriviaIsotipo } from "@/components/brand/OriviaLogo";
+import { AuthVisual } from "./AuthVisual";
 import { ROLES, ROLE_ORDER, resolveRole, type Role, type Session } from "./roles";
 import { cn } from "@/lib/cn";
 import { clearAuthTokens, login as loginApi, OriviaApiError } from "@/lib/orivia-api";
@@ -120,20 +120,7 @@ function LoginDialog({ initialEmail, onRegister, onClose, onSuccess }: Omit<Prop
             className="relative grid max-h-[94svh] w-full max-w-4xl overflow-hidden rounded-t-[2rem] bg-card shadow-2xl sm:rounded-[2rem] md:grid-cols-[0.9fr_1.1fr]"
           >
             {/* Panel visual */}
-            <div className="relative hidden overflow-hidden md:block">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: "url(/media/cosecha-mano.jpg)" }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-bosque-950 via-bosque-950/55 to-bosque-950/10" />
-              <div className="relative flex h-full flex-col justify-between p-8 text-crema">
-                <OriviaIsotipo className="h-14" />
-                <div>
-                  <p className="font-script text-5xl leading-tight">Cada grano tiene una historia</p>
-                  <p className="mt-4 text-[0.65rem] font-light tracking-[0.4em]">DEL ORIGEN AL MUNDO</p>
-                </div>
-              </div>
-            </div>
+            <AuthVisual img="/media/mazorcas-arbol.jpg" frase="Cada grano tiene una historia" lugar="Mazorcas en el árbol · Huila" />
 
             {/* Formulario */}
             <div className="overflow-y-auto p-6 sm:p-9">
