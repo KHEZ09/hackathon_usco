@@ -182,14 +182,32 @@ No usar `down -v` salvo que se haya respaldado y aprobado explícitamente la eli
 ## Activar blockchain EVM real
 
 1. Elegir una red EVM; para la demo se recomienda una testnet.
-2. Desplegar el contrato desde `backend/scripts/deploy_registry.py` con una
+2. Usar un RPC vigente de un proveedor dedicado y una cuenta firmante dedicada.
+   No depender de un endpoint público retirado ni poner la API key en Git.
+3. Obtener fondos de prueba para esa cuenta en la testnet elegida.
+4. Desplegar el contrato desde `backend/scripts/deploy_registry.py` con una
    cuenta firmante dedicada y fondos de prueba.
-3. Guardar RPC, clave privada, chain id y contrato únicamente en
+5. Guardar RPC, clave privada, chain id y contrato únicamente en
    `infra/orivia-server/.env` con permisos `600`.
-4. Ejecutar la migración `008_blockchain_registry.sql`, pruebas, despliegue y
+6. Ejecutar la migración `008_blockchain_registry.sql`, pruebas, despliegue y
    smoke test antes de cambiar el backend a `ORIVIA_BLOCKCHAIN_BACKEND=evm`.
-5. Verificar que un evento `BLOCKED` devuelve `transaction_id` y que su ruta
+7. Verificar que un evento `BLOCKED` devuelve `transaction_id` y que su ruta
    de consulta reporta `verified=true` directamente desde el contrato.
+
+Configuración objetivo para Polygon Amoy:
+
+```dotenv
+ORIVIA_BLOCKCHAIN_BACKEND=evm
+ORIVIA_BLOCKCHAIN_RPC_URL=https://polygon-amoy.g.alchemy.com/v2/<API_KEY>
+ORIVIA_BLOCKCHAIN_PRIVATE_KEY=<CLAVE_DE_LA_CUENTA_DEDICADA>
+ORIVIA_BLOCKCHAIN_CONTRACT_ADDRESS=<DIRECCION_DEVUELTA_POR_DEPLOY>
+ORIVIA_BLOCKCHAIN_CHAIN_ID=80002
+```
+
+La clave privada se escribe directamente en el `.env` privado del servidor y
+no se comparte por chat, commits, capturas ni logs. El despliegue se ejecuta
+primero con `ORIVIA_BLOCKCHAIN_BACKEND=postgres`, se obtiene la dirección del
+contrato, y solo después se cambia a `evm` y se reconstruye el servicio.
 
 Mientras no existan contrato, RPC y cuenta financiada, el servidor debe seguir
 en `postgres`; eso no debe presentarse como blockchain pública real.

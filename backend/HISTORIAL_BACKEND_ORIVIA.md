@@ -387,3 +387,7 @@ ejecuta sin RPC, wallet dedicada financiada, contrato y `chain_id`. Ollama real
 tampoco se instala en la instancia de 1.9 GiB RAM para `gpt-oss:120b`; requiere
 un proveedor remoto o una máquina con capacidad suficiente.
 
+La prueba EVM local posterior confirmó despliegue del contrato en el bloque 1,
+anclaje de un evento en el bloque 2 y verificación `isAnchored=true`. Esta
+prueba usa un nodo efímero y no se presenta como una transacción pública.
+
