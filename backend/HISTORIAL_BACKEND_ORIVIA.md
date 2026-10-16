@@ -418,3 +418,25 @@ Resultado: blockchain EVM y análisis Ollama quedan funcionales en staging. Lo
 pendiente para integración es que frontend consuma los contratos y que Kevin
 termine sus validaciones de usuarios, roles persistidos y módulos empresariales.
 
+## 16. Cierre de módulos de Kevin y roles persistidos — 2026-10-16
+
+Se ejecutó `git pull --ff-only origin main` en staging antes de validar. Se
+cerraron y comprobaron los módulos de usuarios, PostgreSQL, migraciones,
+catálogo, contabilidad, reportes, integraciones y datos sintéticos.
+
+- El login real usa usuarios persistidos en PostgreSQL, bcrypt y refresh tokens
+  rotables; la prueba operativa confirmó login, `/auth/me`, rotación y rechazo
+  del refresh token reutilizado.
+- Los roles se leen de `orivia.app_user_role` y los permisos se derivan
+  server-side. Se agregó el alias compatible `orders:transition` al operador.
+- La migración `009_expand_user_roles.sql` alinea el enum PostgreSQL con los
+  roles `ACCOUNTING` y `VIEWER` ya soportados por el backend. `lots:status`
+  permanece reservado al administrador mediante `*` para proteger CAC001.
+- No se modificaron rutas ni lógica de seguridad, tokens, pedidos,
+  trazabilidad, auditoría, blockchain, IA, CORS o rate limiting de Sebas.
+
+Resultado final en Docker/staging: `86 passed`, Ruff sin hallazgos, migraciones
+sin checksum alterado, `APPLIED 009_expand_user_roles.sql`, health/readiness,
+smoke test y persistencia PostgreSQL correctos. La API sobrevivió a la
+recreación de contenedores y el login persistido volvió a validarse.
+
