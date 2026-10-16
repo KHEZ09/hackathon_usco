@@ -10,7 +10,7 @@ Historial técnico y operativo del desarrollo del backend de ORIVIA dentro del r
 - **Repositorio:** `https://github.com/KHEZ09/hackathon_usco`.
 - **Rama de trabajo:** `main`.
 - **Ruta del backend:** `backend/`.
-- **Modelo utilizado durante el acompañamiento técnico:** **GPT 5.6 Luna**.
+- **Modelo utilizado por Sebas y Kevin durante el acompañamiento técnico:** **GPT 5.6 Luna**.
 - **Servidor de staging/pruebas:** instancia AWS Lightsail `orivia` con Debian 13.
 - **Estado de referencia del repositorio al crear este historial:** `bd1cceb`.
 
@@ -48,7 +48,7 @@ Sebas definió el alcance de ORIVIA, el flujo de trabajo del equipo y la estrate
 
 ### Kevin — datos, usuarios e integraciones empresariales
 
-Kevin se encargó de la capa de datos y de los módulos empresariales generales. Sus responsabilidades y aportes registrados en el repositorio fueron:
+Kevin se encargó de la capa de datos y de los módulos empresariales generales, también con acompañamiento de **GPT 5.6 Luna**. Sus responsabilidades y aportes registrados en el repositorio fueron:
 
 - usuarios y operaciones relacionadas con datos;
 - conexión y configuración de PostgreSQL;
@@ -64,9 +64,9 @@ Kevin se encargó de la capa de datos y de los módulos empresariales generales.
 
 La integración de Kevin quedó preparada para reemplazar progresivamente los repositorios en memoria del núcleo de pedidos. En el estado actual todavía debe completarse ese reemplazo para que los pedidos y sus eventos se persistan en PostgreSQL de forma definitiva.
 
-### GPT 5.6 Luna — acompañamiento técnico y ejecución bajo dirección de Sebas
+### GPT 5.6 Luna — acompañamiento técnico compartido
 
-El modelo utilizado fue **GPT 5.6 Luna**. Su papel fue el de asistente de desarrollo operando bajo las decisiones de Sebas:
+El modelo utilizado por Sebas y Kevin fue **GPT 5.6 Luna**. Su papel fue el de asistente de desarrollo, operando según el alcance y las decisiones de cada integrante:
 
 - revisar el estado del repositorio, la estructura y el historial Git;
 - proponer y ejecutar cambios de backend y documentación;
@@ -185,18 +185,18 @@ La operación normal del equipo es:
 | `478e306` | Sebas / GPT 5.6 Luna | Rutas de auditoría, verificación y blockchain. | Se expuso la comprobación de integridad y el anclaje inicial. |
 | `a8a222c` | Sebas / GPT 5.6 Luna | Insights de IA de solo lectura. | Se añadió el proveedor local/fallback sin hacer dependiente el backend de un servicio externo. |
 | `2b1380a` | Sebas / GPT 5.6 Luna | Correcciones de IA y trazabilidad. | Se corrigieron validaciones, tipos de análisis y controles de integridad. |
-| `521daca` | Kevin | Primera integración de modificaciones de datos y backend. | Se inició la separación de responsabilidades entre dominio y datos. |
+| `521daca` | Kevin / GPT 5.6 Luna | Primera integración de modificaciones de datos y backend. | Se inició la separación de responsabilidades entre dominio y datos. |
 | `40093c2` | Equipo | Integración de rama. | Se sincronizaron los avances del equipo. |
-| `fe4d416` | Kevin | Operaciones de datos y tooling del servidor. | Se ampliaron módulos empresariales, repositorios y herramientas de operación. |
-| `e41baa5` | Kevin | Migraciones, backups y herramientas contables. | Se añadió soporte operativo para PostgreSQL y contabilidad. |
-| `8179ff4` | Kevin | Formateo y limpieza de módulos de datos e integraciones. | Se mejoró consistencia y mantenibilidad. |
-| `1462b88` | Kevin | Corrección de filtros nullable del catálogo. | Se evitó un error de tipado en filtros opcionales. |
-| `fbc7219` | Kevin | Seed sintético de inventario. | Se habilitaron datos reproducibles para staging y pruebas. |
-| `3381835` | Kevin | Scripts de despliegue ejecutables. | Se corrigieron permisos de ejecución en los scripts. |
-| `1b4ef7b` | Kevin | Normalización de finales de línea en la imagen. | Se evitó incompatibilidad de scripts dentro del contenedor. |
-| `090e575` | Kevin | Formateo de pruebas de backend. | Se dejó el conjunto de pruebas consistente. |
+| `fe4d416` | Kevin / GPT 5.6 Luna | Operaciones de datos y tooling del servidor. | Se ampliaron módulos empresariales, repositorios y herramientas de operación. |
+| `e41baa5` | Kevin / GPT 5.6 Luna | Migraciones, backups y herramientas contables. | Se añadió soporte operativo para PostgreSQL y contabilidad. |
+| `8179ff4` | Kevin / GPT 5.6 Luna | Formateo y limpieza de módulos de datos e integraciones. | Se mejoró consistencia y mantenibilidad. |
+| `1462b88` | Kevin / GPT 5.6 Luna | Corrección de filtros nullable del catálogo. | Se evitó un error de tipado en filtros opcionales. |
+| `fbc7219` | Kevin / GPT 5.6 Luna | Seed sintético de inventario. | Se habilitaron datos reproducibles para staging y pruebas. |
+| `3381835` | Kevin / GPT 5.6 Luna | Scripts de despliegue ejecutables. | Se corrigieron permisos de ejecución en los scripts. |
+| `1b4ef7b` | Kevin / GPT 5.6 Luna | Normalización de finales de línea en la imagen. | Se evitó incompatibilidad de scripts dentro del contenedor. |
+| `090e575` | Kevin / GPT 5.6 Luna | Formateo de pruebas de backend. | Se dejó el conjunto de pruebas consistente. |
 | `a59ee09` | Sebas / GPT 5.6 Luna | Verificación final del núcleo Sebas y smoke checks. | Se completaron pruebas, correcciones de Docker y validación del despliegue. |
-| `bd1cceb` | Kevin | Documentación de módulos de datos y despliegue. | Se actualizó la referencia documental de la capa de Kevin. |
+| `bd1cceb` | Kevin / GPT 5.6 Luna | Documentación de módulos de datos y despliegue. | Se actualizó la referencia documental de la capa de Kevin. |
 
 ## 6. Correcciones importantes realizadas
 
