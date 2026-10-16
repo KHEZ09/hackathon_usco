@@ -2,6 +2,53 @@
 
 Este archivo es la referencia rápida de carpetas. Las rutas son relativas a `backend/`.
 
+## Documentos obligatorios por persona e IA
+
+Todos deben leer primero:
+
+1. `README.md` — mapa general del repositorio.
+2. `PLAN_HACKATON_ORIVIA.md` — objetivo, flujo de demo, equipo y reglas.
+3. `ARQUITECTURA_ORIVIA_HACKATON.md` — arquitectura, seguridad y decisiones técnicas.
+4. `backend/TEAM_STRUCTURE.md` — esta matriz de carpetas y responsables.
+
+### Sebas
+
+Además de los documentos generales, trabaja bajo:
+
+- `RUTA_BACKEND_ORIVIA.md` — fases, endpoints y secuencia de implementación del backend.
+- `ESTRUCTURA_BACKEND_ORIVIA.md` — contrato de módulos, responsabilidades y límites.
+- `backend/README.md` — ejecución local, pruebas y alcance actual de Flask.
+- `infra/orivia-server/README.md` — Docker, despliegue, healthcheck y operación de `orivia`.
+
+### Kevin
+
+Además de los documentos generales, trabaja bajo:
+
+- `ESTRUCTURA_BACKEND_ORIVIA.md` — usuarios, PostgreSQL, migraciones e integraciones.
+- `RUTA_BACKEND_ORIVIA.md` — fases del backend y puntos de integración.
+- `backend/README.md` — requisitos de integración con la API Flask.
+- `backend/TEAM_STRUCTURE.md` — sus carpetas y reglas de coordinación.
+
+### Ángel
+
+Además de los documentos generales, trabaja bajo:
+
+- `hackathon_usco/design/README.md` — UX, flujos, wireframes y tokens.
+- `hackathon_usco/docs/ux/README.md` — accesibilidad, pruebas y criterios visuales.
+- `PLAN_HACKATON_ORIVIA.md` — flujo de demo y perfiles de usuario.
+- `ARQUITECTURA_ORIVIA_HACKATON.md` — límites de UX frente a seguridad, datos e IA.
+
+### Daniel
+
+Además de los documentos generales, trabaja bajo:
+
+- `hackathon_usco/components/README.md` — sistema de componentes.
+- `hackathon_usco/styles/README.md` — estilos, responsive y accesibilidad.
+- `hackathon_usco/design/README.md` — tokens y referencias visuales.
+- `PLAN_HACKATON_ORIVIA.md` — flujo de demo y criterios de experiencia.
+
+`ARQUITECTURA_DESARROLLO_APP_CACAO.md` es histórico: ninguna persona ni IA debe usarlo como plan vigente.
+
 ## Sebas — plataforma y seguridad
 
 ```text

@@ -58,6 +58,8 @@ No se debe desarrollar este backend dentro de `app/` ni mezclarlo con el reposit
 
 Ángel y Daniel coordinan juntos la experiencia y el diseño. No deben modificar la lógica crítica del backend sin acordarlo con Sebas y Kevin.
 
+La matriz detallada de documentos por persona e IA está en `backend/TEAM_STRUCTURE.md`. Ese archivo es la referencia para saber qué leer antes de modificar cada zona.
+
 ## 4. Infraestructura oficial del MVP
 
 El backend se desarrollará, probará y preparará para desplegarse en la instancia recién creada:
