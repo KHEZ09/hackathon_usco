@@ -3,6 +3,8 @@
 ## Controles aplicados
 
 - Los secretos de producción viven únicamente en `infra/orivia-server/.env`.
+- El código no incluye una URL de base de datos funcional por defecto; el
+  entorno debe proporcionarla explícitamente.
 - La configuración de producción rechaza la clave JWT de desarrollo, la URL de
   PostgreSQL de desarrollo y orígenes CORS con credenciales, rutas o comodín.
 - La API limita el tamaño de cuerpos, usa respuestas JSON genéricas para errores

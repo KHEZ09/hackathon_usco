@@ -59,7 +59,7 @@ class Settings:
             ),
             database_url=os.getenv(
                 "ORIVIA_DATABASE_URL",
-                "postgresql://orivia:orivia_dev_password@localhost:5432/orivia",
+                "",
             ),
             order_repository_backend=os.getenv(
                 "ORIVIA_ORDER_REPOSITORY",

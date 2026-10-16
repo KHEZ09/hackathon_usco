@@ -38,6 +38,8 @@ def fetch_all(query: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
 
 
 def database_is_ready() -> bool:
+    if not _dsn:
+        return False
     try:
         # Readiness must fail fast when PostgreSQL is down; a health probe must
         # never hang the whole test runner or the reverse proxy.
