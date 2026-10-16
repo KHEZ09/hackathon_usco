@@ -47,8 +47,6 @@ Además de los documentos generales, trabaja bajo:
 - `hackathon_usco/design/README.md` — tokens y referencias visuales.
 - `PLAN_HACKATON_ORIVIA.md` — flujo de demo y criterios de experiencia.
 
-`ARQUITECTURA_DESARROLLO_APP_CACAO.md` es histórico: ninguna persona ni IA debe usarlo como plan vigente.
-
 ## Flujo Git obligatorio del equipo
 
 ### Al comenzar el trabajo
