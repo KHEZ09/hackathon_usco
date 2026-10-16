@@ -24,7 +24,7 @@ rectificar, analizar errores, complementar, auditar y comprobar nuevamente.
 ## Evidencia local
 
 ```text
-backend: 65 passed in 6.89s
+backend: 68 passed in 6.94s
 ruff (app/cluster, app/lots y pruebas nuevas): All checks passed
 compileall app tests: OK
 ```

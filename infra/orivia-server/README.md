@@ -13,7 +13,7 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
 ## Estado
 
 - El backend está en `../../backend/`.
-- El checkout oficial está desplegado y validado en `4653273`; repetir el flujo
+- El checkout oficial está desplegado y validado en `0cd5a70`; repetir el flujo
   después de cada cambio publicado.
 - Los secretos y el `.env` real nunca se suben a GitHub.
 - El acceso previsto es `ssh admin@orivia` por Tailscale.
