@@ -23,10 +23,11 @@ Todo cambio sigue: `push` → `git pull` en `orivia` → prueba Docker → despl
   ambos archivos si el segundo existe; ninguno se versiona.
 - El login tiene límite local por IP/identificador: 5 fallos en 10 minutos y bloqueo de 15 minutos.
 - La API registra método, ruta, código y `X-Request-ID`, sin registrar tokens ni cuerpos de solicitud.
-- El servicio `web` publica el frontend en `orivia.tobaru.xyz` y el tablero
-  agregado de salud en `oriviahealth.tobaru.xyz`; el tablero solo expone
-  métricas y eventos sin PII. La API oficial se sirve por
-  `oriviaurlapi.tobaru.xyz`. PostgreSQL continúa privado dentro de Docker.
+- El frontend se aloja separadamente en Hostinger mediante
+  `orivia.tobaru.xyz`. El servicio `web` de AWS publica únicamente el tablero
+  agregado de salud en `oriviahealth.tobaru.xyz` y la API oficial por
+  `oriviaurlapi.tobaru.xyz`; el tablero solo expone métricas y eventos sin PII.
+  PostgreSQL continúa privado dentro de Docker.
 - El stack canónico es únicamente `/opt/orivia/repo` (`orivia-server`), con API
   local en `127.0.0.1:8000` y PostgreSQL privado en Docker.
 - El stack legado `/home/admin/backend` estaba aislado en otra red, con otra

@@ -32,23 +32,6 @@ services:
     networks:
       - orivia_private
 
-  frontend:
-    build:
-      context: ../../hackathon_usco
-      args:
-        NEXT_PUBLIC_ORIVIA_API_URL: https://oriviaurlapi.tobaru.xyz/api/v1
-        NEXT_PUBLIC_ORIVIA_DEMO_MODE: "false"
-    expose:
-      - "3000"
-    restart: unless-stopped
-    read_only: true
-    tmpfs:
-      - /tmp
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - orivia_private
-
   web:
     image: caddy:2-alpine
     ports:
@@ -61,7 +44,6 @@ services:
       - caddy_config:/config
     depends_on:
       - api
-      - frontend
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
